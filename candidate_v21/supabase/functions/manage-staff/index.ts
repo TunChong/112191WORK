@@ -31,11 +31,15 @@ Deno.serve(async (req:Request)=>{
   const data=await req.json() as Obj,action=String(data.action||'');
   if(action==='list'){
    const accounts=await request('/rest/v1/profiles?select=id,employee_code,full_name,role,active,created_at,must_change_password,password_changed_at&role=eq.staff&order=full_name.asc&limit=500');
-   const enriched=await Promise.all(accounts.map(async(p:Obj)=>{
-     let last_sign_in_at:string|null=null;
-     try{const u=await request('/auth/v1/admin/users/'+p.id);last_sign_in_at=u?.last_sign_in_at||null}catch{}
-     return {...p,last_sign_in_at};
-   }));
+   // Use paginated Auth admin listing rather than a privileged request per employee.
+   const signins=new Map<string,string|null>();
+   for(let page=1;page<=5;page++){
+     const batch=await request('/auth/v1/admin/users?per_page=1000&page='+page);
+     const identities=Array.isArray(batch?.users)?batch.users:[];
+     for(const u of identities)if(typeof u.id==='string')signins.set(u.id,u.last_sign_in_at||null);
+     if(identities.length<1000)break;
+   }
+   const enriched=accounts.map((p:Obj)=>({...p,last_sign_in_at:signins.get(String(p.id))||null}));
    const events=await request('/rest/v1/staff_account_audit?select=action,employee_code,created_at&order=created_at.desc&limit=50');
    return reply(req,200,{accounts:enriched,events});
   }
@@ -50,8 +54,9 @@ Deno.serve(async (req:Request)=>{
    if(!validId(uid))throw new Error('Could not create auth identity');
    try{await request('/rest/v1/profiles?on_conflict=id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{id:uid,employee_code:code,full_name:name,role:'staff',active:true,must_change_password:true}})}
    catch(e){try{await request('/auth/v1/admin/users/'+uid,{method:'DELETE'})}catch{};throw e}
-   await audit(signed.id,uid,code,'created');
-   return reply(req,200,{ok:true,employee_code:code,temporary_password:pw});
+   let auditWarning=false;
+   try{await audit(signed.id,uid,code,'created')}catch{auditWarning=true;console.error('staff audit insert failed after creation')}
+   return reply(req,200,{ok:true,employee_code:code,temporary_password:pw,audit_warning:auditWarning});
   }
   if(action==='set_active'||action==='reset_password'){
    if(!validId(data.user_id))return reply(req,400,{error:'ID không hợp lệ'});
@@ -61,15 +66,24 @@ Deno.serve(async (req:Request)=>{
    const code=String(p.employee_code||'');
    if(action==='set_active'){
     if(typeof data.active!=='boolean')return reply(req,400,{error:'Trạng thái không hợp lệ'});
+    // Archive instead of deleting: preserve assignments and activity history.
+    // A ban prevents new sign-ins, but existing access tokens require RLS checks.
     await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{method:'PATCH',prefer:'return=minimal',body:{active:data.active}});
+    try{
+      await request('/auth/v1/admin/users/'+uid,{method:'PUT',body:{ban_duration:data.active?'none':'876000h'}});
+    }catch(e){
+      try{await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{method:'PATCH',prefer:'return=minimal',body:{active:p.active}})}catch{}
+      throw e;
+    }
     await audit(signed.id,uid,code,data.active?'activated':'deactivated');
     return reply(req,200,{ok:true});
    }
    const pw=newPassword();
    await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{method:'PATCH',prefer:'return=minimal',body:{must_change_password:true}});
    await request('/auth/v1/admin/users/'+uid,{method:'PUT',body:{password:pw}});
-   await audit(signed.id,uid,code,'password_reset');
-   return reply(req,200,{ok:true,temporary_password:pw});
+   let auditWarning=false;
+   try{await audit(signed.id,uid,code,'password_reset')}catch{auditWarning=true;console.error('staff audit insert failed after password reset')}
+   return reply(req,200,{ok:true,temporary_password:pw,audit_warning:auditWarning});
   }
   return reply(req,400,{error:'Hành động không hợp lệ'});
  }catch(e){
