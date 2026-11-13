@@ -44,9 +44,16 @@ jobs:
           assert not Path('candidate_v21/config.js').read_text().find('sb_secret_') >= 0
           print('Frontend checks passed')
           PY
-      - name: Upload candidate ZIP for manual preview deployment
+      - name: Package public frontend only (exclude Supabase backend)
+        run: |
+          mkdir -p deploy_site
+          for filename in app.js index.html styles.css config.js sw.js manifest.webmanifest robots.txt icon-192.png icon-512.png; do
+            cp "candidate_v21/$filename" "deploy_site/$filename"
+          done
+          test "$(find deploy_site -maxdepth 1 -type f | wc -l)" -eq 9
+      - name: Upload site-only ZIP for Preview deployment
         uses: actions/upload-artifact@v4
         with:
-          name: 112191-work-v21-preview
-          path: candidate_v21/
+          name: 112191-work-v21-site-only
+          path: deploy_site/
           retention-days: 14
