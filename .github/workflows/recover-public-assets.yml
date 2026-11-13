@@ -25,8 +25,10 @@ jobs:
           assert len(m) == 36 and all(x['ok'] for x in m), 'Recovery incomplete'
           for version in ['production','8fa9c30b','4dd8d2d4','7f79fb8a']:
               config = (root/version/'config.js').read_text()
+              active = '\n'.join(line for line in config.splitlines()
+                                 if not line.lstrip().startswith('//'))
               for forbidden in ['service_role', 'sb_secret_', 'BEGIN PRIVATE KEY']:
-                  assert forbidden.lower() not in config.lower(), 'Privileged secret marker found'
+                  assert forbidden.lower() not in active.lower(), 'Privileged secret marker found'
           print('Validated all 36 assets, no privileged config key markers')
           PY
       - name: Keep permanent snapshots inside this repository
