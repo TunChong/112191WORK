@@ -12,7 +12,7 @@ assert.match(app, /<option>Công Việc Siêu Thị<\/option>/);
 assert.match(app, /function createView\(\)/);
 assert.match(app, /function accountsView\(\)\{\s*if\(!manager\(\)\)/);
 assert.match(app, /\['accounts','Quản lý tài khoản','shield'\]/);
-assert.match(app, /action==='create'/);
+assert.match(app, /staffAdminRequest\(\{action:'create'/);
 assert.match(app, /'createStaffForm'/);
 assert.match(app, /data-action="reset-staff-password"/);
 assert.match(app, /data-action="toggle-staff-account"/);
