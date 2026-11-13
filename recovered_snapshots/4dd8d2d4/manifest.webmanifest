@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "112191 WORK - Quản lý công việc",
+  "short_name": "112191 WORK",
+  "description": "Giao việc, báo cáo ảnh, duyệt và thống kê cho siêu thị",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "background_color": "#f5f7fb",
+  "theme_color": "#1456dc",
+  "icons": [
+    {"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

@@ -1,0 +1,290 @@
+[
+  {
+    "version": "production",
+    "filename": "app.js",
+    "ok": true,
+    "bytes": 62266,
+    "sha256": "6cced094a204b156110c08184a9b9e3fe0d380265110e1d201c2ecaa81819fd9",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "production",
+    "filename": "config.js",
+    "ok": true,
+    "bytes": 159,
+    "sha256": "e9bfe3e423cc65282de667c821fb78ac9611d3caca6caa3a4c8291b1d8afaa2b",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "production",
+    "filename": "icon-192.png",
+    "ok": true,
+    "bytes": 3095,
+    "sha256": "26ee256e2ddc5313b06b92416b51fa6695594aee8191d96c067dc70834e2711a",
+    "content_type": "image/png"
+  },
+  {
+    "version": "production",
+    "filename": "icon-512.png",
+    "ok": true,
+    "bytes": 8635,
+    "sha256": "6f382c65c2e1b4cce90c3dca2be8debea4d349860e01cee9caf449dd86a08bbe",
+    "content_type": "image/png"
+  },
+  {
+    "version": "production",
+    "filename": "index.html",
+    "ok": true,
+    "bytes": 1009,
+    "sha256": "f5e2406cfc894de9a3525fbf18dc7e5b4ddfb2c87fa2697a729c20cc9ea22fdf",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "version": "production",
+    "filename": "manifest.webmanifest",
+    "ok": true,
+    "bytes": 565,
+    "sha256": "6c557976aff6771ffb56a047f81db99bf3c8a8d57cc5dc2fc177f9930df5262b",
+    "content_type": "application/manifest+json"
+  },
+  {
+    "version": "production",
+    "filename": "robots.txt",
+    "ok": true,
+    "bytes": 26,
+    "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1",
+    "content_type": "text/plain; charset=utf-8"
+  },
+  {
+    "version": "production",
+    "filename": "styles.css",
+    "ok": true,
+    "bytes": 16632,
+    "sha256": "651b228560020ad5b68c2e9c3896f55d3605d7cd83db0002d2bf5a69e75ac35d",
+    "content_type": "text/css; charset=utf-8"
+  },
+  {
+    "version": "production",
+    "filename": "sw.js",
+    "ok": true,
+    "bytes": 1996,
+    "sha256": "0a798e65bef78be79fb569b41d679870d99254c38827a4c100dcaf54de6a4534",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "app.js",
+    "ok": true,
+    "bytes": 62266,
+    "sha256": "6cced094a204b156110c08184a9b9e3fe0d380265110e1d201c2ecaa81819fd9",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "config.js",
+    "ok": true,
+    "bytes": 159,
+    "sha256": "e9bfe3e423cc65282de667c821fb78ac9611d3caca6caa3a4c8291b1d8afaa2b",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "icon-192.png",
+    "ok": true,
+    "bytes": 3095,
+    "sha256": "26ee256e2ddc5313b06b92416b51fa6695594aee8191d96c067dc70834e2711a",
+    "content_type": "image/png"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "icon-512.png",
+    "ok": true,
+    "bytes": 8635,
+    "sha256": "6f382c65c2e1b4cce90c3dca2be8debea4d349860e01cee9caf449dd86a08bbe",
+    "content_type": "image/png"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "index.html",
+    "ok": true,
+    "bytes": 1009,
+    "sha256": "f5e2406cfc894de9a3525fbf18dc7e5b4ddfb2c87fa2697a729c20cc9ea22fdf",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "manifest.webmanifest",
+    "ok": true,
+    "bytes": 565,
+    "sha256": "6c557976aff6771ffb56a047f81db99bf3c8a8d57cc5dc2fc177f9930df5262b",
+    "content_type": "application/manifest+json"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "robots.txt",
+    "ok": true,
+    "bytes": 26,
+    "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1",
+    "content_type": "text/plain; charset=utf-8"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "styles.css",
+    "ok": true,
+    "bytes": 16632,
+    "sha256": "651b228560020ad5b68c2e9c3896f55d3605d7cd83db0002d2bf5a69e75ac35d",
+    "content_type": "text/css; charset=utf-8"
+  },
+  {
+    "version": "8fa9c30b",
+    "filename": "sw.js",
+    "ok": true,
+    "bytes": 1996,
+    "sha256": "0a798e65bef78be79fb569b41d679870d99254c38827a4c100dcaf54de6a4534",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "app.js",
+    "ok": true,
+    "bytes": 57861,
+    "sha256": "4c5ae41e6c8ad8e339c0abc14942a6ab3ea49796d5e3dad86987c95ac4d5658d",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "config.js",
+    "ok": true,
+    "bytes": 282,
+    "sha256": "7e55866964ac3c0f79b7560c213109df134248a029bf22e8b26189a55cd29942",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "icon-192.png",
+    "ok": true,
+    "bytes": 3095,
+    "sha256": "26ee256e2ddc5313b06b92416b51fa6695594aee8191d96c067dc70834e2711a",
+    "content_type": "image/png"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "icon-512.png",
+    "ok": true,
+    "bytes": 8635,
+    "sha256": "6f382c65c2e1b4cce90c3dca2be8debea4d349860e01cee9caf449dd86a08bbe",
+    "content_type": "image/png"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "index.html",
+    "ok": true,
+    "bytes": 1009,
+    "sha256": "4b33fe57eac1ee8abf893f81d13b4da39621adafcc9c8c7e40b49745364e1793",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "manifest.webmanifest",
+    "ok": true,
+    "bytes": 565,
+    "sha256": "6c557976aff6771ffb56a047f81db99bf3c8a8d57cc5dc2fc177f9930df5262b",
+    "content_type": "application/manifest+json"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "robots.txt",
+    "ok": true,
+    "bytes": 26,
+    "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1",
+    "content_type": "text/plain; charset=utf-8"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "styles.css",
+    "ok": true,
+    "bytes": 15835,
+    "sha256": "cce61b4a0a77493ef61d484c9aa42c94b3bfa955aafe2db70687324f5a52de8b",
+    "content_type": "text/css; charset=utf-8"
+  },
+  {
+    "version": "4dd8d2d4",
+    "filename": "sw.js",
+    "ok": true,
+    "bytes": 1996,
+    "sha256": "ea84af0de4216d4c638ca112c3b9d1b02a792af3c21ffbca37d2c44cde3fa322",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "app.js",
+    "ok": true,
+    "bytes": 55918,
+    "sha256": "317a519a83cd7bb9eb7f4eb85620c5ddbc0fe45909854df0eb0d21ebb7ddbef7",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "config.js",
+    "ok": true,
+    "bytes": 282,
+    "sha256": "7e55866964ac3c0f79b7560c213109df134248a029bf22e8b26189a55cd29942",
+    "content_type": "application/javascript"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "icon-192.png",
+    "ok": true,
+    "bytes": 3095,
+    "sha256": "26ee256e2ddc5313b06b92416b51fa6695594aee8191d96c067dc70834e2711a",
+    "content_type": "image/png"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "icon-512.png",
+    "ok": true,
+    "bytes": 8635,
+    "sha256": "6f382c65c2e1b4cce90c3dca2be8debea4d349860e01cee9caf449dd86a08bbe",
+    "content_type": "image/png"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "index.html",
+    "ok": true,
+    "bytes": 997,
+    "sha256": "35c43a4c8488c288ee282bd3f5a68bc46120f3d0baed84dd6f30de790d5050be",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "manifest.webmanifest",
+    "ok": true,
+    "bytes": 565,
+    "sha256": "6c557976aff6771ffb56a047f81db99bf3c8a8d57cc5dc2fc177f9930df5262b",
+    "content_type": "application/manifest+json"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "robots.txt",
+    "ok": true,
+    "bytes": 26,
+    "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1",
+    "content_type": "text/plain; charset=utf-8"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "styles.css",
+    "ok": true,
+    "bytes": 15585,
+    "sha256": "3fc2055f3dbd4cbed16a541e2747e8a5064149310edccc1803e7cf29798a0f40",
+    "content_type": "text/css; charset=utf-8"
+  },
+  {
+    "version": "7f79fb8a",
+    "filename": "sw.js",
+    "ok": true,
+    "bytes": 1984,
+    "sha256": "98454c2e0f455f50010184627de7bed6d8fe1be1d9dbaee8e79de39714b648cd",
+    "content_type": "application/javascript"
+  }
+]
