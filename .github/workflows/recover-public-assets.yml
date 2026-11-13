@@ -1,0 +1,25 @@
+name: Recover Cloudflare Pages public assets
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/recover-public-assets.yml"
+      - "recovery/download_public_assets.py"
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download 9 public assets from 4 deployments
+        run: python3 recovery/download_public_assets.py
+      - name: Upload snapshot for review (not published as Git commits)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-pages-recovery
+          path: recovery_artifacts/
+          retention-days: 7
+          if-no-files-found: warn
