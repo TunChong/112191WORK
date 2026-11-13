@@ -11,7 +11,7 @@ VERSIONS = {
     "7f79fb8a": "https://7f79fb8a.112191work.pages.dev",
 }
 FILES = ["app.js","config.js","icon-192.png","icon-512.png","index.html",
-         "manifest.webmanifest","robots.txt","style.css","sw.js"]
+         "manifest.webmanifest","robots.txt","styles.css","sw.js"]
 OUT = Path("recovery_artifacts")
 OUT.mkdir(exist_ok=True)
 manifest = []
