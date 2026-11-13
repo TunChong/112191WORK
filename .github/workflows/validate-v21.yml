@@ -28,6 +28,14 @@ jobs:
           fi
       - name: JavaScript syntax check
         run: node --check candidate_v21/app.js && node --check candidate_v21/sw.js && node --check candidate_v21/config.js
+      - name: Feature and permission regression checks
+        run: node candidate_v21/test_smoke.mjs
+      - name: Set up Deno for privileged backend type checking
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Edge Function TypeScript syntax and types
+        run: deno check candidate_v21/supabase/functions/manage-staff/index.ts
       - name: Check required features and prevent secrets in frontend
         run: |
           python3 - <<'PY'
