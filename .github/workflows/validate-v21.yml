@@ -1,0 +1,52 @@
+name: Validate and package 112191 WORK v2.1
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/quan-ly-tai-khoan-v21
+    paths:
+      - candidate_v21/**
+      - .github/workflows/validate-v21.yml
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy verified original app icons
+        run: |
+          cp recovered_snapshots/production/icon-192.png candidate_v21/icon-192.png
+          cp recovered_snapshots/production/icon-512.png candidate_v21/icon-512.png
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add candidate_v21/icon-192.png candidate_v21/icon-512.png
+          if ! git diff --cached --quiet; then
+            git commit -m "build: preserve icons in v2.1 preview"
+            git push
+          fi
+      - name: JavaScript syntax check
+        run: node --check candidate_v21/app.js && node --check candidate_v21/sw.js && node --check candidate_v21/config.js
+      - name: Check required features and prevent secrets in frontend
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          app = Path('candidate_v21/app.js').read_text()
+          assert 'Công Việc Siêu Thị' in app
+          assert 'function accountsView' in app
+          assert 'function staffAdminRequest' in app
+          assert 'createStaffForm' in app
+          assert 'data-action="reset-staff-password"' in app
+          html = Path('candidate_v21/index.html').read_text()
+          assert 'app.js?v=2.1' in html
+          assert 'styles.css?v=2.1' in html
+          assert not Path('candidate_v21/config.js').read_text().find('sb_secret_') >= 0
+          print('Frontend checks passed')
+          PY
+      - name: Upload candidate ZIP for manual preview deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: 112191-work-v21-preview
+          path: candidate_v21/
+          retention-days: 14
