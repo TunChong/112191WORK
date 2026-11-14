@@ -79,8 +79,8 @@ assert.match(sql, /app_private\.track_staff_password_change/);
 assert.match(sql, /app_private\.guard_profile_permissions/);
 assert.doesNotMatch(app,/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 assert.doesNotMatch(read('./config.js'),/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
-assert.match(html,/styles\.css\?v=2\.4/);
-assert.match(html,/app\.js\?v=2\.4/);
+assert.match(html,/styles\.css\?v=2\.5/);
+assert.match(html,/app\.js\?v=2\.5/);
 
 console.log('PASS: task category, manager account UI, server-side auth, archive and secret checks');
 
@@ -131,7 +131,7 @@ assert.match(app, /task-priority-label high/);
 assert.match(sw, /addEventListener\('push'/);
 assert.match(sw, /self\.registration\.showNotification/);
 assert.match(sw, /work-push-click/);
-assert.match(sw, /v2\.4\.0/);
+assert.match(sw, /v2\.5\.0/);
 assert.match(push, /generateVapidKeys/);
 assert.match(push, /work_push_claim_delivery/);
 assert.match(push, /work_push_subscriptions/);
