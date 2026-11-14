@@ -265,13 +265,32 @@ async function changeStaffActive(uid){
  try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();await loadStaffAdmin();toast('Đã cập nhật trạng thái tài khoản.')}catch(e){toast(e.message)}
 }
 async function deleteStaffForever(uid){
- if(!manager()||!state.staffAccounts)return;
- const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p||p.active)return;
- const code=window.prompt('Xóa VĨNH VIỄN tài khoản '+p.employee_code+'?\nChỉ tài khoản CHƯA có công việc, thông báo hoặc ảnh mới được xóa.\nGõ lại mã nhân viên để xác nhận:','');
- if(code===null)return;
- if(code.trim()!==p.employee_code){toast('Mã xác nhận không trùng. Không xóa tài khoản.');return}
- if(!confirm('Đây là thao tác không thể khôi phục. Xác nhận XÓA tài khoản '+p.employee_code+'?'))return;
- try{await staffAdminRequest({action:'delete',user_id:uid,confirm_code:code.trim()});await loadCloud();await loadStaffAdmin();toast('Đã xóa vĩnh viễn tài khoản chưa có lịch sử.')}catch(e){toast(e.message)}
+ if(!admin()||!state.staffAccounts)return;
+ const p=state.staffAccounts.accounts.find(x=>x.id===uid);
+ if(!p||p.active||p.is_admin)return;
+ try{
+  const {counts}=await staffAdminRequest({action:'preview_delete',user_id:uid});
+  const summary=[
+   'XÓA VĨNH VIỄN tài khoản: '+p.employee_code+' - '+p.full_name,
+   'Lượt công việc/báo cáo của người này sẽ bị xóa: '+(counts.assignments||0),
+   'Thông báo của người này sẽ bị xóa: '+(counts.notifications||0),
+   'Lịch công việc tham gia sẽ bị xóa: '+(counts.recurring_members||0),
+   'Ảnh minh chứng sẽ bị xóa: '+(counts.photos||0),
+   'Công việc do người này tạo sẽ chuyển sang Admin: '+(counts.tasks_to_reassign||0),
+   'Lịch việc do người này tạo sẽ chuyển sang Admin: '+(counts.templates_to_reassign||0),
+   '',
+   'KHÔNG THỂ HOÀN TÁC. Gõ chính xác mã tài khoản để xác nhận:'
+  ].join('\n');
+  const entered=window.prompt(summary,'');
+  if(entered===null)return;
+  if(entered.trim()!==p.employee_code){toast('Sai mã xác nhận. Không xóa tài khoản.');return}
+  if(!window.confirm('Xóa vĩnh viễn tài khoản '+p.employee_code+' và lịch sử, ảnh minh chứng liên quan?\n\nKhông thể hoàn tác thao tác này.'))return;
+  const r=await staffAdminRequest({action:'delete',user_id:uid,confirm_code:entered.trim(),ack_delete_history:true,expected_counts:counts});
+  await loadCloud();
+  await loadStaffAdmin();
+  draw();
+  toast(r.audit_warning?'Tài khoản đã xóa. Có cảnh báo khi ghi nhật ký.':'Đã xóa vĩnh viễn tài khoản và dữ liệu liên quan.');
+ }catch(e){toast('Không xóa được: '+e.message)}
 }
 async function resetStaffPassword(uid){
  if(!manager()||!state.staffAccounts)return;
