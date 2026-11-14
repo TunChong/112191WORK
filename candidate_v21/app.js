@@ -250,8 +250,37 @@ async function changeStaffActive(uid){
 async function resetStaffPassword(uid){
  if(!manager()||!state.staffAccounts)return;
  const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p)return;
- if(!confirm(`Đặt lại mật khẩu cho ${p.employee_code} - ${p.full_name}? Mật khẩu cũ sẽ không còn hiệu lực.`))return;
- try{const r=await staffAdminRequest({action:'reset_password',user_id:uid});state.oneTimeCredential={code:p.employee_code,password:r.temporary_password};await loadStaffAdmin();toast('Đã đặt lại mật khẩu. Gửi mật khẩu tạm qua kênh riêng.')}catch(e){toast(e.message)}
+ state.modal={type:'staff-reset',uid};draw();
+}
+async function editStaffName(uid){
+ if(!manager()||!state.staffAccounts)return;
+ const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p)return;
+ state.modal={type:'staff-edit',uid};draw();
+}
+async function submitStaffReset(e){
+ e.preventDefault();if(!manager()||!state.staffAccounts)return;
+ const f=e.target,uid=f.dataset.id,p=state.staffAccounts.accounts.find(x=>x.id===uid);if(!p)return;
+ const pw=String(new FormData(f).get('password')||'');
+ if(pw&&(pw.length<10||pw.length>72||!/[A-Za-z]/.test(pw)||!/[0-9]/.test(pw)||pw.includes(p.employee_code))){
+  toast('Mật khẩu cần 10–72 ký tự, gồm chữ và số, không chứa mã nhân viên.');return
+ }
+ const btn=f.querySelector('[type=submit]');btn.disabled=true;
+ try{
+  const r=await staffAdminRequest({action:'reset_password',user_id:uid,...(pw?{temporary_password:pw}:{})});
+  state.modal=null;state.oneTimeCredential={code:p.employee_code,password:r.temporary_password};
+  await loadStaffAdmin();draw();toast('Đã đặt lại mật khẩu. Nhân viên cần đổi lại khi đăng nhập.');
+ }catch(err){toast('Không đổi được mật khẩu: '+err.message);btn.disabled=false}
+}
+async function submitStaffEdit(e){
+ e.preventDefault();if(!manager()||!state.staffAccounts)return;
+ const f=e.target,uid=f.dataset.id,p=state.staffAccounts.accounts.find(x=>x.id===uid);if(!p)return;
+ const fullName=String(new FormData(f).get('fullName')||'').trim().replace(/\s+/g,' ');
+ if(fullName.length<2||fullName.length>120){toast('Họ tên cần từ 2 đến 120 ký tự.');return}
+ const btn=f.querySelector('[type=submit]');btn.disabled=true;
+ try{
+  await staffAdminRequest({action:'update_name',user_id:uid,full_name:fullName});
+  state.modal=null;await loadCloud();await loadStaffAdmin();draw();toast('Đã sửa tên nhân viên.');
+ }catch(err){toast('Không sửa được tên: '+err.message);btn.disabled=false}
 }
 
 function alertsView(){const items=myNotifications();return `<section class="panel"><div class="panel-head"><div><h2>Thông báo của bạn</h2><div class="subtitle">Việc mới, trễ hạn, báo cáo và quyết định duyệt</div></div><button class="btn outline sm" data-action="read-all">Đánh dấu đã đọc</button></div>
@@ -282,6 +311,12 @@ function detailModal(t){const rows=taskAssignments(t.id).filter(a=>manager()||a.
  </div>`}).join('')}
  </div><button class="btn outline full" data-action="close-modal" style="margin-top:12px">Đóng</button></div></div>`}
 function modalHtml(){if(state.modal?.type==='detail'){const t=getTask(state.modal.taskId);return t?detailModal(t):''}
+ if(state.modal?.type==='staff-reset'||state.modal?.type==='staff-edit'){
+  if(!manager()||!state.staffAccounts)return '';
+  const p=state.staffAccounts.accounts.find(x=>x.id===state.modal.uid);if(!p)return '';
+  if(state.modal.type==='staff-reset')return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Đặt lại mật khẩu nhân viên</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><p>${esc(p.employee_code)} · ${esc(p.full_name)}</p><form id="staffResetForm" data-id="${esc(p.id)}" class="stack"><div class="form-field"><label>Mật khẩu mới (tùy chọn)</label><input name="password" type="password" autocomplete="new-password" minlength="10" maxlength="72" placeholder="Để trống nếu muốn máy tự tạo"/></div><p class="fineprint">Tối thiểu 10 ký tự, có chữ và số, không chứa mã nhân viên. Mật khẩu cũ sẽ ngừng hoạt động, nhân viên phải đổi lại sau đăng nhập.</p><button class="btn danger full" type="submit">Xác nhận đặt lại mật khẩu</button></form></div></div>`;
+  return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Sửa tên nhân viên</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><form id="staffEditForm" data-id="${esc(p.id)}" class="stack"><div class="form-field"><label>Mã tài khoản</label><input readonly value="${esc(p.employee_code)}"/></div><div class="form-field"><label>Họ và tên *</label><input name="fullName" required minlength="2" maxlength="120" value="${esc(p.full_name)}"/></div><button class="btn full" type="submit">Lưu tên nhân viên</button></form></div></div>`;
+ }
  if(state.modal?.type==='reject')return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Yêu cầu nhân viên làm lại</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><form id="rejectForm" data-aid="${esc(state.modal.aid)}" class="stack"><div class="form-field"><label>Lý do cần chỉnh sửa *</label><textarea name="feedback" required minlength="5" maxlength="800" placeholder="Nêu rõ nội dung chưa đạt và yêu cầu thực hiện lại"></textarea></div><button class="btn danger full" type="submit">Gửi yêu cầu làm lại</button></form></div></div>`;
  return ''}
 function configRequiredView(){return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>112191 WORK</h1><p>Phiên bản dùng chung · Cấu hình chưa hoàn tất</p></div><div class="notice note-amber">${ic('lock')}<div>Ứng dụng cần kết nối Supabase trước khi nhân viên đăng nhập. Hãy nhập <b>Project URL</b> và <b>Publishable key</b> vào file <code>config.js</code> rồi triển khai lại. Không có chế độ dùng thử trong bản chính thức.</div></div></div></div>`}
@@ -409,6 +444,8 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='toggle-recurrence')return toggleRecurrence(el.dataset.id);
  if(name==='toggle-user')return toggleUser(el.dataset.id);
  if(name==='refresh-accounts')return loadStaffAdmin();
+ if(name==='account-filter'){state.staffAccountFilter=el.dataset.filter==='archived'?'archived':'active';draw();return}
+ if(name==='edit-staff-name')return editStaffName(el.dataset.id);
  if(name==='toggle-staff-account')return changeStaffActive(el.dataset.id);
  if(name==='reset-staff-password')return resetStaffPassword(el.dataset.id);
  if(name==='copy-temp-password'){if(state.oneTimeCredential)await navigator.clipboard.writeText(state.oneTimeCredential.password);toast('Đã sao chép.');return}
@@ -421,9 +458,11 @@ async function action(el,e){const name=el.dataset.action;
 }
 document.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(el)action(el,e).catch?.(err=>toast(err.message))});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;draw()};if((e.key==='Enter'||e.key===' ')&&e.target.matches('.task-card')){e.preventDefault();e.target.click()}});
-document.addEventListener('submit',async e=>{const f=e.target;if(['createTaskForm','createStaffForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
+document.addEventListener('submit',async e=>{const f=e.target;if(['createTaskForm','createStaffForm','staffResetForm','staffEditForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
  if(f.id==='createTaskForm')await createTask(e);
  else if(f.id==='createStaffForm')await createStaff(e);
+ else if(f.id==='staffResetForm')await submitStaffReset(e);
+ else if(f.id==='staffEditForm')await submitStaffEdit(e);
  else if(f.id==='reportForm')await sendReport(e);
  else if(f.id==='rejectForm'){const feedback=String(new FormData(f).get('feedback')||'').trim();if(feedback.length<5){toast('Hãy ghi rõ lý do làm lại.');return}await review(f.dataset.aid,false,feedback)}
  else if(f.id==='authForm'){const data=new FormData(f),username=String(data.get('username')||'').trim(),password=String(data.get('password')||'');if(!username||!password){toast('Vui lòng nhập tài khoản và mật khẩu.');return}const button=f.querySelector('[type=submit]');button.disabled=true;button.textContent='Đang đăng nhập...';try{await signIn(username,password)}finally{if(button.isConnected){button.disabled=false;button.textContent='Đăng nhập'}}}
