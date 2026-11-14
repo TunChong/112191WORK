@@ -20,6 +20,9 @@ assert.match(app, /password_changed_at/);
 
 // Require server-side roles and a request token, never browser service role.
 assert.match(api, /managerProfiles\[0\]\?\.role!=='manager'/);
+assert.match(api, /managerProfiles\[0\]\?\.must_change_password!==false/);
+assert.match(api, /user_metadata:\{employee_code:code,full_name:name\}/);
+assert.match(sql, /new\.must_change_password is distinct from old\.must_change_password/);
 assert.match(api, /signed=await request\('\/auth\/v1\/user'/);
 assert.match(api, /action==='create'/);
 assert.match(api, /action==='reset_password'/);
