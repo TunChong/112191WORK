@@ -25,3 +25,9 @@
 .task-priority-label{display:inline-flex;align-items:center;padding:3px 7px;border-radius:7px;background:#e8f0ff;color:#2754aa;font-size:10px;font-weight:800}
 .task-priority-label.high{background:#fee2e2;color:#b91c1c}
 @media(max-width:600px){.work-push-popup{right:12px;top:calc(env(safe-area-inset-top,0px) + 12px)}}
+
+/* v2.5 Admin task controls */
+.task-delete-button{border:1px solid #f8caca;background:#fff2f2;color:#b42335;padding:8px 11px;border-radius:10px;font-size:12px;font-weight:800;display:inline-flex;gap:5px;align-items:center;justify-content:center;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.task-delete-button:hover,.task-delete-button:focus-visible{background:#fee2e2;color:#991b1b;border-color:#e15d65;outline:0}
+.task-delete-button svg{width:15px;height:15px}
+@media(max-width:520px){.task-card{flex-wrap:wrap}.task-delete-button{margin-left:auto}.task-card .task-body{min-width:0;flex:1}}
