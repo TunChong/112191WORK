@@ -267,7 +267,7 @@ function peopleLine(taskId){let a=taskAssignments(taskId);return `${a.length} ng
 function taskCard(t,a=null){const ass=a||taskAssignments(t.id)[0]||{status:'todo'};const st=a?assignStatus(a,t):taskAssignments(t.id).some(x=>x.status==='submitted')?'submitted':taskAssignments(t.id).every(x=>x.status==='approved')?'approved':taskAssignments(t.id).some(x=>isLate(x,t))?'overdue':'todo';
  return `<article class="task-card" role="button" tabindex="0" data-action="detail" data-id="${esc(t.id)}">
  <div class="task-symbol">${ic(STATUS_ICON[st]||'clipboard')}</div><div class="task-body"><div class="task-title">${esc(t.title)}</div>
- <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}${t.priority==='high'?'<span class="task-priority-label high">🚨 ƯU TIÊN CAO</span>':'<span class="task-priority-label">BÌNH THƯỜNG</span>'}</div></div>${statusBadge(st)}</article>`}
+ <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}${t.priority==='high'?'<span class="task-priority-label high">🚨 ƯU TIÊN CAO</span>':'<span class="task-priority-label">BÌNH THƯỜNG</span>'}</div></div>${statusBadge(st)}${admin()?`<button type="button" class="task-delete-button" data-action="delete-task" data-id="${esc(t.id)}" title="Xóa vĩnh viễn công việc">${ic('trash')} Xóa</button>`:''}</article>`}
 function navEntries(){return manager()?[
  ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['accounts','Quản lý tài khoản','shield'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
  supervisor()?[
@@ -348,6 +348,42 @@ function accountsView(){
  <section class="panel"><div class="panel-head"><div><h2>Nhật ký quản trị tài khoản</h2><div class="subtitle">Không ghi mật khẩu, chỉ ghi sự kiện thay đổi</div></div></div><div class="person-list">${events.length?events.map(x=>`<div class="person-row"><div class="info"><strong>${esc(x.action||'Cập nhật')}</strong><small>Mã NV: ${esc(x.employee_code||'—')} · ${esc(x.created_at?fmt(x.created_at):'—')}</small></div></div>`).join(''):'<div class="subtitle">Chưa có sự kiện quản trị.</div>'}</div></section>
  </div>`;
 }
+async function taskAdminRequest(body){
+ if(!admin()||!CLOUD)throw new Error('Chỉ Admin 112191 được xóa công việc.');
+ await ensureFreshToken();
+ const resp=await fetch(BASE+'/functions/v1/manage-tasks',{
+  method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+state.session.access_token,
+   'Content-Type':'application/json'},body:JSON.stringify(body)
+ });
+ let data={};try{data=await resp.json()}catch{}
+ if(!resp.ok)throw new Error(data.error||'Không xử lý được yêu cầu xóa công việc');
+ return data;
+}
+async function deleteTaskForever(taskId){
+ if(!admin())return;
+ const task=getTask(taskId);if(!task)return;
+ try{
+  const info=await taskAdminRequest({action:'preview',task_id:taskId});
+  const p=info.preview;
+  if(!p||p.task_id!==taskId)throw new Error('Không tải được thông tin công việc');
+  const title=String(p.title||task.title);
+  const prompt=[
+   'XÓA VĨNH VIỄN CÔNG VIỆC: '+title,
+   '• '+p.assignments+' lượt giao/báo cáo sẽ bị xóa.',
+   '• '+p.notifications+' thông báo liên quan sẽ bị xóa.',
+   '• '+p.photos+' ảnh minh chứng sẽ bị xóa.',
+   ...(p.is_recurring_occurrence?['• Lịch lặp hằng ngày vẫn giữ; chỉ xóa lượt công việc này.']:[]),
+   '',
+   'Thao tác không thể hoàn tác. Anh xác nhận xóa?'
+  ].join('\n');
+  if(!window.confirm(prompt))return;
+  const r=await taskAdminRequest({action:'delete',task_id:taskId,confirm:true,
+   expected:{assignments:p.assignments,photos:p.photos}});
+  state.modal=null;await loadCloud();draw();
+  toast(r.warning?'Đã xóa công việc. '+r.warning:'Đã xóa vĩnh viễn công việc và các lượt giao liên quan.');
+ }catch(err){toast('Không xóa được công việc: '+(err?.message||'Lỗi không xác định'));}
+}
+
 async function staffAdminRequest(body){
  if(!manager()||!CLOUD)throw new Error('Không có quyền quản lý');
  await ensureFreshToken();
@@ -655,6 +691,7 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='navigate'){if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);if(state.screen==='accounts')await loadStaffAdmin();return}
  if(name==='filter'){state.filter=el.dataset.status;draw();return}
  if(name==='detail'){state.modal={type:'detail',taskId:el.dataset.id};draw();await signEvidence();return}
+ if(name==='delete-task')return deleteTaskForever(el.dataset.id);
  if(name==='close-modal'){state.modal=null;draw();return}
  if(name==='toggle-all-assignees'){const inputs=[...document.querySelectorAll('.assignee')];const every=inputs.every(x=>x.checked);inputs.forEach(x=>x.checked=!every);return}
  if(name==='reject-dialog'){state.modal={type:'reject',aid:el.dataset.aid};draw();return}
