@@ -12,6 +12,9 @@ create table if not exists public.staff_account_audit (
 );
 alter table public.staff_account_audit enable row level security;
 revoke all on public.staff_account_audit from anon, authenticated;
+-- Backend service-role must be explicitly granted access on newly created tables.
+grant select, insert on table public.staff_account_audit to service_role;
+grant usage, select on sequence public.staff_account_audit_id_seq to service_role;
 
 alter table public.profiles add column if not exists password_changed_at timestamptz;
 
