@@ -9,6 +9,10 @@ const rbac=read('./supabase/migrations/20261114_admin_shift_lead_roles.sql');
 const deletionGrant=read('./supabase/migrations/20261114_fix_staff_delete_service_role_read.sql');
 const hardDelete=read('./supabase/migrations/20261114_safe_hard_delete_with_history.sql');
 const html=read('./index.html');
+const push=read('./supabase/functions/work-push/index.ts');
+const pushSchema=read('./supabase/migrations/20261114_web_push.sql');
+const prioritySQL=read('./supabase/migrations/20261114_notification_priority.sql');
+const sw=read('./sw.js');
 
 // User-facing feature regression assertions.
 assert.match(app, /<option>Công Việc Siêu Thị<\/option>/);
@@ -73,8 +77,8 @@ assert.match(sql, /app_private\.track_staff_password_change/);
 assert.match(sql, /app_private\.guard_profile_permissions/);
 assert.doesNotMatch(app,/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 assert.doesNotMatch(read('./config.js'),/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
-assert.match(html,/styles\.css\?v=2\.3/);
-assert.match(html,/app\.js\?v=2\.3/);
+assert.match(html,/styles\.css\?v=2\.4/);
+assert.match(html,/app\.js\?v=2\.4/);
 
 console.log('PASS: task category, manager account UI, server-side auth, archive and secret checks');
 
@@ -115,3 +119,25 @@ assert.match(api, /action==='preview_delete'/);
 assert.match(api, /rpc\/staff_delete_cleanup/);
 assert.match(api, /storage\/v1\/object\/task-evidence/);
 assert.match(api, /ack_delete_history/);
+
+assert.match(app, /function enablePhonePush\(\)/);
+assert.match(app, /action:'dispatch_task'/);
+assert.match(app, /action:'dispatch_pending'/);
+assert.match(app, /data-action="enable-notifs"/);
+assert.match(app, /function showNewWorkPopup\(n\)/);
+assert.match(app, /task-priority-label high/);
+assert.match(sw, /addEventListener\('push'/);
+assert.match(sw, /self\.registration\.showNotification/);
+assert.match(sw, /work-push-click/);
+assert.match(sw, /v2\.4\.0/);
+assert.match(push, /generateVapidKeys/);
+assert.match(push, /work_push_claim_delivery/);
+assert.match(push, /work_push_subscriptions/);
+assert.match(push, /'dispatch_pending'/);
+assert.match(push, /'dispatch_task'/);
+assert.match(push, /Urgency\.High/);
+assert.doesNotMatch(push,/sb_secret_/);
+assert.match(pushSchema,/ENABLE ROW LEVEL SECURITY/i);
+assert.match(pushSchema,/work_push_get_keys/);
+assert.match(pushSchema,/REVOKE ALL ON FUNCTION public\.work_push_get_keys/);
+assert.match(prioritySQL,/ƯU TIÊN CAO/);
