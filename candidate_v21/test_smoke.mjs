@@ -13,6 +13,8 @@ const push=read('./supabase/functions/work-push/index.ts');
 const pushSchema=read('./supabase/migrations/20261114_web_push.sql');
 const prioritySQL=read('./supabase/migrations/20261114_notification_priority.sql');
 const sw=read('./sw.js');
+const manageTasks=read('./supabase/functions/manage-tasks/index.ts');
+const taskDeleteSQL=read('./supabase/migrations/20261115_admin_delete_task.sql');
 
 // User-facing feature regression assertions.
 assert.match(app, /<option>Công Việc Siêu Thị<\/option>/);
@@ -141,3 +143,23 @@ assert.match(pushSchema,/ENABLE ROW LEVEL SECURITY/i);
 assert.match(pushSchema,/work_push_get_keys/);
 assert.match(pushSchema,/REVOKE ALL ON FUNCTION public\.work_push_get_keys/);
 assert.match(prioritySQL,/ƯU TIÊN CAO/);
+
+assert.match(app, /data-action="delete-task"/);
+assert.match(app, /taskAdminRequest\(\{action:'preview'/);
+assert.match(app, /taskAdminRequest\(\{action:'delete'/);
+assert.match(app, /function deleteTaskForever\(taskId\)/);
+assert.match(app, /function canPush\(\)/);
+assert.match(app, /Không cần cài app:/);
+assert.match(app, /document\.visibilityState==='hidden'&&state\.pushEnabled/);
+assert.match(manageTasks, /action==='preview'/);
+assert.match(manageTasks, /action==='delete'/);
+assert.match(manageTasks, /Only Admin 112191/);
+assert.match(manageTasks, /storage\/v1\/object\/task-evidence/);
+assert.match(manageTasks, /work_admin_delete_task/);
+assert.match(manageTasks, /storage_cleanup_complete:true/);
+assert.match(taskDeleteSQL, /work_admin_task_preview/);
+assert.match(taskDeleteSQL, /work_admin_delete_task/);
+assert.match(taskDeleteSQL, /REVOKE ALL ON FUNCTION public\.work_admin_delete_task/);
+assert.match(taskDeleteSQL, /ALTER TABLE public\.work_deleted_task_audit ENABLE ROW LEVEL SECURITY/);
+assert.match(taskDeleteSQL, /DELETE FROM public\.tasks WHERE id=p_task/);
+assert.doesNotMatch(taskDeleteSQL, /DELETE FROM storage\.objects/i);
