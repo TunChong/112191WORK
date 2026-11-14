@@ -218,7 +218,7 @@ async function resumeDevicePush(){
 }
 function maybeDispatchPendingPush(){
  if(!CLOUD||!state.user||!state.user.active||state.user.must_change_password)return;
- if(Date.now()-lastPendingPushCheck<60000)return;
+ if(Date.now()-lastPendingPushCheck<5*60000)return;
  lastPendingPushCheck=Date.now();
  pushService({action:'dispatch_pending'}).catch(err=>console.warn('Push outbox check',err));
 }
@@ -241,7 +241,8 @@ function showNewWorkPopup(n){
  setTimeout(()=>{if(box.isConnected)box.remove()},16000);
 }
 async function openPushedTask(taskId){
- if(!state.user||!state.data){state.screen='alerts';draw();return}
+ if(!state.user||!state.data)return;
+ if(new URLSearchParams(location.search).has('task'))history.replaceState(null,'',location.pathname);
  if(!getTask(taskId)){await refresh()}
  if(getTask(taskId)){
   state.screen='tasks';state.modal={type:'detail',taskId};draw();
@@ -695,12 +696,43 @@ document.addEventListener('submit',async e=>{const f=e.target;if(['createTaskFor
 document.addEventListener('change',e=>{if(e.target.id==='demoStaffSelect'&&e.target.value)loginDemo(e.target.value).catch(err=>toast(err.message));});
 document.addEventListener('input',e=>{if(e.target.id==='taskSearch'){state.search=e.target.value;const where=e.target.selectionStart;draw();const input=document.querySelector('#taskSearch');if(input){input.focus();input.setSelectionRange(where,where)}}});
 async function boot(){
- if('serviceWorker' in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
+ if('serviceWorker' in navigator && location.protocol!=='file:'){
+  navigator.serviceWorker.register('./sw.js').catch(console.warn);
+  navigator.serviceWorker.addEventListener('message',event=>{
+   if(event.data?.type==='work-push-click'&&event.data.task_id)
+    openPushedTask(String(event.data.task_id)).catch(console.warn);
+  });
+ }
  try{
- if(CLOUD){const saved=localStorage.getItem(TOKEN_KEY);if(saved){state.session=JSON.parse(saved);await loadCloud()}}
- else{state.data=null;state.user=null;}
- }catch(e){console.warn(e);if(CLOUD){localStorage.removeItem(TOKEN_KEY);state.user=null;state.session=null;toast('Phiên đăng nhập đã hết hạn hoặc chưa kết nối được máy chủ.')}}
- draw();setInterval(()=>{if(!state.user||document.visibilityState==='hidden')return;if(CLOUD)refresh();else{demoGenerate();demoCheckOverdue();draw()}},60000);
- document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&state.user)refresh()});
+  if(CLOUD){const saved=localStorage.getItem(TOKEN_KEY);if(saved){state.session=JSON.parse(saved);await loadCloud()}}
+  else{state.data=null;state.user=null;}
+ }catch(e){
+  console.warn(e);
+  if(CLOUD){localStorage.removeItem(TOKEN_KEY);state.user=null;state.session=null;
+   toast('Phiên đăng nhập đã hết hạn hoặc chưa kết nối được máy chủ.')}
+ }
+ draw();
+ if(state.user){
+  resumeDevicePush().catch(console.warn);
+  const taskId=new URLSearchParams(location.search).get('task');
+  if(taskId)openPushedTask(taskId).catch(console.warn);
+ }
+ let managerLastRefresh=0;
+ setInterval(()=>{
+  if(!state.user||document.visibilityState==='hidden')return;
+  if(CLOUD){
+   // Foreground staff see new work popups without requiring notification permission.
+   if(!supervisor()||Date.now()-managerLastRefresh>60000){
+    managerLastRefresh=Date.now();refresh();
+   }
+   maybeDispatchPendingPush();
+  }else{demoGenerate();demoCheckOverdue();draw()}
+ },20000);
+ document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&state.user){
+   refresh();
+   maybeDispatchPendingPush();
+  }
+ });
 }
 boot();
