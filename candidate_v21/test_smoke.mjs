@@ -6,6 +6,7 @@ const app=read('./app.js');
 const api=read('./supabase/functions/manage-staff/index.ts');
 const sql=read('./supabase/migrations/20261113_manage_staff.sql');
 const rbac=read('./supabase/migrations/20261114_admin_shift_lead_roles.sql');
+const deletionGrant=read('./supabase/migrations/20261114_fix_staff_delete_service_role_read.sql');
 const html=read('./index.html');
 
 // User-facing feature regression assertions.
@@ -90,3 +91,12 @@ assert.match(api, /if\(role==='manager'&&!actorAdmin\)/);
 assert.match(api, /if\(p\.is_admin===true/);
 assert.match(api, /action==='set_role'/);
 assert.match(api, /is_admin=eq\.false/);
+
+assert.match(deletionGrant, /GRANT SELECT ON TABLE/);
+assert.match(deletionGrant, /public\.assignments/);
+assert.match(deletionGrant, /public\.recurring_members/);
+assert.match(deletionGrant, /TO service_role/);
+assert.doesNotMatch(deletionGrant, /TO anon/);
+assert.match(api, /Không kiểm tra được lịch sử công việc/);
+assert.match(api, /Không kiểm tra được kho ảnh minh chứng/);
+assert.match(api, /Tài khoản đã có lịch sử công việc/);
