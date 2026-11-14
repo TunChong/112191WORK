@@ -72,7 +72,7 @@ Deno.serve(async (req:Request)=>{
    try{await audit(signed.id,uid,code,'created')}catch{auditWarning=true;console.error('staff audit insert failed after creation')}
    return reply(req,200,{ok:true,employee_code:code,temporary_password:pw,audit_warning:auditWarning});
   }
-  if(action==='set_active'||action==='reset_password'||action==='update_name'||action==='delete'||action==='set_role'){
+  if(action==='set_active'||action==='reset_password'||action==='update_name'||action==='delete'||action==='preview_delete'||action==='set_role'){
    if(!validId(data.user_id))return reply(req,400,{error:'ID không hợp lệ'});
    const uid=data.user_id;
    const rows=await request('/rest/v1/profiles?select=id,employee_code,role,active,is_admin,must_change_password&id=eq.'+encodeURIComponent(uid)+'&limit=1'),p=rows[0];
@@ -89,38 +89,68 @@ Deno.serve(async (req:Request)=>{
     try{await audit(signed.id,uid,code,'role_changed')}catch{console.error('role change audit failed')}
     return reply(req,200,{ok:true,role});
    }
-   if(action==='delete'){
-    if(p.role==='manager')return reply(req,403,{error:'Không xóa vĩnh viễn tài khoản Quản lý; hãy lưu trữ'});
+   if(action==='preview_delete'||action==='delete'){
+    if(!actorAdmin)return reply(req,403,{error:'Chỉ Admin 112191 được xóa tài khoản vĩnh viễn'});
     if(p.active)return reply(req,409,{error:'Hãy lưu trữ tài khoản trước khi xóa vĩnh viễn'});
-    if(data.confirm_code!==code)return reply(req,400,{error:'Xác nhận mã nhân viên chưa chính xác'});
-    // Strong safety barrier: do not remove linked tasks, reports, audit-worthy events or evidence.
-    const relationships=[
-      ['assignments','staff_id'],['recurring_members','staff_id'],
-      ['notifications','recipient_id'],['tasks','created_by'],['recurring_templates','created_by']
-    ] as const;
-    for(const [table,col] of relationships){
-      // Use an exact read-only existence check, never delete related records.
-      let linked:any;
+    if(action==='delete'&&data.confirm_code!==code)return reply(req,400,{error:'Mã xác nhận chưa chính xác'});
+
+    // Preflight and cleanup are server-only database RPCs. Public client roles
+    // have no EXECUTE grant. Created tasks for other staff are REASSIGNED to
+    // the sole Admin rather than deleted.
+    const preview=await request('/rest/v1/rpc/staff_delete_preview',{
+      method:'POST',body:{p_target:uid,p_actor:signed.id,p_code:code}
+    });
+    if(!preview||preview.employee_code!==code||!Array.isArray(preview.photo_paths))
+      throw new Error('Invalid deletion preview');
+    const fields=['assignments','notifications','recurring_members','tasks_to_reassign','templates_to_reassign','photos'];
+    const counts=Object.fromEntries(fields.map(k=>[k,Number(preview[k]||0)]));
+    if(action==='preview_delete')return reply(req,200,{ok:true,counts,employee_code:code});
+
+    if(data.ack_delete_history!==true)return reply(req,400,{error:'Cần xác nhận xóa cả lịch sử của tài khoản'});
+    const expected=(data.expected_counts||{}) as Obj;
+    if(fields.some(k=>Number(expected[k])!==counts[k]))
+      return reply(req,409,{error:'Lịch sử tài khoản đã thay đổi. Vui lòng kiểm tra và xác nhận lại số liệu trước khi xóa.'});
+
+    // Supabase requires deleting owned Storage objects through the Storage API
+    // (never direct SQL against storage.objects). max 1000 paths per batch.
+    const paths=preview.photo_paths as string[];
+    if(paths.length>5000)return reply(req,409,{error:'Tài khoản có quá nhiều ảnh, cần xuất và xử lý sao lưu riêng'});
+    for(let i=0;i<paths.length;i+=1000){
+      const batch=paths.slice(i,i+1000);
+      if(batch.some(x=>typeof x!=='string'||!x.trim()))throw new Error('Invalid Storage path');
       try{
-        linked=await request('/rest/v1/'+table+'?select='+col+'&'+col+'=eq.'+encodeURIComponent(uid)+'&limit=1');
+        await request('/storage/v1/object/task-evidence',{method:'DELETE',body:{prefixes:batch}});
       }catch(e){
-        console.error('delete preflight failed for '+table,e instanceof Error?e.message:'unknown');
-        return reply(req,503,{error:'Không kiểm tra được lịch sử công việc ('+table+'). Tài khoản chưa bị xóa, vui lòng thử lại.'});
+        console.error('Storage deletion failed',e instanceof Error?e.message:'unknown');
+        return reply(req,503,{error:'Không thể xóa ảnh minh chứng từ kho lưu trữ. Tài khoản chưa bị xóa.'});
       }
-      if(Array.isArray(linked)&&linked.length)return reply(req,409,{error:'Tài khoản đã có lịch sử công việc ('+table+'). Chỉ có thể lưu trữ để bảo toàn dữ liệu.'});
     }
-    let evidence:any;
+    const afterImages=await request('/rest/v1/rpc/staff_delete_preview',{
+      method:'POST',body:{p_target:uid,p_actor:signed.id,p_code:code}
+    });
+    if(Number(afterImages?.photos||0)>0)return reply(req,503,{error:'Còn ảnh minh chứng chưa xóa hết. Tài khoản vẫn được giữ để tránh lỗi dữ liệu.'});
+
+    let cleanup:any;
     try{
-      evidence=await request('/storage/v1/object/list/task-evidence',{method:'POST',body:{prefix:uid,limit:1}});
+      cleanup=await request('/rest/v1/rpc/staff_delete_cleanup',{
+        method:'POST',body:{p_target:uid,p_actor:signed.id,p_code:code}
+      });
     }catch(e){
-      console.error('delete evidence preflight failed',e instanceof Error?e.message:'unknown');
-      return reply(req,503,{error:'Không kiểm tra được kho ảnh minh chứng. Tài khoản chưa bị xóa.'});
+      console.error('Account relation cleanup failed',e instanceof Error?e.message:'unknown');
+      return reply(req,503,{error:'Không thể dọn lịch sử công việc. Tài khoản vẫn được giữ ở trạng thái lưu trữ.'});
     }
-    if(Array.isArray(evidence)&&evidence.length)return reply(req,409,{error:'Tài khoản còn ảnh minh chứng. Không thể xóa vĩnh viễn.'});
+
+    // Auth user deletion cascades to profile and revokes refresh tokens.
+    // A previously issued JWT can remain valid until expiration, hence
+    // existing RLS also checks that the profile is active.
     try{await request('/auth/v1/admin/users/'+uid,{method:'DELETE'})}
-    catch{return reply(req,409,{error:'Không thể xóa: tài khoản còn dữ liệu liên kết. Hãy giữ lưu trữ.'})}
-    try{await audit(signed.id,null,code,'deleted')}catch{console.error('staff deletion audit failed')}
-    return reply(req,200,{ok:true});
+    catch(e){
+      console.error('Auth deletion after DB cleanup failed',e instanceof Error?e.message:'unknown');
+      return reply(req,503,{error:'Đã dọn lịch sử nhưng chưa xóa được tài khoản đăng nhập. Tài khoản vẫn bị khóa. Bấm xóa lại để hoàn tất.'});
+    }
+    let auditWarning=false;
+    try{await audit(signed.id,null,code,'deleted')}catch{auditWarning=true;console.error('staff deletion audit failed')}
+    return reply(req,200,{ok:true,deleted:true,removed:cleanup,audit_warning:auditWarning});
    }
    if(action==='update_name'){
     const name=String(data.full_name||'').trim().replace(/\s+/g,' ');
