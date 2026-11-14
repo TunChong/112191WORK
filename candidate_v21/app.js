@@ -300,8 +300,8 @@ async function submitStaffEdit(e){
 function alertsView(){const items=myNotifications();return `<section class="panel"><div class="panel-head"><div><h2>Thông báo của bạn</h2><div class="subtitle">Việc mới, trễ hạn, báo cáo và quyết định duyệt</div></div><button class="btn outline sm" data-action="read-all">Đánh dấu đã đọc</button></div>
  <div>${items.length?items.map(n=>`<div class="notification ${n.read_at?'read':''}" data-action="read-one" data-id="${esc(n.id)}" data-task="${esc(n.task_id||'')}"><span class="bulb">${ic('bell')}</span><div style="flex:1"><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p><time>${fmt(n.created_at)}</time></div>${!n.read_at?'<span style="width:7px;height:7px;background:var(--blue);border-radius:50%"></span>':''}</div>`).join(''):empty('Không có thông báo','Khi có công việc hoặc thay đổi kết quả, thông báo sẽ hiển thị ở đây.','bell')}</div></section>`}
 function moreView(){return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Chức năng quản lý</h2><div class="subtitle">Truy cập nhanh trên iPhone</div></div></div><div class="more-menu">${[['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['accounts','Quản lý tài khoản','shield'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']].map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}</div></section></div>`}
-function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${manager()?'Quản lý siêu thị':'Nhân viên'} · ${CLOUD?'Dữ liệu trực tuyến':'Dùng thử trên thiết bị'}</div></div></div>
- <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v2.0 · Đồng bộ</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${Notification.permission==='granted'?'Đã cấp quyền':Notification.permission==='denied'?'Đã từ chối':'Chưa cấp quyền'}`:'Trình duyệt chưa hỗ trợ Notification API'}</div></div>
+function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${roleName(state.user)} · ${CLOUD?'Dữ liệu trực tuyến':'Dùng thử trên thiết bị'}</div></div></div>
+ <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v2.1 · Đồng bộ</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${Notification.permission==='granted'?'Đã cấp quyền':Notification.permission==='denied'?'Đã từ chối':'Chưa cấp quyền'}`:'Trình duyệt chưa hỗ trợ Notification API'}</div></div>
  <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button><button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo khi mở app</button><button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
  ${!CLOUD?`<hr class="divider"/><div class="mini-label" style="margin-bottom:9px">Đổi tài khoản dùng thử</div><div class="row"><button class="btn outline sm" data-action="switch-demo" data-user="mgr">Quản lý</button><select id="demoStaffSelect" aria-label="Chọn nhân viên dùng thử" style="max-width:230px"><option value="">Chọn nhân viên...</option>${users().map(p=>`<option value="${esc(p.id)}" ${p.id===state.user.id?'selected':''}>${esc(personLabel(p))}</option>`).join('')}</select></div><p class="fineprint">Chuyển vai trò để thử luồng công việc trên cùng một thiết bị. Đây không phải đăng nhập bảo mật.</p><button class="btn outline sm" data-action="reset-demo">Đặt lại dữ liệu dùng thử</button>`:''}
  <hr class="divider"/><p class="fineprint">${CLOUD?'Tài khoản dùng chung được kiểm soát bằng Supabase Auth và Row Level Security.':'Chế độ dùng thử lưu vào localStorage; ảnh và dữ liệu không tự sao lưu hoặc đồng bộ.'} Thông báo ngoài app khi đóng ứng dụng cần cài đặt dịch vụ Web Push máy chủ riêng.</p></section>`}
@@ -334,10 +334,10 @@ function modalHtml(){if(state.modal?.type==='detail'){const t=getTask(state.moda
  if(state.modal?.type==='reject')return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Yêu cầu nhân viên làm lại</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><form id="rejectForm" data-aid="${esc(state.modal.aid)}" class="stack"><div class="form-field"><label>Lý do cần chỉnh sửa *</label><textarea name="feedback" required minlength="5" maxlength="800" placeholder="Nêu rõ nội dung chưa đạt và yêu cầu thực hiện lại"></textarea></div><button class="btn danger full" type="submit">Gửi yêu cầu làm lại</button></form></div></div>`;
  return ''}
 function configRequiredView(){return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>112191 WORK</h1><p>Phiên bản dùng chung · Cấu hình chưa hoàn tất</p></div><div class="notice note-amber">${ic('lock')}<div>Ứng dụng cần kết nối Supabase trước khi nhân viên đăng nhập. Hãy nhập <b>Project URL</b> và <b>Publishable key</b> vào file <code>config.js</code> rồi triển khai lại. Không có chế độ dùng thử trong bản chính thức.</div></div></div></div>`}
-function loginView(){if(!CLOUD)return configRequiredView();const isManager=state.authRole==='manager';return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>112191 WORK</h1><p>Quản lý và triển khai công việc siêu thị<br>ĐỒNG BỘ TRỰC TUYẾN</p></div>
- <div class="tabs login-role-tabs" style="justify-content:center;margin-bottom:18px"><button class="tab ${!isManager?'on':''}" type="button" data-action="auth-role" data-role="staff">${ic('user')} NHÂN VIÊN</button><button class="tab ${isManager?'on':''}" type="button" data-action="auth-role" data-role="manager">${ic('shield')} QUẢN LÝ</button></div>
+function loginView(){if(!CLOUD)return configRequiredView();const isManager=state.authRole==='manager',isLead=state.authRole==='shift_lead';return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>112191 WORK</h1><p>Quản lý và triển khai công việc siêu thị<br>ĐỒNG BỘ TRỰC TUYẾN</p></div>
+ <div class="tabs login-role-tabs" style="justify-content:center;margin-bottom:18px"><button class="tab ${!isManager&&!isLead?'on':''}" type="button" data-action="auth-role" data-role="staff">${ic('user')} NHÂN VIÊN</button><button class="tab ${isLead?'on':''}" type="button" data-action="auth-role" data-role="shift_lead">${ic('checkcircle')} TRƯỞNG CA</button><button class="tab ${isManager?'on':''}" type="button" data-action="auth-role" data-role="manager">${ic('shield')} QUẢN LÝ</button></div>
  <form id="authForm" class="login-form" novalidate>
- <div class="form-field"><label>${isManager?'Tài khoản quản lý':'Mã nhân viên'} *</label><input name="username" required inputmode="text" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="${isManager?'Ví dụ: 112191':'Ví dụ: 111566'}" /></div>
+ <div class="form-field"><label>${isManager?'Mã quản lý':isLead?'Mã trưởng ca':'Mã nhân viên'} *</label><input name="username" required inputmode="text" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="${isManager?'Ví dụ: 112191':'Ví dụ: 111566'}" /></div>
  <div class="form-field"><label>Mật khẩu *</label><input name="password" type="password" required autocomplete="current-password" placeholder="Nhập mật khẩu tài khoản" /></div>
  <div id="loginError" class="form-error" hidden role="alert"></div>
  <button class="btn full" type="submit">${ic('lock')} Đăng nhập</button></form><p class="fineprint" style="text-align:center;margin-top:14px">Tài khoản do quản lý cung cấp. Lần đầu đăng nhập cần đổi mật khẩu riêng. Không có chức năng tự đăng ký.</p></div></div>`}
@@ -352,8 +352,30 @@ function draw(){if(!CLOUD){root.innerHTML=configRequiredView();return}if(!state.
  if(!navEntries().some(([key])=>key===state.screen)&&state.screen!=='change-password')state.screen='home';root.innerHTML=appShell((views[state.screen]||homeView)());
 }
 async function loginDemo(uid){if(!state.data){state.data=migrateDemoRoster(JSON.parse(localStorage.getItem(KEY)||'null'))||initDemo()}state.user=state.data.profiles.find(p=>p.id===uid)||state.data.profiles[0];localStorage.setItem('work112191_user',state.user.id);state.screen='home';demoGenerate();demoCheckOverdue();persist();draw()}
-function normalizeLogin(raw,role){let v=String(raw||'').trim().toUpperCase();if(role==='manager'){if(/^[0-9]{4,8}$/.test(v))v+='QUANLY';else if(!/^[0-9]{4,8}QUANLY$/.test(v))throw new Error('Nhập mã quản lý, ví dụ 112191.')}if(role==='staff' && !/^[0-9]{4,8}$/.test(v))throw new Error('Nhập mã nhân viên gồm các chữ số, ví dụ 111566.');return v}
-async function signIn(username,password){const role=state.authRole;const normalized=normalizeLogin(username,role);const email=`${normalized.toLowerCase()}@${LOGIN_DOMAIN}`;const s=await authRequest('token?grant_type=password',{email,password});storeSession(s);try{await loadCloud();if(state.user?.role!==role || `${state.user.employee_code||''}${role==='manager'?'QUANLY':''}`.toUpperCase()!==normalized){await logout();throw new Error('Tài khoản không thuộc quyền đăng nhập đã chọn.');}state.screen='home';draw()}catch(e){if(state.user)await logout();throw e}}
+function normalizeLogin(raw,role){
+ let v=String(raw||'').trim().toUpperCase();
+ if(role==='manager'&&/^[0-9]{4,8}QUANLY$/.test(v))v=v.slice(0,-6);
+ if(!/^[0-9]{4,8}$/.test(v))throw new Error('Nhập mã tài khoản gồm 4–8 chữ số, ví dụ 112191.');
+ return v;
+}
+async function signIn(username,password){
+ const role=state.authRole,normalized=normalizeLogin(username,role);
+ // All new accounts use numeric login. Legacy 2026 managers used 'codeQUANLY'.
+ let session;
+ try{session=await authRequest('token?grant_type=password',{email:normalized.toLowerCase()+'@'+LOGIN_DOMAIN,password})}
+ catch(e){
+  if(role!=='manager')throw e;
+  session=await authRequest('token?grant_type=password',{email:normalized.toLowerCase()+'quanly@'+LOGIN_DOMAIN,password});
+ }
+ storeSession(session);
+ try{
+  await loadCloud();
+  if(state.user?.role!==role || String(state.user.employee_code||'').toUpperCase()!==normalized){
+   await logout();throw new Error('Tài khoản không thuộc vị trí đăng nhập đã chọn.');
+  }
+  state.screen='home';draw();
+ }catch(e){if(state.user)await logout();throw e}
+}
 async function changePassword(e){e.preventDefault();const f=e.target,fd=new FormData(f);const p=String(fd.get('newPassword')||''),c=String(fd.get('confirmPassword')||'');if(p.length<8){toast('Mật khẩu mới phải có ít nhất 8 ký tự.');return}if(p!==c){toast('Hai mật khẩu không trùng nhau.');return}const init=state.user.must_change_password;const original=state.user.employee_code+(manager()?'QUANLY':'');if(p.toUpperCase()===original.toUpperCase()||p==='57021!'){toast('Không được sử dụng lại mật khẩu mặc định.');return}const btn=f.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Đang thay đổi...';try{await ensureFreshToken();await cloudRequest('/auth/v1/user',{method:'PUT',body:{password:p}});if(init)await rpc('complete_initial_password');await loadCloud();state.screen='account';draw();toast('Đã đổi mật khẩu thành công.')}catch(err){toast('Không đổi được mật khẩu: '+err.message);btn.disabled=false;btn.textContent='Lưu mật khẩu mới'}}
 
 // Không cho tự đăng ký: tài khoản được tạo bằng script quản trị chạy trên máy riêng.
@@ -442,7 +464,7 @@ function exportCsv(){const lines=[['Tên công việc','Nhóm','Hạn hoàn thà
 async function action(el,e){const name=el.dataset.action;
  if(name==='close-overlay'){if(e.target===el){state.modal=null;draw()}return}
  if(name==='demo-login')return loginDemo(el.dataset.user);
- if(name==='auth-role'){state.authRole=el.dataset.role==='manager'?'manager':'staff';draw();return}
+ if(name==='auth-role'){state.authRole=['manager','shift_lead','staff'].includes(el.dataset.role)?el.dataset.role:'staff';draw();return}
  if(name==='show-change-password'){state.screen='change-password';draw();return}
  if(name==='back-account'){state.screen='account';draw();return}
  if(name==='navigate'){if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);if(state.screen==='accounts')await loadStaffAdmin();return}
