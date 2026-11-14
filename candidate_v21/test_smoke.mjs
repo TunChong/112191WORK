@@ -22,6 +22,9 @@ assert.match(app, /name="password" type="password" autocomplete="new-password"/)
 assert.match(app, /'staffResetForm'/);
 assert.match(app, /'staffEditForm'/);
 assert.match(app, /data-action="account-filter"/);
+assert.match(app, /data-action="delete-staff"/);
+assert.match(app, /window.prompt\('Xóa VĨNH VIỄN/);
+
 assert.match(app, /Xóa \(lưu trữ\)/);
 assert.match(app, /users\(\)\{return state\.data\?\.profiles\.filter\(x=>x\.role==='staff'&&x\.active\)/);
 
@@ -35,6 +38,12 @@ assert.match(api, /signed=await request\('\/auth\/v1\/user'/);
 assert.match(api, /action==='create'/);
 assert.match(api, /action==='reset_password'/);
 assert.match(api, /action==='update_name'/);
+assert.match(api, /action==='delete'/);
+assert.match(api, /data\.confirm_code!==code/);
+assert.match(api, /if\(p\.active\)return reply\(req,409/);
+assert.match(api, /storage\/v1\/object\/list\/task-evidence/);
+assert.match(sql, /'deleted'/);
+
 assert.match(api, /chooseInitialPassword\(data\.temporary_password,code\)/);
 assert.match(api, /password:pw/);
 assert.match(sql, /'updated'/);
