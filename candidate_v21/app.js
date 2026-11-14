@@ -699,8 +699,11 @@ async function boot(){
  if('serviceWorker' in navigator && location.protocol!=='file:'){
   navigator.serviceWorker.register('./sw.js').catch(console.warn);
   navigator.serviceWorker.addEventListener('message',event=>{
-   if(event.data?.type==='work-push-click'&&event.data.task_id)
+   if(event.data?.type==='work-push-click'&&event.data.task_id){
     openPushedTask(String(event.data.task_id)).catch(console.warn);
+   }else if(event.data?.type==='work-push-arrived'&&state.user){
+    refresh().catch(console.warn);
+   }
   });
  }
  try{
