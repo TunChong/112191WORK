@@ -278,6 +278,23 @@ async function resetStaffPassword(uid){
  const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p)return;
  state.modal={type:'staff-reset',uid};draw();
 }
+async function editStaffRole(uid){
+ if(!admin()||!state.staffAccounts)return;
+ const p=state.staffAccounts.accounts.find(p=>p.id===uid);
+ if(!p||p.is_admin)return;
+ state.modal={type:'staff-role',uid};draw();
+}
+async function submitStaffRole(e){
+ e.preventDefault();if(!admin()||!state.staffAccounts)return;
+ const f=e.target,uid=f.dataset.id,role=String(new FormData(f).get('role')||'');
+ if(!['staff','shift_lead','manager'].includes(role)){toast('Vị trí không hợp lệ');return}
+ const p=state.staffAccounts.accounts.find(x=>x.id===uid);
+ if(!p||p.is_admin)return;
+ if(!confirm('Chuyển vị trí '+p.employee_code+' từ '+roleName(p)+' sang '+({staff:'Nhân Viên',shift_lead:'Trưởng Ca',manager:'Quản Lý'}[role])+'?'))return;
+ const btn=f.querySelector('[type=submit]');btn.disabled=true;
+ try{await staffAdminRequest({action:'set_role',user_id:uid,role});state.modal=null;await loadCloud();await loadStaffAdmin();draw();toast('Đã cập nhật vị trí thành công.')}
+ catch(err){toast('Không thay đổi được vị trí: '+err.message);btn.disabled=false}
+}
 async function editStaffName(uid){
  if(!manager()||!state.staffAccounts)return;
  const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p)return;
@@ -343,6 +360,11 @@ function detailModal(t){const rows=taskAssignments(t.id).filter(a=>supervisor()|
  </div>`}).join('')}
  </div><button class="btn outline full" data-action="close-modal" style="margin-top:12px">Đóng</button></div></div>`}
 function modalHtml(){if(state.modal?.type==='detail'){const t=getTask(state.modal.taskId);return t?detailModal(t):''}
+ if(state.modal?.type==='staff-role'){
+  if(!admin()||!state.staffAccounts)return '';
+  const p=state.staffAccounts.accounts.find(x=>x.id===state.modal.uid);if(!p||p.is_admin)return '';
+  return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Đổi vị trí nhân sự</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><p>${esc(p.employee_code)} · ${esc(p.full_name)}</p><form id="staffRoleForm" data-id="${esc(p.id)}" class="stack"><div class="form-field"><label>Chọn vị trí *</label><select name="role" required><option value="staff" ${p.role==='staff'?'selected':''}>Nhân Viên</option><option value="shift_lead" ${p.role==='shift_lead'?'selected':''}>Trưởng Ca</option><option value="manager" ${p.role==='manager'?'selected':''}>Quản Lý</option></select></div><p class="fineprint">Chỉ Admin 112191 có thể cấp hoặc thu hồi quyền Quản Lý; lịch sử công việc giữ nguyên.</p><button class="btn full" type="submit">Lưu vị trí mới</button></form></div></div>`;
+ }
  if(state.modal?.type==='staff-reset'||state.modal?.type==='staff-edit'){
   if(!manager()||!state.staffAccounts)return '';
   const p=state.staffAccounts.accounts.find(x=>x.id===state.modal.uid);if(!p)return '';
@@ -500,6 +522,7 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='refresh-accounts')return loadStaffAdmin();
  if(name==='account-filter'){state.staffAccountFilter=el.dataset.filter==='archived'?'archived':'active';draw();return}
  if(name==='edit-staff-name')return editStaffName(el.dataset.id);
+ if(name==='edit-staff-role')return editStaffRole(el.dataset.id);
  if(name==='delete-staff')return deleteStaffForever(el.dataset.id);
  if(name==='toggle-staff-account')return changeStaffActive(el.dataset.id);
  if(name==='reset-staff-password')return resetStaffPassword(el.dataset.id);
@@ -513,11 +536,12 @@ async function action(el,e){const name=el.dataset.action;
 }
 document.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(el)action(el,e).catch?.(err=>toast(err.message))});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;draw()};if((e.key==='Enter'||e.key===' ')&&e.target.matches('.task-card')){e.preventDefault();e.target.click()}});
-document.addEventListener('submit',async e=>{const f=e.target;if(['createTaskForm','createStaffForm','staffResetForm','staffEditForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
+document.addEventListener('submit',async e=>{const f=e.target;if(['createTaskForm','createStaffForm','staffResetForm','staffEditForm','staffRoleForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
  if(f.id==='createTaskForm')await createTask(e);
  else if(f.id==='createStaffForm')await createStaff(e);
  else if(f.id==='staffResetForm')await submitStaffReset(e);
  else if(f.id==='staffEditForm')await submitStaffEdit(e);
+ else if(f.id==='staffRoleForm')await submitStaffRole(e);
  else if(f.id==='reportForm')await sendReport(e);
  else if(f.id==='rejectForm'){const feedback=String(new FormData(f).get('feedback')||'').trim();if(feedback.length<5){toast('Hãy ghi rõ lý do làm lại.');return}await review(f.dataset.aid,false,feedback)}
  else if(f.id==='authForm'){const data=new FormData(f),username=String(data.get('username')||'').trim(),password=String(data.get('password')||'');if(!username||!password){toast('Vui lòng nhập tài khoản và mật khẩu.');return}const button=f.querySelector('[type=submit]');button.disabled=true;button.textContent='Đang đăng nhập...';try{await signIn(username,password)}finally{if(button.isConnected){button.disabled=false;button.textContent='Đăng nhập'}}}
