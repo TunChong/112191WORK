@@ -55,7 +55,7 @@ const isLate = (a,t) => ['todo','rejected'].includes(a.status) && new Date(t.due
 const assignStatus = (a,t) => isLate(a,t)?'overdue':a.status;
 const NAMES={todo:'Chưa làm',submitted:'Chờ duyệt',approved:'Đã duyệt',rejected:'Làm lại',overdue:'Quá hạn'};
 const STATUS_ICON={todo:'clock',submitted:'camera',approved:'checkcircle',rejected:'refresh',overdue:'warning'};
-let state={staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
+let state={pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
 const root=document.getElementById('app');
 let ticking=false;
 const toast=(message)=>{document.querySelector('.alert-toast')?.remove();const a=document.createElement('div');a.className='alert-toast';a.textContent=message;document.body.appendChild(a);setTimeout(()=>a.remove(),3400)};
@@ -131,12 +131,124 @@ async function loadCloud(){
 async function refresh(){if(state.loading)return;state.loading=true;try{
  const known=new Set((state.data?.notifications||[]).map(n=>n.id));
  if(CLOUD){await loadCloud();
-  if(known.size && 'Notification' in window && Notification.permission==='granted' && document.visibilityState==='visible'){
+  if(known.size && document.visibilityState==='visible'){
    const fresh=myNotifications().filter(n=>!known.has(n.id));
-   for(const n of fresh.slice(0,3)){try{new Notification(n.title,{body:n.body,icon:'./icon-192.png'})}catch{}}
+   const newTask=fresh.find(n=>n.event_key?.startsWith('new:'));
+   if(newTask)showNewWorkPopup(newTask);
+   if(!state.pushEnabled&&'Notification' in window&&Notification.permission==='granted'){
+    for(const n of fresh.slice(0,2)){try{new Notification(n.title,{body:n.body,icon:'./icon-192.png'})}catch{}}
+   }
   }
  }else{demoGenerate();demoCheckOverdue()};draw()
  }catch(e){toast('Không tải được dữ liệu: '+e.message);draw()}finally{state.loading=false}}
+
+/* PWA Web Push: public key in browser, VAPID private key kept on Supabase server. */
+let lastPendingPushCheck=0;
+function canPush(){return CLOUD&&window.isSecureContext&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window}
+function base64KeyToBytes(key){
+ const base=key.replace(/-/g,'+').replace(/_/g,'/');
+ const raw=atob(base+'='.repeat((4-base.length%4)%4));
+ return Uint8Array.from(raw,c=>c.charCodeAt(0));
+}
+async function pushService(body){
+ await ensureFreshToken();
+ return cloudRequest('/functions/v1/work-push',{method:'POST',body});
+}
+async function enablePhonePush(){
+ if(!canPush()){
+  toast('iPhone: thêm 112191 WORK vào Màn hình chính rồi mở từ biểu tượng. Android: dùng Chrome và cho phép thông báo.');
+  return;
+ }
+ if(Notification.permission==='denied'){
+  toast('Thông báo đang bị chặn. Hãy bật trong phần Cài đặt thông báo của điện thoại.');
+  return;
+ }
+ try{
+  // Must run directly from an explicit tap on iOS.
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted'){toast('Chưa cấp quyền thông báo trên điện thoại.');draw();return}
+  const cfg=await pushService({action:'key'});
+  if(!cfg?.public_key)throw new Error('Máy chủ chưa trả về khóa Push');
+  const key=base64KeyToBytes(cfg.public_key);
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(sub){
+   const old=sub.options?.applicationServerKey;
+   if(old){
+    const a=new Uint8Array(old);
+    if(a.length!==key.length||a.some((x,i)=>x!==key[i])){
+     await sub.unsubscribe();sub=null;
+    }
+   }
+  }
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+  await pushService({action:'subscribe',subscription:sub.toJSON(),user_agent:navigator.userAgent});
+  state.pushEnabled=true;draw();
+  toast('Đã bật thông báo công việc trên điện thoại.');
+  pushService({action:'dispatch_pending'}).catch(err=>console.warn('Pending push retry',err));
+ }catch(err){
+  console.warn('Push subscribe failed',err);
+  toast('Không bật được thông báo đẩy: '+(err?.message||'Kiểm tra quyền thông báo.'));
+  draw();
+ }
+}
+async function disablePhonePush(){
+ if(!canPush())return;
+ try{
+  const reg=await navigator.serviceWorker.ready;
+  const sub=await reg.pushManager.getSubscription();
+  if(sub){
+   await pushService({action:'unsubscribe',endpoint:sub.endpoint});
+   await sub.unsubscribe();
+  }
+  state.pushEnabled=false;draw();toast('Đã tắt thông báo đẩy trên thiết bị này.');
+ }catch(e){toast('Không thể tắt thông báo: '+e.message)}
+}
+async function resumeDevicePush(){
+ if(!canPush()||!state.user||Notification.permission!=='granted')return;
+ try{
+  const reg=await navigator.serviceWorker.ready;
+  const sub=await reg.pushManager.getSubscription();
+  if(!sub)return;
+  await pushService({action:'subscribe',subscription:sub.toJSON(),user_agent:navigator.userAgent});
+  state.pushEnabled=true;
+  if(state.screen==='account'||state.screen==='alerts')draw();
+  maybeDispatchPendingPush();
+ }catch(e){console.warn('Push device resync failed',e)}
+}
+function maybeDispatchPendingPush(){
+ if(!CLOUD||!state.user||!state.user.active||state.user.must_change_password)return;
+ if(Date.now()-lastPendingPushCheck<60000)return;
+ lastPendingPushCheck=Date.now();
+ pushService({action:'dispatch_pending'}).catch(err=>console.warn('Push outbox check',err));
+}
+function showNewWorkPopup(n){
+ const t=getTask(n.task_id);
+ if(!t||!n.task_id)return;
+ document.querySelector('.work-push-popup')?.remove();
+ const urgent=t.priority==='high';
+ const box=document.createElement('div');
+ box.className='work-push-popup'+(urgent?' urgent':'');
+ box.setAttribute('role','alert');
+ box.innerHTML='<div class="work-push-heading">'+(urgent?'🚨 ƯU TIÊN CAO':'📋 CÔNG VIỆC BÌNH THƯỜNG')
+  +'<button class="work-push-dismiss" type="button" aria-label="Đóng">×</button></div>'
+  +'<strong>'+esc(t.title)+'</strong><small>Hạn hoàn thành: '+esc(fmt(t.due_at))
+  +'</small><button type="button" class="work-push-open">Xem công việc</button>';
+ document.body.appendChild(box);
+ const close=()=>box.remove();
+ box.querySelector('.work-push-dismiss').addEventListener('click',close);
+ box.querySelector('.work-push-open').addEventListener('click',()=>{close();openPushedTask(t.id)});
+ setTimeout(()=>{if(box.isConnected)box.remove()},16000);
+}
+async function openPushedTask(taskId){
+ if(!state.user||!state.data){state.screen='alerts';draw();return}
+ if(!getTask(taskId)){await refresh()}
+ if(getTask(taskId)){
+  state.screen='tasks';state.modal={type:'detail',taskId};draw();
+  await signEvidence().catch(()=>{});
+ }else{state.screen='alerts';draw()}
+}
+
 function manager(){return state.user?.role==='manager'}
 function admin(){return manager()&&state.user?.is_admin===true}
 function supervisor(){return manager()||state.user?.role==='shift_lead'}
