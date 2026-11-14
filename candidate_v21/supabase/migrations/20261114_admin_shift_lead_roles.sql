@@ -30,6 +30,11 @@ INSERT INTO public.staff_account_audit(actor_id,target_user_id,employee_code,act
  FROM public.profiles a JOIN public.profiles h ON h.employee_code='16784'
  WHERE a.employee_code='112191' AND a.is_admin=true;
 
+-- Role changes are audited, without recording any password.
+ALTER TABLE public.staff_account_audit DROP CONSTRAINT IF EXISTS staff_account_audit_action_check;
+ALTER TABLE public.staff_account_audit ADD CONSTRAINT staff_account_audit_action_check
+ CHECK (action IN ('created','activated','deactivated','password_reset','updated','deleted','role_changed'));
+
 -- Privilege fields and identity cannot be modified directly by a browser account.
 CREATE OR REPLACE FUNCTION app_private.guard_profile_permissions()
 RETURNS trigger LANGUAGE plpgsql SET search_path TO '' AS $$
