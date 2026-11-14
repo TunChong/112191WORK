@@ -106,10 +106,14 @@ Deno.serve(async (req:Request)=>{
     const counts=Object.fromEntries(fields.map(k=>[k,Number(preview[k]||0)]));
     if(action==='preview_delete')return reply(req,200,{ok:true,counts,employee_code:code});
 
-    if(data.ack_delete_history!==true)return reply(req,400,{error:'Cần xác nhận xóa cả lịch sử của tài khoản'});
-    const expected=(data.expected_counts||{}) as Obj;
-    if(fields.some(k=>Number(expected[k])!==counts[k]))
-      return reply(req,409,{error:'Lịch sử tài khoản đã thay đổi. Vui lòng kiểm tra và xác nhận lại số liệu trước khi xóa.'});
+    const hasLinkedData=fields.some(k=>counts[k]>0);
+    if(data.ack_delete_history!==true&&hasLinkedData)
+      return reply(req,409,{error:'Tài khoản có lịch sử công việc. Vui lòng cập nhật website lên bản v2.3 để xem dữ liệu và xác nhận xóa.'});
+    if(data.ack_delete_history===true){
+      const expected=(data.expected_counts||{}) as Obj;
+      if(fields.some(k=>Number(expected[k])!==counts[k]))
+        return reply(req,409,{error:'Lịch sử tài khoản đã thay đổi. Vui lòng kiểm tra và xác nhận lại số liệu trước khi xóa.'});
+    }
 
     // Supabase requires deleting owned Storage objects through the Storage API
     // (never direct SQL against storage.objects). max 1000 paths per batch.
