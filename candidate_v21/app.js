@@ -120,7 +120,7 @@ async function loadCloud(){
  if(!state.user){throw new Error('Chưa tìm thấy hồ sơ. Kiểm tra SQL khởi tạo dữ liệu.');}
  if(!state.user.active || state.user.must_change_password){state.data={profiles:[state.user],tasks:[],assignments:[],recurring_templates:[],recurring_members:[],notifications:[]};return;}
  const [profiles,tasks,assignments,templates,members,notifications]=await Promise.all([
-  cloudRequest('/rest/v1/profiles?select=id,employee_code,full_name,role,active,must_change_password,created_at&order=full_name.asc'),
+  cloudRequest('/rest/v1/profiles?select=id,employee_code,full_name,role,is_admin,active,must_change_password,created_at&order=full_name.asc'),
   cloudRequest('/rest/v1/tasks?select=*&order=due_at.desc&limit=400'),
   cloudRequest('/rest/v1/assignments?select=*&limit=1200'),
   cloudRequest('/rest/v1/recurring_templates?select=*&order=created_at.desc'),
@@ -203,7 +203,18 @@ function recurringView(){if(!manager())return empty('Không có quyền','Chỉ 
 function statsView(){if(!manager())return empty('Không có quyền','Chỉ quản lý xem thống kê tổng.','lock');const data=users().map(p=>{const rows=myRows().filter(x=>x.a.staff_id===p.id);const done=rows.filter(x=>x.a.status==='approved').length;return {p,done,total:rows.length,pct:rows.length?Math.round(done/rows.length*100):0}}).sort((a,b)=>b.pct-a.pct);
  const s=stats();return `<div class="stack"><div class="stats">${displayStat(s.total,'Lượt giao việc','clipboard')}${displayStat(s.approved,'Đã duyệt','checkcircle')}${displayStat(s.submitted,'Chờ duyệt','camera')}${displayStat(s.overdue,'Quá hạn','warning')}</div><section class="panel"><div class="panel-head"><div><h2>Tiến độ theo nhân viên</h2><div class="subtitle">Tỷ lệ duyệt đạt trên tổng số lượt được giao</div></div><button class="btn outline sm" data-action="export-csv">${ic('download')} Xuất CSV</button></div>
  ${data.map(({p,done,total,pct})=>`<div class="progress-row"><div class="line"><b>${esc(personLabel(p))}</b><span>${done}/${total} · ${pct}%</span></div><div class="progress ${pct>=80?'good':''}"><span style="width:${pct}%"></span></div></div>`).join('')}</section></div>`}
-function teamView(){if(!manager())return empty('Không có quyền','Chỉ quản lý xem thông tin nhân sự.','lock');return `<div class="stack"><div class="notice">${ic('info')}<div>${users().length} tài khoản nhân viên được quản lý tập trung. Nhân viên dùng mã riêng để đăng nhập; chỉ quản lý được duyệt công việc.</div></div><section class="panel"><div class="panel-head"><div><h2>Danh sách nhân sự</h2><div class="subtitle">${users().length} tài khoản nhân viên</div></div><div class="person-list">${(state.data?.profiles||[]).filter(p=>p.role==='manager').map(p=>`<div class="person-row"><span class="initial">${esc(p.full_name[0])}</span><div class="info"><strong>${esc(p.full_name)}</strong><small>${esc(p.employee_code)} · Quản lý · ${p.active?'Đang hoạt động':'Tạm khóa'}</small></div><span class="badge approved">Quản lý</span></div>`).join('')}${users().map(p=>`<div class="person-row"><span class="initial">${esc(p.full_name[0])}</span><div class="info"><strong>${esc(p.full_name)}</strong><small>${p.employee_code?`Mã NV: ${esc(p.employee_code)} · `:''}${p.active?'Đang hoạt động':'Chờ quản lý kích hoạt'}</small></div><span class="badge ${p.active?'approved':'todo'}">${p.active?'Hoạt động':'Chờ duyệt'}</span>${CLOUD?`<button class="btn sm outline" data-action="toggle-user" data-id="${esc(p.id)}">${p.active?'Lưu trữ':'Khôi phục'}</button>`:''}</div>`).join('')}</div></section></div>`}
+function teamView(){
+ if(!supervisor())return empty('Không có quyền','Chỉ trưởng ca hoặc quản lý được xem danh sách nhân sự.','lock');
+ const active=(state.data?.profiles||[]).filter(p=>p.active);
+ const leaders=active.filter(p=>p.role==='manager'||p.role==='shift_lead');
+ const workers=active.filter(p=>p.role==='staff');
+ return `<div class="stack">
+ <div class="notice">${ic('info')}<div><b>${leaders.length} quản lý/trưởng ca</b> · <b>${workers.length} nhân viên đang hoạt động</b>. Admin 112191 là chủ quản trị cao nhất; tài khoản đã lưu trữ không xuất hiện tại đây.</div></div>
+ <section class="panel"><div class="panel-head"><div><h2>Danh sách nhân sự</h2><div class="subtitle">Chỉ hiển thị người đang hoạt động</div></div></div><div class="person-list">
+ ${leaders.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name)}</strong><small>${esc(p.employee_code)} · ${roleName(p)} · Đang hoạt động</small></div><span class="badge approved">${roleName(p)}</span></div>`).join('')}
+ ${workers.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name)}</strong><small>Mã NV: ${esc(p.employee_code||'—')} · Nhân Viên</small></div><span class="badge approved">Hoạt động</span>${manager()?`<button class="btn sm outline" data-action="toggle-user" data-id="${esc(p.id)}">Lưu trữ</button>`:''}</div>`).join('')}
+ </div></section></div>`;
+}
 
 function accountsView(){
  if(!manager())return empty('Không có quyền','Chỉ quản lý được xem tài khoản.','lock');
@@ -299,7 +310,13 @@ async function submitStaffEdit(e){
 
 function alertsView(){const items=myNotifications();return `<section class="panel"><div class="panel-head"><div><h2>Thông báo của bạn</h2><div class="subtitle">Việc mới, trễ hạn, báo cáo và quyết định duyệt</div></div><button class="btn outline sm" data-action="read-all">Đánh dấu đã đọc</button></div>
  <div>${items.length?items.map(n=>`<div class="notification ${n.read_at?'read':''}" data-action="read-one" data-id="${esc(n.id)}" data-task="${esc(n.task_id||'')}"><span class="bulb">${ic('bell')}</span><div style="flex:1"><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p><time>${fmt(n.created_at)}</time></div>${!n.read_at?'<span style="width:7px;height:7px;background:var(--blue);border-radius:50%"></span>':''}</div>`).join(''):empty('Không có thông báo','Khi có công việc hoặc thay đổi kết quả, thông báo sẽ hiển thị ở đây.','bell')}</div></section>`}
-function moreView(){return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Chức năng quản lý</h2><div class="subtitle">Truy cập nhanh trên iPhone</div></div></div><div class="more-menu">${[['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['accounts','Quản lý tài khoản','shield'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']].map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}</div></section></div>`}
+function moreView(){
+ const items=manager()?[
+  ['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['accounts','Quản lý tài khoản','shield'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
+ ]:[['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
+ return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Tiện ích ${roleName(state.user)}</h2><div class="subtitle">Truy cập nhanh</div></div></div><div class="more-menu">${items.map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}</div></section></div>`;
+}
+
 function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${roleName(state.user)} · ${CLOUD?'Dữ liệu trực tuyến':'Dùng thử trên thiết bị'}</div></div></div>
  <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v2.1 · Đồng bộ</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${Notification.permission==='granted'?'Đã cấp quyền':Notification.permission==='denied'?'Đã từ chối':'Chưa cấp quyền'}`:'Trình duyệt chưa hỗ trợ Notification API'}</div></div>
  <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button><button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo khi mở app</button><button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
