@@ -7,7 +7,7 @@ create table if not exists public.staff_account_audit (
   actor_id uuid references auth.users(id) on delete set null,
   target_user_id uuid references auth.users(id) on delete set null,
   employee_code text not null,
-  action text not null check (action in ('created', 'activated', 'deactivated', 'password_reset')),
+  action text not null check (action in ('created', 'activated', 'deactivated', 'password_reset', 'updated')),
   created_at timestamptz not null default now()
 );
 alter table public.staff_account_audit enable row level security;
