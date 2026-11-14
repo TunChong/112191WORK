@@ -275,7 +275,7 @@ function navEntries(){return manager()?[
 function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
 function headerTitle(){return ({home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
-function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · 1 SIÊU THỊ<br>112191 WORK · Phiên bản 2.3</div></aside><main class="content">
+function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · 1 SIÊU THỊ<br>112191 WORK · Phiên bản 2.4</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${content}<div class="footbar">112191 WORK · Built for store teams</div></main>
@@ -457,7 +457,8 @@ async function submitStaffEdit(e){
  }catch(err){toast('Không sửa được tên: '+err.message);btn.disabled=false}
 }
 
-function alertsView(){const items=myNotifications();return `<section class="panel"><div class="panel-head"><div><h2>Thông báo của bạn</h2><div class="subtitle">Việc mới, trễ hạn, báo cáo và quyết định duyệt</div></div><button class="btn outline sm" data-action="read-all">Đánh dấu đã đọc</button></div>
+function alertsView(){const items=myNotifications();return `<section class="panel">
+ ${CLOUD&&!state.pushEnabled?`<div class="notice" style="margin-bottom:12px">${ic('bell')}<div><b>Nhận thông báo khi không mở app</b><p>Bật thông báo đẩy để nhận cảnh báo công việc mới và mức ưu tiên trên điện thoại.</p><button class="btn sm" data-action="enable-notifs">Bật thông báo điện thoại</button></div></div>`:''}<div class="panel-head"><div><h2>Thông báo của bạn</h2><div class="subtitle">Việc mới, trễ hạn, báo cáo và quyết định duyệt</div></div><button class="btn outline sm" data-action="read-all">Đánh dấu đã đọc</button></div>
  <div>${items.length?items.map(n=>`<div class="notification ${n.read_at?'read':''}" data-action="read-one" data-id="${esc(n.id)}" data-task="${esc(n.task_id||'')}"><span class="bulb">${ic('bell')}</span><div style="flex:1"><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p><time>${fmt(n.created_at)}</time></div>${!n.read_at?'<span style="width:7px;height:7px;background:var(--blue);border-radius:50%"></span>':''}</div>`).join(''):empty('Không có thông báo','Khi có công việc hoặc thay đổi kết quả, thông báo sẽ hiển thị ở đây.','bell')}</div></section>`}
 function moreView(){
  const items=manager()?[
@@ -467,10 +468,10 @@ function moreView(){
 }
 
 function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${roleName(state.user)} · ${CLOUD?'Dữ liệu trực tuyến':'Dùng thử trên thiết bị'}</div></div></div>
- <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v2.3 · Đồng bộ</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${Notification.permission==='granted'?'Đã cấp quyền':Notification.permission==='denied'?'Đã từ chối':'Chưa cấp quyền'}`:'Trình duyệt chưa hỗ trợ Notification API'}</div></div>
- <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button><button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo khi mở app</button><button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
+ <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v2.4 · Đồng bộ</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${state.pushEnabled?'Đã bật thông báo đẩy':Notification.permission==='granted'?'Đã cho phép, chưa đăng ký thiết bị':Notification.permission==='denied'?'Đã chặn quyền thông báo':'Chưa bật'}`:'Trình duyệt chưa hỗ trợ Notification API'}</div></div>
+ <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button>${state.pushEnabled?`<button class="btn outline" data-action="disable-notifs">${ic('bell')} Tắt thông báo đẩy trên thiết bị</button>`:`<button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo trên điện thoại</button>`}<button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
  ${!CLOUD?`<hr class="divider"/><div class="mini-label" style="margin-bottom:9px">Đổi tài khoản dùng thử</div><div class="row"><button class="btn outline sm" data-action="switch-demo" data-user="mgr">Quản lý</button><select id="demoStaffSelect" aria-label="Chọn nhân viên dùng thử" style="max-width:230px"><option value="">Chọn nhân viên...</option>${users().map(p=>`<option value="${esc(p.id)}" ${p.id===state.user.id?'selected':''}>${esc(personLabel(p))}</option>`).join('')}</select></div><p class="fineprint">Chuyển vai trò để thử luồng công việc trên cùng một thiết bị. Đây không phải đăng nhập bảo mật.</p><button class="btn outline sm" data-action="reset-demo">Đặt lại dữ liệu dùng thử</button>`:''}
- <hr class="divider"/><p class="fineprint">${CLOUD?'Tài khoản dùng chung được kiểm soát bằng Supabase Auth và Row Level Security.':'Chế độ dùng thử lưu vào localStorage; ảnh và dữ liệu không tự sao lưu hoặc đồng bộ.'} Thông báo ngoài app khi đóng ứng dụng cần cài đặt dịch vụ Web Push máy chủ riêng.</p></section>`}
+ <hr class="divider"/><p class="fineprint">${CLOUD?'Tài khoản dùng chung được kiểm soát bằng Supabase Auth và Row Level Security.':'Chế độ dùng thử lưu vào localStorage; ảnh và dữ liệu không tự sao lưu hoặc đồng bộ.'} iPhone: cần thêm website vào Màn hình chính, mở app từ biểu tượng rồi bấm Bật thông báo. Android: cho phép thông báo trên trình duyệt/PWA. Thông báo điện thoại có thể bị trì hoãn bởi chế độ Tiết kiệm pin hoặc Không làm phiền.</p></section>`}
 function pendingView(){return `<section class="panel"><div class="notice note-amber">${ic('lock')}<div>Tài khoản <b>${esc(state.user.full_name)}</b> đang chờ quản lý kích hoạt. Đăng nhập với tài khoản quản lý và vào mục Nhân viên để cấp quyền.</div></div><button class="btn outline" style="margin-top:16px" data-action="logout">Đăng xuất</button></section>`}
 function photoLink(path){if(!path)return '';if(path.startsWith('data:'))return path;return state.signed[path]||''}
 function photoTiles(paths){return paths?.length?`<div class="photo-grid" style="margin-top:12px">${paths.map(path=>photoLink(path)?`<a href="${esc(photoLink(path))}" target="_blank" rel="noopener noreferrer"><img alt="Ảnh minh chứng công việc" loading="lazy" src="${esc(photoLink(path))}"/></a>`:`<div style="border:1px dashed var(--line);border-radius:9px;aspect-ratio:1;display:grid;place-items:center;color:var(--muted);font-size:10px">${ic('image')} Đang tải ảnh</div>`).join('')}</div>`:''}
@@ -544,13 +545,22 @@ async function signIn(username,password){
   if(state.user?.role!==role || String(state.user.employee_code||'').toUpperCase()!==normalized){
    await logout();throw new Error('Tài khoản không thuộc vị trí đăng nhập đã chọn.');
   }
-  state.screen='home';draw();
+  state.screen='home';draw();resumeDevicePush().catch(console.warn);
+  const fromPush=new URLSearchParams(location.search).get('task');if(fromPush)openPushedTask(fromPush).catch(console.warn);
  }catch(e){if(state.user)await logout();throw e}
 }
 async function changePassword(e){e.preventDefault();const f=e.target,fd=new FormData(f);const p=String(fd.get('newPassword')||''),c=String(fd.get('confirmPassword')||'');if(p.length<8){toast('Mật khẩu mới phải có ít nhất 8 ký tự.');return}if(p!==c){toast('Hai mật khẩu không trùng nhau.');return}const init=state.user.must_change_password;const original=state.user.employee_code+(manager()?'QUANLY':'');if(p.toUpperCase()===original.toUpperCase()||p==='57021!'){toast('Không được sử dụng lại mật khẩu mặc định.');return}const btn=f.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Đang thay đổi...';try{await ensureFreshToken();await cloudRequest('/auth/v1/user',{method:'PUT',body:{password:p}});if(init)await rpc('complete_initial_password');await loadCloud();state.screen='account';draw();toast('Đã đổi mật khẩu thành công.')}catch(err){toast('Không đổi được mật khẩu: '+err.message);btn.disabled=false;btn.textContent='Lưu mật khẩu mới'}}
 
 // Không cho tự đăng ký: tài khoản được tạo bằng script quản trị chạy trên máy riêng.
-async function logout(){if(CLOUD){try{await cloudRequest('/auth/v1/logout',{method:'POST'})}catch{}localStorage.removeItem(TOKEN_KEY);state.session=null}else localStorage.removeItem('work112191_user');state.user=null;state.data=CLOUD?null:state.data;state.screen='home';state.modal=null;state.staffAccounts=null;state.oneTimeCredential=null;draw()}
+async function logout(){if(CLOUD){
+  if(canPush()&&state.session){
+   try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
+       if(sub){await pushService({action:'unsubscribe',endpoint:sub.endpoint}).catch(()=>{});await sub.unsubscribe()}}
+   catch(e){console.warn('Device push signout',e)}
+  }
+  try{await cloudRequest('/auth/v1/logout',{method:'POST'})}catch{}
+  localStorage.removeItem(TOKEN_KEY);state.session=null;state.pushEnabled=false;lastPendingPushCheck=0;
+ }else localStorage.removeItem('work112191_user');state.user=null;state.data=CLOUD?null:state.data;state.screen='home';state.modal=null;state.staffAccounts=null;state.oneTimeCredential=null;draw()}
 async function tableInsert(table,values){return await cloudRequest(`/rest/v1/${table}`,{method:'POST',body:values,headers:{'Prefer':'return=representation'}})}
 async function tablePatch(table,match,values){return await cloudRequest(`/rest/v1/${table}?${match}`,{method:'PATCH',body:values,headers:{'Prefer':'return=representation'}})}
 async function rpc(name,payload={}){return await cloudRequest(`/rest/v1/rpc/${name}`,{method:'POST',body:payload})}
@@ -666,7 +676,8 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='read-all')return readAll();
  if(name==='export-csv')return exportCsv();
  if(name==='generate-today'){try{if(CLOUD){await rpc('generate_daily_tasks');await loadCloud()}else demoGenerate();draw();toast('Đã kiểm tra và tạo nhiệm vụ hôm nay nếu chưa tồn tại.')}catch(e){toast(e.message)}return}
- if(name==='enable-notifs'){if(!('Notification' in window)){toast('Trình duyệt này chưa hỗ trợ thông báo.');return}try{const perm=await Notification.requestPermission();toast(perm==='granted'?'Đã cấp quyền thông báo khi app đang hoạt động.':'Bạn chưa cấp quyền thông báo.');draw()}catch(e){toast('Hãy mở app từ màn hình chính iPhone rồi thử lại.')}return}
+ if(name==='enable-notifs')return enablePhonePush();
+ if(name==='disable-notifs')return disablePhonePush();
 }
 document.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(el)action(el,e).catch?.(err=>toast(err.message))});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;draw()};if((e.key==='Enter'||e.key===' ')&&e.target.matches('.task-card')){e.preventDefault();e.target.click()}});
