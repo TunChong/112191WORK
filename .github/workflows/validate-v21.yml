@@ -58,6 +58,7 @@ jobs:
         run: |
           deno check candidate_v21/supabase/functions/manage-staff/index.ts
           deno check candidate_v21/supabase/functions/work-push/index.ts
+          deno check candidate_v21/supabase/functions/manage-tasks/index.ts
       - name: Check required features and prevent secrets in frontend
         run: |
           python3 - <<'PY'
