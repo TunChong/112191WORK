@@ -238,7 +238,7 @@ async function createStaff(e){
  const form=e.target,fd=new FormData(form),code=String(fd.get('code')||'').trim(),name=String(fd.get('fullName')||'').trim(),password=String(fd.get('password')||'');
  if(!/^[0-9]{4,8}$/.test(code)||name.length<2){toast('Kiểm tra mã NV hoặc họ tên.');return}
  const btn=form.querySelector('[type="submit"]');btn.disabled=true;
- try{const response=await staffAdminRequest({action:'create',employee_code:code,full_name:name,...(password?{temporary_password:password}:{})});state.oneTimeCredential={code,password:response.temporary_password};await loadCloud();await loadStaffAdmin();toast('Đã tạo tài khoản. Gửi mật khẩu tạm riêng cho nhân viên.')}
+ try{const response=await staffAdminRequest({action:'create',employee_code:code,full_name:name,...(password?{temporary_password:password}:{})});state.oneTimeCredential={code,password:response.temporary_password};state.staffAccountFilter='active';await loadCloud();await loadStaffAdmin();toast('Đã tạo tài khoản. Gửi mật khẩu tạm riêng cho nhân viên.')}
  catch(e){toast('Không thêm được nhân viên: '+e.message);btn.disabled=false}
 }
 async function changeStaffActive(uid){
@@ -250,7 +250,7 @@ async function changeStaffActive(uid){
 async function deleteStaffForever(uid){
  if(!manager()||!state.staffAccounts)return;
  const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p||p.active)return;
- const code=window.prompt('Xóa VĨNH VIỄN tài khoản '+p.employee_code+'?\\nChỉ tài khoản CHƯA có công việc, thông báo hoặc ảnh mới được xóa.\\nGõ lại mã nhân viên để xác nhận:','');
+ const code=window.prompt('Xóa VĨNH VIỄN tài khoản '+p.employee_code+'?\nChỉ tài khoản CHƯA có công việc, thông báo hoặc ảnh mới được xóa.\nGõ lại mã nhân viên để xác nhận:','');
  if(code===null)return;
  if(code.trim()!==p.employee_code){toast('Mã xác nhận không trùng. Không xóa tài khoản.');return}
  if(!confirm('Đây là thao tác không thể khôi phục. Xác nhận XÓA tài khoản '+p.employee_code+'?'))return;
