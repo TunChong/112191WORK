@@ -5,6 +5,7 @@ const read=(p)=>readFileSync(new URL(p, import.meta.url),'utf8');
 const app=read('./app.js');
 const api=read('./supabase/functions/manage-staff/index.ts');
 const sql=read('./supabase/migrations/20261113_manage_staff.sql');
+const rbac=read('./supabase/migrations/20261114_admin_shift_lead_roles.sql');
 const html=read('./index.html');
 
 // User-facing feature regression assertions.
@@ -71,3 +72,21 @@ assert.match(html,/styles\.css\?v=2\.1/);
 assert.match(html,/app\.js\?v=2\.1/);
 
 console.log('PASS: task category, manager account UI, server-side auth, archive and secret checks');
+
+assert.match(rbac, /profiles_admin_identity_check/);
+assert.match(rbac, /employee_code='112191'/);
+assert.match(rbac, /employee_code='16784'/);
+assert.match(rbac, /is_work_supervisor/);
+assert.match(rbac, /review_assignment/);
+assert.match(rbac, /role='staff',active=false/);
+assert.match(rbac, /NEW\.is_admin IS DISTINCT FROM OLD\.is_admin/);
+assert.match(app, /function admin\(\)/);
+assert.match(app, /function supervisor\(\)/);
+assert.match(app, /function roleName\(p\)/);
+assert.match(app, /name="role" required/);
+assert.match(app, /role=String\(fd\.get\('role'\)/);
+assert.match(api, /viewer_is_admin:actorAdmin/);
+assert.match(api, /if\(role==='manager'&&!actorAdmin\)/);
+assert.match(api, /if\(p\.is_admin===true/);
+assert.match(api, /action==='set_role'/);
+assert.match(api, /is_admin=eq\.false/);
