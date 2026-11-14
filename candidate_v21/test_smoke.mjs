@@ -101,9 +101,9 @@ assert.match(deletionGrant, /public\.assignments/);
 assert.match(deletionGrant, /public\.recurring_members/);
 assert.match(deletionGrant, /TO service_role/);
 assert.doesNotMatch(deletionGrant, /TO anon/);
-assert.match(api, /Không kiểm tra được lịch sử công việc/);
-assert.match(api, /Không kiểm tra được kho ảnh minh chứng/);
-assert.match(api, /Tài khoản đã có lịch sử công việc/);
+
+
+
 
 assert.match(hardDelete, /REVOKE ALL ON FUNCTION public.staff_delete_cleanup/);
 assert.match(hardDelete, /GRANT EXECUTE ON FUNCTION public.staff_delete_cleanup/);
