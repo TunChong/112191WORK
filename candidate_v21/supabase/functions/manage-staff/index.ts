@@ -99,10 +99,23 @@ Deno.serve(async (req:Request)=>{
       ['notifications','recipient_id'],['tasks','created_by'],['recurring_templates','created_by']
     ] as const;
     for(const [table,col] of relationships){
-      const linked=await request('/rest/v1/'+table+'?select=*&'+col+'=eq.'+encodeURIComponent(uid)+'&limit=1');
-      if(Array.isArray(linked)&&linked.length)return reply(req,409,{error:'Tài khoản đã có lịch sử công việc. Hãy giữ ở trạng thái lưu trữ để bảo toàn dữ liệu.'});
+      // Use an exact read-only existence check, never delete related records.
+      let linked:any;
+      try{
+        linked=await request('/rest/v1/'+table+'?select='+col+'&'+col+'=eq.'+encodeURIComponent(uid)+'&limit=1');
+      }catch(e){
+        console.error('delete preflight failed for '+table,e instanceof Error?e.message:'unknown');
+        return reply(req,503,{error:'Không kiểm tra được lịch sử công việc ('+table+'). Tài khoản chưa bị xóa, vui lòng thử lại.'});
+      }
+      if(Array.isArray(linked)&&linked.length)return reply(req,409,{error:'Tài khoản đã có lịch sử công việc ('+table+'). Chỉ có thể lưu trữ để bảo toàn dữ liệu.'});
     }
-    const evidence=await request('/storage/v1/object/list/task-evidence',{method:'POST',body:{prefix:uid,limit:1}});
+    let evidence:any;
+    try{
+      evidence=await request('/storage/v1/object/list/task-evidence',{method:'POST',body:{prefix:uid,limit:1}});
+    }catch(e){
+      console.error('delete evidence preflight failed',e instanceof Error?e.message:'unknown');
+      return reply(req,503,{error:'Không kiểm tra được kho ảnh minh chứng. Tài khoản chưa bị xóa.'});
+    }
     if(Array.isArray(evidence)&&evidence.length)return reply(req,409,{error:'Tài khoản còn ảnh minh chứng. Không thể xóa vĩnh viễn.'});
     try{await request('/auth/v1/admin/users/'+uid,{method:'DELETE'})}
     catch{return reply(req,409,{error:'Không thể xóa: tài khoản còn dữ liệu liên kết. Hãy giữ lưu trữ.'})}
