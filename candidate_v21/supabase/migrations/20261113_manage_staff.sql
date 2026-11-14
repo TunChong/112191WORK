@@ -40,7 +40,13 @@ create trigger trg_track_staff_password_change
 after update of encrypted_password on auth.users
 for each row execute function app_private.track_staff_password_change();
 
--- Defensive guard: clients must never self-promote to manager or self-unarchive.
+-- The source v2.0 SQL was verified against the 2026-10-23 original ZIP.
+-- profiles.role is checked to manager/staff; profiles must_change_password
+-- is an existing boolean; tasks.category and recurring_templates.category
+-- are unrestricted text (no category enum/check migration needed).
+-- Defensive guard: no direct client may alter role, active, or the
+-- first-login flag. Trusted service_role and the original SECURITY DEFINER
+-- complete_initial_password RPC still work.
 -- A trusted service_role API can still manage these fields.
 create or replace function app_private.guard_profile_permissions()
 returns trigger
@@ -52,6 +58,7 @@ begin
      and (
        new.role is distinct from old.role
        or new.active is distinct from old.active
+       or new.must_change_password is distinct from old.must_change_password
      ) then
     raise exception 'Only server administration may change account privileges';
   end if;
@@ -70,7 +77,7 @@ for each row execute function app_private.guard_profile_permissions();
 --    REST requests. Preserve the existing complete_initial_password RPC flow.
 -- 2. All task, assignment, notification and storage RLS policies must deny
 --    inactive profiles; an Auth ban alone does not revoke existing JWTs.
--- 3. Inspect any tasks.category and recurring_templates.category CHECK/ENUM
---    before allowing 'Công Việc Siêu Thị'. Do not drop constraints blindly.
+-- 3. The verified v2.0 baseline has no category CHECK/ENUM. Check production
+--    separately for changes made after deployment; never drop constraints blindly.
 -- 4. Verify the existing managers' IDs against auth.users and profiles.
 -- 5. Test manager vs staff permissions using separate test accounts.
