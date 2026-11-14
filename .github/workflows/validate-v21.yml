@@ -29,7 +29,27 @@ jobs:
       - name: JavaScript syntax check
         run: node --check candidate_v21/app.js && node --check candidate_v21/sw.js && node --check candidate_v21/config.js
       - name: Feature and permission regression checks
-        run: node candidate_v21/test_smoke.mjs
+        run: |
+          node candidate_v21/test_smoke.mjs
+          node candidate_v21/test_sw_push.mjs
+      - name: Verify deployed Push endpoint rejects anonymous access and allows CORS
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --max-time 25 -D /tmp/push-cors.txt -o /dev/null -X OPTIONS \
+            'https://oyjrgbpjrazwvmiomquw.supabase.co/functions/v1/work-push' \
+            -H 'Origin: https://112191work.pages.dev' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: authorization,apikey,content-type'
+          grep -iq 'access-control-allow-origin: https://112191work.pages.dev' /tmp/push-cors.txt
+          status="$(curl -sS --max-time 25 -o /dev/null -w '%{http_code}' \
+            -X POST 'https://oyjrgbpjrazwvmiomquw.supabase.co/functions/v1/work-push' \
+            -H 'content-type: application/json' \
+            --data '{"action":"dispatch_task"}')"
+          if [[ "$status" != "401" && "$status" != "403" ]]; then
+            echo "Unauthenticated Push endpoint response unsafe: $status"
+            exit 1
+          fi
+          echo "Push endpoint rejects unauthorized operations: HTTP $status"
       - name: Set up Deno for privileged backend type checking
         uses: denoland/setup-deno@v2
         with:
