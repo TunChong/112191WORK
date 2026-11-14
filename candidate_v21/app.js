@@ -214,7 +214,7 @@ function accountsView(){
  <p class="fineprint">Mật khẩu tự đặt: 10–72 ký tự, có cả chữ và số, không chứa mã nhân viên. Hệ thống không lưu mật khẩu dạng văn bản; chỉ hiển thị lại một lần khi tạo tài khoản.</p>
  <button class="btn" type="submit" ${!state.staffAccounts?'disabled':''}>${ic('plus')} Thêm nhân viên</button></form></section>
  <section class="panel"><div class="panel-head"><div><h2>Danh sách tài khoản</h2><div class="subtitle">${active} đang làm việc · ${rows.length-active} đã lưu trữ. Không xóa lịch sử công việc.</div></div><button class="btn outline sm" data-action="refresh-accounts">${ic('refresh')} Làm mới</button></div><div class="row" style="gap:8px;margin:12px 0"><button class="btn sm ${tab==='active'?'':'outline'}" data-action="account-filter" data-filter="active">Đang hoạt động (${active})</button><button class="btn sm ${tab==='archived'?'':'outline'}" data-action="account-filter" data-filter="archived">Đã xóa / lưu trữ (${rows.length-active})</button></div><div class="person-list">
- ${shownRows.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name||'Chưa đặt tên')}</strong><small>Mã NV: ${esc(p.employee_code||'—')} · ${p.active?'Hoạt động':'Đã khóa'} · Tạo: ${esc(p.created_at?fmt(p.created_at):'—')}</small><small>Đổi MK gần nhất: ${esc(p.password_changed_at?fmt(p.password_changed_at):'Chưa có nhật ký')} · Đăng nhập: ${esc(p.last_sign_in_at?fmt(p.last_sign_in_at):'—')}</small></div><span class="badge ${p.active?'approved':'todo'}">${p.active?'Hoạt động':'Đã khóa'}</span>${state.staffAccounts?`<button class="btn sm outline" data-action="edit-staff-name" data-id="${esc(p.id)}">Sửa tên</button><button class="btn sm outline" data-action="reset-staff-password" data-id="${esc(p.id)}">Đặt lại MK</button><button class="btn sm ${p.active?'danger':'outline'}" data-action="toggle-staff-account" data-id="${esc(p.id)}">${p.active?'Xóa (lưu trữ)':'Khôi phục'}</button>`:''}</div>`).join('')}</div></section>
+ ${shownRows.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name||'Chưa đặt tên')}</strong><small>Mã NV: ${esc(p.employee_code||'—')} · ${p.active?'Hoạt động':'Đã khóa'} · Tạo: ${esc(p.created_at?fmt(p.created_at):'—')}</small><small>Đổi MK gần nhất: ${esc(p.password_changed_at?fmt(p.password_changed_at):'Chưa có nhật ký')} · Đăng nhập: ${esc(p.last_sign_in_at?fmt(p.last_sign_in_at):'—')}</small></div><span class="badge ${p.active?'approved':'todo'}">${p.active?'Hoạt động':'Đã khóa'}</span>${state.staffAccounts?`<button class="btn sm outline" data-action="edit-staff-name" data-id="${esc(p.id)}">Sửa tên</button><button class="btn sm outline" data-action="reset-staff-password" data-id="${esc(p.id)}">Đặt lại MK</button><button class="btn sm ${p.active?'danger':'outline'}" data-action="toggle-staff-account" data-id="${esc(p.id)}">${p.active?'Xóa (lưu trữ)':'Khôi phục'}</button>${!p.active?`<button class="btn danger sm" data-action="delete-staff" data-id="${esc(p.id)}">Xóa vĩnh viễn</button>`:''}`:''}</div>`).join('')}</div></section>
  <section class="panel"><div class="panel-head"><div><h2>Nhật ký quản trị tài khoản</h2><div class="subtitle">Không ghi mật khẩu, chỉ ghi sự kiện thay đổi</div></div></div><div class="person-list">${events.length?events.map(x=>`<div class="person-row"><div class="info"><strong>${esc(x.action||'Cập nhật')}</strong><small>Mã NV: ${esc(x.employee_code||'—')} · ${esc(x.created_at?fmt(x.created_at):'—')}</small></div></div>`).join(''):'<div class="subtitle">Chưa có sự kiện quản trị.</div>'}</div></section>
  </div>`;
 }
@@ -246,6 +246,15 @@ async function changeStaffActive(uid){
  const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p)return;
  if(!confirm(`${p.active?'Xóa (lưu trữ)':'Khôi phục'} tài khoản ${p.employee_code} - ${p.full_name}? Không xóa dữ liệu hay lịch sử đã giao việc.`))return;
  try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();await loadStaffAdmin();toast('Đã cập nhật trạng thái tài khoản.')}catch(e){toast(e.message)}
+}
+async function deleteStaffForever(uid){
+ if(!manager()||!state.staffAccounts)return;
+ const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p||p.active)return;
+ const code=window.prompt('Xóa VĨNH VIỄN tài khoản '+p.employee_code+'?\\nChỉ tài khoản CHƯA có công việc, thông báo hoặc ảnh mới được xóa.\\nGõ lại mã nhân viên để xác nhận:','');
+ if(code===null)return;
+ if(code.trim()!==p.employee_code){toast('Mã xác nhận không trùng. Không xóa tài khoản.');return}
+ if(!confirm('Đây là thao tác không thể khôi phục. Xác nhận XÓA tài khoản '+p.employee_code+'?'))return;
+ try{await staffAdminRequest({action:'delete',user_id:uid,confirm_code:code.trim()});await loadCloud();await loadStaffAdmin();toast('Đã xóa vĩnh viễn tài khoản chưa có lịch sử.')}catch(e){toast(e.message)}
 }
 async function resetStaffPassword(uid){
  if(!manager()||!state.staffAccounts)return;
@@ -446,6 +455,7 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='refresh-accounts')return loadStaffAdmin();
  if(name==='account-filter'){state.staffAccountFilter=el.dataset.filter==='archived'?'archived':'active';draw();return}
  if(name==='edit-staff-name')return editStaffName(el.dataset.id);
+ if(name==='delete-staff')return deleteStaffForever(el.dataset.id);
  if(name==='toggle-staff-account')return changeStaffActive(el.dataset.id);
  if(name==='reset-staff-password')return resetStaffPassword(el.dataset.id);
  if(name==='copy-temp-password'){if(state.oneTimeCredential)await navigator.clipboard.writeText(state.oneTimeCredential.password);toast('Đã sao chép.');return}
