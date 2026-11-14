@@ -131,12 +131,14 @@ async function loadCloud(){
 async function refresh(){if(state.loading)return;state.loading=true;try{
  const hadLoadedData=!!state.data;const known=new Set((state.data?.notifications||[]).map(n=>n.id));
  if(CLOUD){await loadCloud();
-  if(hadLoadedData && document.visibilityState==='visible'){
+  if(hadLoadedData){
    const fresh=myNotifications().filter(n=>!known.has(n.id));
    const newTask=fresh.find(n=>n.event_key?.startsWith('new:'));
-   if(newTask)showNewWorkPopup(newTask);
+   if(newTask&&document.visibilityState==='visible')showNewWorkPopup(newTask);
+   // Web-link users see native browser notifications while tab is still open,
+   // even in the background when the browser lets the timer run.
    if(!state.pushEnabled&&'Notification' in window&&Notification.permission==='granted'){
-    for(const n of fresh.slice(0,2)){try{new Notification(n.title,{body:n.body,icon:'./icon-192.png'})}catch{}}
+    for(const n of fresh.slice(0,2)){try{new Notification(n.title,{body:n.body,icon:'./icon-192.png',tag:'inapp-'+n.id})}catch{}}
    }
   }
  }else{demoGenerate();demoCheckOverdue()};draw()
@@ -155,8 +157,9 @@ async function pushService(body){
  return cloudRequest('/functions/v1/work-push',{method:'POST',body});
 }
 async function enablePhonePush(){
- if(!canPush()){
-  toast('iPhone: thêm 112191 WORK vào Màn hình chính rồi mở từ biểu tượng. Android: dùng Chrome và cho phép thông báo.');
+ if(!CLOUD)return;
+ if(!('Notification' in window)){
+  toast('Popup vẫn hoạt động khi đang mở link web. iPhone: thêm website vào Màn hình chính để nhận Push khi đóng trang.');
   return;
  }
  if(Notification.permission==='denied'){
@@ -166,7 +169,12 @@ async function enablePhonePush(){
  try{
   // Must run directly from an explicit tap on iOS.
   const permission=await Notification.requestPermission();
-  if(permission!=='granted'){toast('Chưa cấp quyền thông báo trên điện thoại.');draw();return}
+  if(permission!=='granted'){toast('Chưa cấp quyền trình duyệt. Popup vẫn hoạt động khi đang mở web.');draw();return}
+  if(!canPush()){
+   state.pushEnabled=false;draw();
+   toast('Đã bật cảnh báo khi mở link web. Muốn nhận khi đóng trang cần thiết bị hỗ trợ Push hoặc iPhone thêm app vào Màn hình chính.');
+   return;
+  }
   const cfg=await pushService({action:'key'});
   if(!cfg?.public_key)throw new Error('Máy chủ chưa trả về khóa Push');
   const key=base64KeyToBytes(cfg.public_key);
@@ -188,7 +196,7 @@ async function enablePhonePush(){
   pushService({action:'dispatch_pending'}).catch(err=>console.warn('Pending push retry',err));
  }catch(err){
   console.warn('Push subscribe failed',err);
-  toast('Không bật được thông báo đẩy: '+(err?.message||'Kiểm tra quyền thông báo.'));
+  toast('Chưa đăng ký được Push khi đóng web; cảnh báo khi mở web vẫn hoạt động. '+(err?.message||''));
   draw();
  }
 }
@@ -495,7 +503,7 @@ async function submitStaffEdit(e){
 }
 
 function alertsView(){const items=myNotifications();return `<section class="panel">
- ${CLOUD&&!state.pushEnabled?`<div class="notice" style="margin-bottom:12px">${ic('bell')}<div><b>Nhận thông báo khi không mở app</b><p>Bật thông báo đẩy để nhận cảnh báo công việc mới và mức ưu tiên trên điện thoại.</p><button class="btn sm" data-action="enable-notifs">Bật thông báo điện thoại</button></div></div>`:''}<div class="panel-head"><div><h2>Thông báo của bạn</h2><div class="subtitle">Việc mới, trễ hạn, báo cáo và quyết định duyệt</div></div><button class="btn outline sm" data-action="read-all">Đánh dấu đã đọc</button></div>
+ ${CLOUD&&!state.pushEnabled?`<div class="notice" style="margin-bottom:12px">${ic('bell')}<div><b>Thông báo khi đăng nhập bằng link web</b><p>Không cần cài app: khi mở link sẽ có popup ƯU TIÊN CAO / BÌNH THƯỜNG. Hãy bật quyền để nhận thêm thông báo của trình duyệt.</p><button class="btn sm" data-action="enable-notifs">Bật thông báo web / điện thoại</button></div></div>`:''}<div class="panel-head"><div><h2>Thông báo của bạn</h2><div class="subtitle">Việc mới, trễ hạn, báo cáo và quyết định duyệt</div></div><button class="btn outline sm" data-action="read-all">Đánh dấu đã đọc</button></div>
  <div>${items.length?items.map(n=>`<div class="notification ${n.read_at?'read':''}" data-action="read-one" data-id="${esc(n.id)}" data-task="${esc(n.task_id||'')}"><span class="bulb">${ic('bell')}</span><div style="flex:1"><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p><time>${fmt(n.created_at)}</time></div>${!n.read_at?'<span style="width:7px;height:7px;background:var(--blue);border-radius:50%"></span>':''}</div>`).join(''):empty('Không có thông báo','Khi có công việc hoặc thay đổi kết quả, thông báo sẽ hiển thị ở đây.','bell')}</div></section>`}
 function moreView(){
  const items=manager()?[
@@ -505,10 +513,10 @@ function moreView(){
 }
 
 function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${roleName(state.user)} · ${CLOUD?'Dữ liệu trực tuyến':'Dùng thử trên thiết bị'}</div></div></div>
- <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v2.4 · Đồng bộ</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${state.pushEnabled?'Đã bật thông báo đẩy':Notification.permission==='granted'?'Đã cho phép, chưa đăng ký thiết bị':Notification.permission==='denied'?'Đã chặn quyền thông báo':'Chưa bật'}`:'Trình duyệt chưa hỗ trợ Notification API'}</div></div>
- <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button>${state.pushEnabled?`<button class="btn outline" data-action="disable-notifs">${ic('bell')} Tắt thông báo đẩy trên thiết bị</button>`:`<button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo trên điện thoại</button>`}<button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
+ <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v2.4 · Đồng bộ</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${state.pushEnabled?'Đã bật Push kể cả khi đóng web':Notification.permission==='granted'?'Đã bật thông báo khi link web còn mở':Notification.permission==='denied'?'Thông báo trình duyệt bị chặn; popup trong web vẫn bật':'Popup trong web luôn bật; chưa cấp quyền trình duyệt'}`:'Popup khi mở link web luôn bật. iPhone cần thêm Màn hình chính để nhận khi đóng web'}</div></div>
+ <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button>${state.pushEnabled?`<button class="btn outline" data-action="disable-notifs">${ic('bell')} Tắt thông báo đẩy trên thiết bị</button>`:`<button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo web / điện thoại</button>`}<button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
  ${!CLOUD?`<hr class="divider"/><div class="mini-label" style="margin-bottom:9px">Đổi tài khoản dùng thử</div><div class="row"><button class="btn outline sm" data-action="switch-demo" data-user="mgr">Quản lý</button><select id="demoStaffSelect" aria-label="Chọn nhân viên dùng thử" style="max-width:230px"><option value="">Chọn nhân viên...</option>${users().map(p=>`<option value="${esc(p.id)}" ${p.id===state.user.id?'selected':''}>${esc(personLabel(p))}</option>`).join('')}</select></div><p class="fineprint">Chuyển vai trò để thử luồng công việc trên cùng một thiết bị. Đây không phải đăng nhập bảo mật.</p><button class="btn outline sm" data-action="reset-demo">Đặt lại dữ liệu dùng thử</button>`:''}
- <hr class="divider"/><p class="fineprint">${CLOUD?'Tài khoản dùng chung được kiểm soát bằng Supabase Auth và Row Level Security.':'Chế độ dùng thử lưu vào localStorage; ảnh và dữ liệu không tự sao lưu hoặc đồng bộ.'} iPhone: cần thêm website vào Màn hình chính, mở app từ biểu tượng rồi bấm Bật thông báo. Android: cho phép thông báo trên trình duyệt/PWA. Thông báo điện thoại có thể bị trì hoãn bởi chế độ Tiết kiệm pin hoặc Không làm phiền.</p></section>`}
+ <hr class="divider"/><p class="fineprint">${CLOUD?'Tài khoản dùng chung được kiểm soát bằng Supabase Auth và Row Level Security.':'Chế độ dùng thử lưu vào localStorage; ảnh và dữ liệu không tự sao lưu hoặc đồng bộ.'} Đăng nhập bằng link web vẫn nhận popup khi trang đang mở. Chrome/Android và trình duyệt có Web Push có thể nhận khi đóng tab nếu đã cấp quyền. Trên iPhone muốn nhận khi đóng Safari phải thêm website vào Màn hình chính rồi cấp quyền. Chế độ Không làm phiền hoặc tiết kiệm pin có thể làm chậm thông báo.</p></section>`}
 function pendingView(){return `<section class="panel"><div class="notice note-amber">${ic('lock')}<div>Tài khoản <b>${esc(state.user.full_name)}</b> đang chờ quản lý kích hoạt. Đăng nhập với tài khoản quản lý và vào mục Nhân viên để cấp quyền.</div></div><button class="btn outline" style="margin-top:16px" data-action="logout">Đăng xuất</button></section>`}
 function photoLink(path){if(!path)return '';if(path.startsWith('data:'))return path;return state.signed[path]||''}
 function photoTiles(paths){return paths?.length?`<div class="photo-grid" style="margin-top:12px">${paths.map(path=>photoLink(path)?`<a href="${esc(photoLink(path))}" target="_blank" rel="noopener noreferrer"><img alt="Ảnh minh chứng công việc" loading="lazy" src="${esc(photoLink(path))}"/></a>`:`<div style="border:1px dashed var(--line);border-radius:9px;aspect-ratio:1;display:grid;place-items:center;color:var(--muted);font-size:10px">${ic('image')} Đang tải ảnh</div>`).join('')}</div>`:''}
@@ -759,7 +767,8 @@ async function boot(){
  }
  let managerLastRefresh=0;
  setInterval(()=>{
-  if(!state.user||document.visibilityState==='hidden')return;
+  if(!state.user)return;
+  if(document.visibilityState==='hidden'&&state.pushEnabled)return;
   if(CLOUD){
    // Foreground staff see new work popups without requiring notification permission.
    if(!supervisor()||Date.now()-managerLastRefresh>60000){
