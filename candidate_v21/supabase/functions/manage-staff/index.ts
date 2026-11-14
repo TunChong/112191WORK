@@ -26,8 +26,8 @@ Deno.serve(async (req:Request)=>{
   if(!token.startsWith('Bearer '))return reply(req,401,{error:'Cần đăng nhập'});
   const signed=await request('/auth/v1/user',{userToken:token.slice(7)});
   if(!signed?.id)return reply(req,401,{error:'Phiên đăng nhập không hợp lệ'});
-  const managerProfiles=await request('/rest/v1/profiles?select=role,active&id=eq.'+encodeURIComponent(signed.id)+'&limit=1');
-  if(managerProfiles[0]?.role!=='manager'||managerProfiles[0]?.active!==true)return reply(req,403,{error:'Chỉ quản lý được phép'});
+  const managerProfiles=await request('/rest/v1/profiles?select=role,active,must_change_password&id=eq.'+encodeURIComponent(signed.id)+'&limit=1');
+  if(managerProfiles[0]?.role!=='manager'||managerProfiles[0]?.active!==true||managerProfiles[0]?.must_change_password!==false)return reply(req,403,{error:'Chỉ quản lý được phép'});
   const data=await req.json() as Obj,action=String(data.action||'');
   if(action==='list'){
    const accounts=await request('/rest/v1/profiles?select=id,employee_code,full_name,role,active,created_at,must_change_password,password_changed_at&role=eq.staff&order=full_name.asc&limit=500');
@@ -49,7 +49,7 @@ Deno.serve(async (req:Request)=>{
    const dup=await request('/rest/v1/profiles?select=id&employee_code=eq.'+encodeURIComponent(code)+'&limit=1');
    if(dup.length)return reply(req,409,{error:'Mã nhân viên đã tồn tại'});
    const pw=newPassword();
-   const created=await request('/auth/v1/admin/users',{method:'POST',body:{email:code+'@112191work.pages.dev',password:pw,email_confirm:true}});
+   const created=await request('/auth/v1/admin/users',{method:'POST',body:{email:code+'@112191work.pages.dev',password:pw,email_confirm:true,user_metadata:{employee_code:code,full_name:name}}});
    const uid=created?.user?.id||created?.id;
    if(!validId(uid))throw new Error('Could not create auth identity');
    try{await request('/rest/v1/profiles?on_conflict=id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{id:uid,employee_code:code,full_name:name,role:'staff',active:true,must_change_password:true}})}
@@ -61,7 +61,7 @@ Deno.serve(async (req:Request)=>{
   if(action==='set_active'||action==='reset_password'){
    if(!validId(data.user_id))return reply(req,400,{error:'ID không hợp lệ'});
    const uid=data.user_id;
-   const rows=await request('/rest/v1/profiles?select=id,employee_code,role,active&id=eq.'+encodeURIComponent(uid)+'&limit=1'),p=rows[0];
+   const rows=await request('/rest/v1/profiles?select=id,employee_code,role,active,must_change_password&id=eq.'+encodeURIComponent(uid)+'&limit=1'),p=rows[0];
    if(!p||p.role!=='staff')return reply(req,404,{error:'Không tìm thấy tài khoản nhân viên'});
    const code=String(p.employee_code||'');
    if(action==='set_active'){
@@ -79,8 +79,15 @@ Deno.serve(async (req:Request)=>{
     return reply(req,200,{ok:true});
    }
    const pw=newPassword();
+   // Block work access while the employee changes their one-time password.
+   // If the Auth update fails, restore the previous first-login flag.
    await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{method:'PATCH',prefer:'return=minimal',body:{must_change_password:true}});
-   await request('/auth/v1/admin/users/'+uid,{method:'PUT',body:{password:pw}});
+   try{
+     await request('/auth/v1/admin/users/'+uid,{method:'PUT',body:{password:pw}});
+   }catch(e){
+     try{await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{method:'PATCH',prefer:'return=minimal',body:{must_change_password:p.must_change_password===true}})}catch{}
+     throw e;
+   }
    let auditWarning=false;
    try{await audit(signed.id,uid,code,'password_reset')}catch{auditWarning=true;console.error('staff audit insert failed after password reset')}
    return reply(req,200,{ok:true,temporary_password:pw,audit_warning:auditWarning});
