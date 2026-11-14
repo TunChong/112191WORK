@@ -138,6 +138,9 @@ async function refresh(){if(state.loading)return;state.loading=true;try{
  }else{demoGenerate();demoCheckOverdue()};draw()
  }catch(e){toast('Không tải được dữ liệu: '+e.message);draw()}finally{state.loading=false}}
 function manager(){return state.user?.role==='manager'}
+function admin(){return manager()&&state.user?.is_admin===true}
+function supervisor(){return manager()||state.user?.role==='shift_lead'}
+function roleName(p){return p?.is_admin?'Admin':p?.role==='manager'?'Quản Lý':p?.role==='shift_lead'?'Trưởng Ca':'Nhân Viên'}
 function users(){return state.data?.profiles.filter(x=>x.role==='staff'&&x.active)||[]}
 function getTask(taskId){return state.data.tasks.find(t=>t.id===taskId)}
 function taskAssignments(taskId){return state.data.assignments.filter(a=>a.task_id===taskId)}
@@ -145,7 +148,7 @@ function findUser(uid){return state.data.profiles.find(p=>p.id===uid)||{full_nam
 function personLabel(p){return p.employee_code?`${p.employee_code} · ${p.full_name}`:p.full_name}
 function myNotifications(){return (state.data?.notifications||[]).filter(n=>n.recipient_id===state.user?.id)}
 function statusBadge(st){return `<span class="badge ${esc(st)}">${NAMES[st]||esc(st)}</span>`}
-function myRows(){const assigns=manager()?state.data.assignments:state.data.assignments.filter(a=>a.staff_id===state.user.id);return assigns.map(a=>({a,t:getTask(a.task_id)})).filter(row=>row.t).sort((x,y)=>new Date(x.t.due_at)-new Date(y.t.due_at))}
+function myRows(){const assigns=supervisor()?state.data.assignments:state.data.assignments.filter(a=>a.staff_id===state.user.id);return assigns.map(a=>({a,t:getTask(a.task_id)})).filter(row=>row.t).sort((x,y)=>new Date(x.t.due_at)-new Date(y.t.due_at))}
 function stats(){const rows=myRows();return {total:rows.length,approved:rows.filter(x=>x.a.status==='approved').length,submitted:rows.filter(x=>x.a.status==='submitted').length,overdue:rows.filter(x=>isLate(x.a,x.t)).length,todo:rows.filter(x=>x.a.status==='todo'||x.a.status==='rejected').length}}
 function peopleLine(taskId){let a=taskAssignments(taskId);return `${a.length} người được giao · ${a.filter(x=>x.status==='approved').length} đã duyệt`}
 function taskCard(t,a=null){const ass=a||taskAssignments(t.id)[0]||{status:'todo'};const st=a?assignStatus(a,t):taskAssignments(t.id).some(x=>x.status==='submitted')?'submitted':taskAssignments(t.id).every(x=>x.status==='approved')?'approved':taskAssignments(t.id).some(x=>isLate(x,t))?'overdue':'todo';
@@ -154,33 +157,35 @@ function taskCard(t,a=null){const ass=a||taskAssignments(t.id)[0]||{status:'todo
  <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}</div></div>${statusBadge(st)}</article>`}
 function navEntries(){return manager()?[
  ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['accounts','Quản lý tài khoản','shield'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
+ supervisor()?[
+ ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['team','Nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
  [['home','Tổng quan','home'],['tasks','Việc của tôi','list'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
-function bottomItems(){return manager()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
+function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
-function headerTitle(){return ({home:'Tổng quan',tasks:manager()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
+function headerTitle(){return ({home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
 function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · 1 SIÊU THỊ<br>112191 WORK · Phiên bản 2.1</div></aside><main class="content">
- <div class="topbar"><div><div class="eyebrow">112191 WORK / ${manager()?'Quản lý':'Nhân viên'}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
+ <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${content}<div class="footbar">112191 WORK · Built for store teams</div></main>
  <nav class="bottomnav">${bottomItems().map(([key,label,icon])=>`<button class="${state.screen===key?'on':''} ${key==='create'?'primary-nav':''}" data-action="navigate" data-screen="${key}">${ic(icon)}<span>${label}</span></button>`).join('')}</nav></div>${state.modal?modalHtml():''}`}
 function displayStat(n,label,icon,extra=''){return `<div class="stat-card"><div class="stat-icon">${ic(icon)}</div><div class="stat-number">${n}</div><div class="stat-label">${label}</div>${extra?`<div class="stat-desc">${extra}</div>`:''}</div>`}
 function empty(title,desc,icon='clipboard'){return `<div class="empty">${ic(icon)}<h3>${esc(title)}</h3><p>${esc(desc)}</p></div>`}
-function homeView(){const s=stats();let pending=myRows().filter(x=>manager()?x.a.status==='submitted':x.a.status!=='approved').slice(0,4);
+function homeView(){const s=stats();let pending=myRows().filter(x=>supervisor()?x.a.status==='submitted':x.a.status!=='approved').slice(0,4);
  const percent=s.total?Math.round(s.approved/s.total*100):0;
- return `<div class="stack"><div class="hero"><div><div style="font-size:11px;color:#b4d3ff">CHÀO MỪNG TRỞ LẠI</div><h2>${esc(state.user.full_name)}</h2><p>${manager()?'Giao việc tập trung, kiểm duyệt nhanh và kiểm soát tiến độ từng nhân viên.':'Kiểm tra nhiệm vụ hôm nay, báo cáo bằng hình ảnh và theo dõi kết quả duyệt.'}</p></div>${manager()?`<button class="btn white" data-action="navigate" data-screen="create">${ic('plus')} Giao việc</button>`:''}</div>
+ return `<div class="stack"><div class="hero"><div><div style="font-size:11px;color:#b4d3ff">CHÀO MỪNG TRỞ LẠI</div><h2>${esc(state.user.full_name)}</h2><p>${supervisor()?'Giao việc tập trung, duyệt phiếu và theo dõi tiến độ nhân viên.':'Kiểm tra nhiệm vụ hôm nay, báo cáo bằng hình ảnh và theo dõi kết quả duyệt.'}</p></div>${supervisor()?`<button class="btn white" data-action="navigate" data-screen="create">${ic('plus')} Giao việc</button>`:''}</div>
  <div class="stats">${displayStat(s.total,'Tổng lượt giao','clipboard')}${displayStat(s.approved,'Đã duyệt','checkcircle')}${displayStat(s.submitted,'Chờ duyệt','camera')}${displayStat(s.overdue,'Quá hạn','warning')}</div>
- <div class="split"><section class="panel"><div class="panel-head"><div><h2>${manager()?'Cần quản lý xử lý':'Công việc cần xử lý'}</h2><div class="subtitle">${manager()?'Danh sách báo cáo đang chờ duyệt':'Những nhiệm vụ chưa được duyệt'}</div></div><button class="btn sm outline" data-action="navigate" data-screen="${manager()?'approvals':'tasks'}">Xem tất cả ${ic('chevron')}</button></div>
+ <div class="split"><section class="panel"><div class="panel-head"><div><h2>${supervisor()?'Báo cáo chờ duyệt':'Công việc cần xử lý'}</h2><div class="subtitle">${supervisor()?'Danh sách báo cáo đang chờ duyệt':'Những nhiệm vụ chưa được duyệt'}</div></div><button class="btn sm outline" data-action="navigate" data-screen="${manager()?'approvals':'tasks'}">Xem tất cả ${ic('chevron')}</button></div>
  <div class="task-list">${pending.length?pending.map(x=>taskCard(x.t,x.a)).join(''):empty('Không có việc tồn','Các công việc đang được xử lý đúng tiến độ.','checkcircle')}</div></section>
  <section class="panel"><div class="panel-head"><div><h2>Tiến độ hoàn thành</h2><div class="subtitle">Dựa trên số lượt giao đã được duyệt</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;margin:17px 0"><div><div style="font-size:36px;font-weight:850;letter-spacing:-1px">${percent}%</div><div class="subtitle">${s.approved}/${s.total} lượt công việc</div></div><div style="width:85px;height:85px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#1456dc ${percent}%, #edf2fb 0);"><div style="border-radius:50%;background:#fff;width:63px;height:63px;display:grid;place-items:center;color:#1456dc">${ic('chart')}</div></div></div><div class="progress"><span style="width:${percent}%"></span></div><div class="subtitle" style="margin-top:14px">Chỉ tính hoàn thành sau khi quản lý duyệt đạt.</div></section></div>
  </div>`}
-function tasksView(){const q=state.search.toLowerCase().trim();let taskList=manager()?state.data.tasks.map(t=>({t})):myRows();
+function tasksView(){const q=state.search.toLowerCase().trim();let taskList=supervisor()?state.data.tasks.map(t=>({t})):myRows();
  if(q)taskList=taskList.filter(({t,a})=>`${t.title} ${t.category||''} ${a?personLabel(findUser(a.staff_id)):''}`.toLowerCase().includes(q));
  if(state.filter!=='all')taskList=taskList.filter(({t,a})=>{const aa=a||taskAssignments(t.id);return (Array.isArray(aa)?aa:[aa]).some(x=>assignStatus(x,t)===state.filter)});
  taskList.sort((x,y)=>new Date(x.t.due_at)-new Date(y.t.due_at));
- return `<div class="panel"><div class="toolbar"><div class="filter-search">${ic('search')}<input id="taskSearch" placeholder="Tìm tên công việc..." value="${esc(state.search)}" aria-label="Tìm công việc" /></div>${manager()?`<button class="btn" data-action="navigate" data-screen="create">${ic('plus')} Giao việc</button>`:''}</div>
+ return `<div class="panel"><div class="toolbar"><div class="filter-search">${ic('search')}<input id="taskSearch" placeholder="Tìm tên công việc..." value="${esc(state.search)}" aria-label="Tìm công việc" /></div>${supervisor()?`<button class="btn" data-action="navigate" data-screen="create">${ic('plus')} Giao việc</button>`:''}</div>
  <div class="toolbar"><div class="tabs">${[['all','Tất cả'],['todo','Chưa làm'],['submitted','Chờ duyệt'],['approved','Đã duyệt'],['overdue','Quá hạn']].map(([val,label])=>`<button class="tab ${state.filter===val?'on':''}" data-action="filter" data-status="${val}">${label}</button>`).join('')}</div><div class="selected-counter">${taskList.length} công việc</div></div>
  <div class="task-list">${taskList.length?taskList.map(({t,a})=>taskCard(t,a)).join(''):empty('Không tìm thấy công việc','Thử tìm từ khóa khác hoặc chuyển bộ lọc.','search')}</div></div>`}
-function createView(){if(!manager())return empty('Không có quyền','Chỉ quản lý được tạo nhiệm vụ.','lock');const people=users().filter(p=>p.active);
+function createView(){if(!supervisor())return empty('Không có quyền','Chỉ trưởng ca hoặc quản lý được giao nhiệm vụ.','lock');const people=users().filter(p=>p.active);
  return `<section class="panel"><div class="panel-head"><div><h2>Thông tin nhiệm vụ</h2><div class="subtitle">Lựa chọn nhân viên và thời hạn hoàn thành</div></div></div>
  <form id="createTaskForm" class="stack" novalidate><div id="createTaskError" class="form-error" role="alert" hidden></div><div class="form-grid"><div class="form-field span-all"><label for="taskTitle">Tên công việc *</label><input id="taskTitle" name="title" required maxlength="180" placeholder="Ví dụ: Kiểm tra trưng bày quầy tivi" /></div>
  <div class="form-field span-all"><label for="taskDescription">Nội dung chi tiết</label><textarea id="taskDescription" name="description" maxlength="2000" placeholder="Yêu cầu thực hiện, tiêu chuẩn kiểm tra, hình ảnh cần chụp..."></textarea></div>
@@ -189,10 +194,10 @@ function createView(){if(!manager())return empty('Không có quyền','Chỉ qu�
  <div class="form-field span-all"><label for="deadline">Hạn hoàn thành *</label><input id="deadline" type="datetime-local" name="due" value="${toDateInput(addHours(3))}" required /></div></div>
  <div><div class="row space" style="margin-bottom:10px"><span class="mini-label">Giao cho nhân viên *</span><button type="button" class="btn outline sm" data-action="toggle-all-assignees">Chọn / bỏ chọn tất cả</button></div>
  <div class="employee-grid">${people.map(p=>`<label class="selection"><input type="checkbox" class="assignee" value="${esc(p.id)}" /><span class="main"><b>${esc(p.full_name)}</b><small>Mã NV: ${esc(p.employee_code||'Chưa có')}</small></span></label>`).join('')}</div></div>
- <label class="selection" style="background:#f2f7ff"><input type="checkbox" name="daily" id="dailyToggle" /><span class="main"><b>${ic('repeat')} Lặp lại hằng ngày</b><small>Tự tạo một lượt nhiệm vụ mới mỗi ngày</small></span></label>
- <div class="notice">${ic('camera')}<div>Nhân viên phải gửi ít nhất <b>1 ảnh</b> minh chứng. Chỉ quản lý mới có quyền duyệt đạt. Nếu bật lặp hằng ngày, lịch bắt đầu từ ngày trong ô hạn hoàn thành.</div></div>
+ ${manager()?`<label class="selection" style="background:#f2f7ff"><input type="checkbox" name="daily" id="dailyToggle" /><span class="main"><b>${ic('repeat')} Lặp lại hằng ngày</b><small>Tự tạo một lượt nhiệm vụ mới mỗi ngày</small></span></label>`:''}
+ <div class="notice">${ic('camera')}<div>Nhân viên phải gửi ít nhất <b>1 ảnh</b> minh chứng. Chỉ Trưởng ca hoặc Quản lý được duyệt đạt. Quản lý có thể bật lịch lặp hằng ngày.</div></div>
  <button type="submit" class="btn full" id="taskSubmit">${ic('plus')} Tạo và giao công việc</button></form></section>`}
-function approvalsView(){if(!manager())return empty('Không có quyền','Chỉ quản lý được duyệt.','lock');const rows=myRows().filter(x=>x.a.status==='submitted');return `<section class="panel"><div class="panel-head"><div><h2>Báo cáo chờ duyệt</h2><div class="subtitle">Xem ảnh và đánh giá từng nhân viên</div></div><span class="badge submitted">${rows.length} chờ xử lý</span></div><div class="task-list">${rows.length?rows.map(({t,a})=>taskCard(t,a)).join(''):empty('Đã xử lý hết','Hiện không có báo cáo nào đang chờ duyệt.','checkcircle')}</div></section>`}
+function approvalsView(){if(!supervisor())return empty('Không có quyền','Chỉ trưởng ca hoặc quản lý được duyệt.','lock');const rows=myRows().filter(x=>x.a.status==='submitted');return `<section class="panel"><div class="panel-head"><div><h2>Báo cáo chờ duyệt</h2><div class="subtitle">Xem ảnh và đánh giá từng nhân viên</div></div><span class="badge submitted">${rows.length} chờ xử lý</span></div><div class="task-list">${rows.length?rows.map(({t,a})=>taskCard(t,a)).join(''):empty('Đã xử lý hết','Hiện không có báo cáo nào đang chờ duyệt.','checkcircle')}</div></section>`}
 function recurringView(){if(!manager())return empty('Không có quyền','Chỉ quản lý quản lý lịch lặp.','lock');return `<div class="stack"><section class="notice">${ic('repeat')}<div>Nhiệm vụ lặp tạo một lượt mới mỗi ngày, lưu lịch sử độc lập. Khi dùng chung trên Supabase, cần bật lịch Cron bằng file SQL kèm theo để chạy ngay cả khi không ai mở app.</div></section><div class="panel"><div class="panel-head"><div><h2>Danh sách công việc định kỳ</h2><div class="subtitle">Các lịch hằng ngày đã tạo từ mục Giao việc</div></div><button class="btn outline sm" data-action="generate-today">${ic('refresh')} Tạo việc hôm nay</button></div>
  ${state.data.recurring_templates.length?state.data.recurring_templates.map(r=>`<div class="assignment"><div class="row space"><strong style="font-size:13px">${esc(r.title)}</strong><span class="badge ${r.active?'approved':'todo'}">${r.active?'Đang bật':'Đã tắt'}</span></div><div class="meta" style="margin:9px 0">${ic('clock')} Hằng ngày · ${esc(r.due_time?.slice(0,5))} · ${state.data.recurring_members.filter(m=>m.template_id===r.id).length} nhân viên</div><button class="btn sm outline" data-action="toggle-recurrence" data-id="${esc(r.id)}">${r.active?'Tạm dừng':'Bật lại'}</button></div>`).join(''):empty('Chưa có lịch định kỳ','Vào Giao việc và chọn “Lặp lại hằng ngày”.','repeat')}</div></div>`}
 function statsView(){if(!manager())return empty('Không có quyền','Chỉ quản lý xem thống kê tổng.','lock');const data=users().map(p=>{const rows=myRows().filter(x=>x.a.staff_id===p.id);const done=rows.filter(x=>x.a.status==='approved').length;return {p,done,total:rows.length,pct:rows.length?Math.round(done/rows.length*100):0}}).sort((a,b)=>b.pct-a.pct);
@@ -303,13 +308,13 @@ function accountView(){return `<section class="panel"><div class="row" style="ma
 function pendingView(){return `<section class="panel"><div class="notice note-amber">${ic('lock')}<div>Tài khoản <b>${esc(state.user.full_name)}</b> đang chờ quản lý kích hoạt. Đăng nhập với tài khoản quản lý và vào mục Nhân viên để cấp quyền.</div></div><button class="btn outline" style="margin-top:16px" data-action="logout">Đăng xuất</button></section>`}
 function photoLink(path){if(!path)return '';if(path.startsWith('data:'))return path;return state.signed[path]||''}
 function photoTiles(paths){return paths?.length?`<div class="photo-grid" style="margin-top:12px">${paths.map(path=>photoLink(path)?`<a href="${esc(photoLink(path))}" target="_blank" rel="noopener noreferrer"><img alt="Ảnh minh chứng công việc" loading="lazy" src="${esc(photoLink(path))}"/></a>`:`<div style="border:1px dashed var(--line);border-radius:9px;aspect-ratio:1;display:grid;place-items:center;color:var(--muted);font-size:10px">${ic('image')} Đang tải ảnh</div>`).join('')}</div>`:''}
-function detailModal(t){const rows=taskAssignments(t.id).filter(a=>manager()||a.staff_id===state.user.id);
+function detailModal(t){const rows=taskAssignments(t.id).filter(a=>supervisor()||a.staff_id===state.user.id);
  return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true" aria-label="Chi tiết công việc">
  <div class="modal-head"><div><div class="eyebrow">CHI TIẾT CÔNG VIỆC</div><h2>${esc(t.title)}</h2></div><button class="icononly" data-action="close-modal" aria-label="Đóng">${ic('close')}</button></div>
  <div class="chips">${t.priority==='high'?'<span class="chip" style="color:#ac7218;background:#fff6df">Ưu tiên cao</span>':''}<span class="chip">${esc(t.category||'Khác')}</span>${t.recurring_template_id?'<span class="chip">Hằng ngày</span>':''}</div>
  <div class="detail-item"><div class="k">Hạn hoàn thành</div><div class="v">${fmt(t.due_at)}</div></div><div class="detail-item"><div class="k">Yêu cầu thực hiện</div><div class="v">${esc(t.description||'Hoàn thành công việc theo hướng dẫn và chụp ảnh minh chứng.')}</div></div>
- <div style="margin-top:16px"><div class="section-title">${manager()?'Báo cáo của nhân viên':'Báo cáo của bạn'} (${rows.length})</div>${rows.map(a=>{
- const canSend=!manager()&&['todo','rejected'].includes(a.status); const canReview=manager()&&a.status==='submitted';const st=assignStatus(a,t);
+ <div style="margin-top:16px"><div class="section-title">${supervisor()?'Báo cáo của nhân viên':'Báo cáo của bạn'} (${rows.length})</div>${rows.map(a=>{
+ const canSend=!supervisor()&&['todo','rejected'].includes(a.status); const canReview=supervisor()&&a.status==='submitted';const st=assignStatus(a,t);
  return `<div class="assignment"><div class="head"><div class="row"><div class="initial">${esc(findUser(a.staff_id).full_name[0])}</div><strong>${esc(personLabel(findUser(a.staff_id)))}</strong></div>${statusBadge(st)}</div>
  ${a.report_notes?`<div class="detail-item"><div class="k">Ghi chú báo cáo</div><div class="v">${esc(a.report_notes)}</div></div>`:''}
  ${a.submitted_at?`<div class="meta" style="margin-top:10px">${ic('clock')} Gửi lúc ${fmt(a.submitted_at)}</div>`:''}
@@ -344,7 +349,7 @@ function draw(){if(!CLOUD){root.innerHTML=configRequiredView();return}if(!state.
  if(CLOUD&&!state.user.active){root.innerHTML=appShell(pendingView());return}
  if(state.user.must_change_password || state.screen==='change-password'){root.innerHTML=changePasswordView(!!state.user.must_change_password);return}
  const views={home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
- if(!manager()&&!['home','tasks','alerts','account'].includes(state.screen))state.screen='home';root.innerHTML=appShell((views[state.screen]||homeView)());
+ if(!navEntries().some(([key])=>key===state.screen)&&state.screen!=='change-password')state.screen='home';root.innerHTML=appShell((views[state.screen]||homeView)());
 }
 async function loginDemo(uid){if(!state.data){state.data=migrateDemoRoster(JSON.parse(localStorage.getItem(KEY)||'null'))||initDemo()}state.user=state.data.profiles.find(p=>p.id===uid)||state.data.profiles[0];localStorage.setItem('work112191_user',state.user.id);state.screen='home';demoGenerate();demoCheckOverdue();persist();draw()}
 function normalizeLogin(raw,role){let v=String(raw||'').trim().toUpperCase();if(role==='manager'){if(/^[0-9]{4,8}$/.test(v))v+='QUANLY';else if(!/^[0-9]{4,8}QUANLY$/.test(v))throw new Error('Nhập mã quản lý, ví dụ 112191.')}if(role==='staff' && !/^[0-9]{4,8}$/.test(v))throw new Error('Nhập mã nhân viên gồm các chữ số, ví dụ 111566.');return v}
@@ -360,7 +365,7 @@ function showCreateError(form,message,selector){
  const field=form.querySelector('#createTaskError');if(field){field.hidden=false;field.textContent=message;field.scrollIntoView?.({behavior:'smooth',block:'nearest'})}
  const control=selector?form.querySelector(selector):null;control?.focus?.();toast(message);
 }
-async function createTask(ev){ev.preventDefault();if(!manager())return;const f=ev.target;const fd=new FormData(f);
+async function createTask(ev){ev.preventDefault();if(!supervisor())return;const f=ev.target;const fd=new FormData(f);
  const title=String(fd.get('title')||'').trim();
  const staff=[...f.querySelectorAll('.assignee:checked')].map(x=>x.value);
  const dateRaw=String(fd.get('due')||'');const due=new Date(dateRaw);
@@ -369,7 +374,7 @@ async function createTask(ev){ev.preventDefault();if(!manager())return;const f=e
  if(!dateRaw || !Number.isFinite(due.getTime())){showCreateError(f,'Vui lòng chọn HẠN HOÀN THÀNH hợp lệ.','[name="due"]');return}
  if(!staff.length){showCreateError(f,'Vui lòng CHỌN ÍT NHẤT 1 NHÂN VIÊN để giao việc.','.assignee');return}
  const error=f.querySelector('#createTaskError');if(error){error.hidden=true;error.textContent=''}
- const description=String(fd.get('description')||'').trim(),category=fd.get('category'),priority=fd.get('priority'),daily=fd.get('daily')==='on';
+ const description=String(fd.get('description')||'').trim(),category=fd.get('category'),priority=fd.get('priority'),daily=manager()&&fd.get('daily')==='on';
  const button=f.querySelector('[type="submit"]');button.disabled=true;button.textContent='Đang tạo công việc...';
  try{
   if(CLOUD){
@@ -415,14 +420,14 @@ async function sendReport(ev){ev.preventDefault();if(manager())return;const form
   state.modal={type:'detail',taskId:a.task_id};draw();await signEvidence();toast('Đã gửi báo cáo. Chờ quản lý duyệt.');
  }catch(e){toast('Không gửi được báo cáo: '+e.message);button.disabled=false;button.textContent='Gửi báo cáo chờ duyệt'}
 }
-async function review(aid,isApproved,feedback=''){if(!manager())return;const a=state.data.assignments.find(x=>x.id===aid);if(!a||a.status!=='submitted')return;
+async function review(aid,isApproved,feedback=''){if(!supervisor())return;const a=state.data.assignments.find(x=>x.id===aid);if(!a||a.status!=='submitted')return;
  try{if(CLOUD){await rpc('review_assignment',{p_assignment_id:aid,p_approved:isApproved,p_feedback:feedback});await loadCloud();}
  else{Object.assign(a,{status:isApproved?'approved':'rejected',review_feedback:feedback||null,reviewed_at:nowDate()});notify(a.staff_id,isApproved?'Đã duyệt hoàn thành':'Yêu cầu thực hiện lại',getTask(a.task_id).title+(feedback?' · '+feedback:''),a.task_id,a.id);persist();}
  state.modal={type:'detail',taskId:a.task_id};draw();await signEvidence();toast(isApproved?'Đã duyệt hoàn thành.':'Đã trả công việc để làm lại.');
  }catch(e){toast('Không duyệt được: '+e.message)}
 }
 async function signEvidence(){if(!CLOUD||state.modal?.type!=='detail')return;
- const as=taskAssignments(state.modal.taskId).filter(a=>manager()||a.staff_id===state.user.id);const paths=[...new Set(as.flatMap(a=>a.photo_paths||[]))].filter(p=>!state.signed[p]||state.signedUntil[p]<Date.now());if(!paths.length)return;
+ const as=taskAssignments(state.modal.taskId).filter(a=>supervisor()||a.staff_id===state.user.id);const paths=[...new Set(as.flatMap(a=>a.photo_paths||[]))].filter(p=>!state.signed[p]||state.signedUntil[p]<Date.now());if(!paths.length)return;
  await Promise.all(paths.map(async p=>{try{const encoded=p.split('/').map(encodeURIComponent).join('/');const j=await cloudRequest(`/storage/v1/object/sign/task-evidence/${encoded}`,{method:'POST',body:{expiresIn:600}});const u=j.signedURL||j.signedUrl||'';state.signed[p]=u.startsWith('http')?u:`${BASE}/storage/v1${u.startsWith('/')?u:'/'+u}`;state.signedUntil[p]=Date.now()+540000;}catch(e){console.warn('Không tạo được URL ảnh',e)}}));if(state.modal?.type==='detail')draw();
 }
 async function readOne(nid,taskid=''){
