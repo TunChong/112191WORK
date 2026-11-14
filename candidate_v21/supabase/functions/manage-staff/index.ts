@@ -16,6 +16,13 @@ async function request(path:string,o:{method?:string;body?:unknown;userToken?:st
 }
 function validId(v:unknown):v is string{return typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v)}
 function newPassword(){const letters='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';return 'W!'+Array.from(crypto.getRandomValues(new Uint8Array(18)),x=>letters[x%letters.length]).join('')}
+function chooseInitialPassword(value:unknown,code:string):string{
+ if(value===undefined||value===null||value==='')return newPassword();
+ if(typeof value!=='string')throw new Error('Mật khẩu ban đầu không hợp lệ');
+ if(value.length<10||value.length>72||!/[A-Za-z]/.test(value)||!/[0-9]/.test(value)||value.includes(code))
+   throw new Error('Mật khẩu cần 10–72 ký tự, gồm chữ và số, không chứa mã nhân viên');
+ return value;
+}
 async function audit(actor:string,target:string,code:string,action:string){await request('/rest/v1/staff_account_audit',{method:'POST',prefer:'return=minimal',body:{actor_id:actor,target_user_id:target,employee_code:code,action}})}
 Deno.serve(async (req:Request)=>{
  if(req.method==='OPTIONS')return new Response(null,{headers:headers(req.headers.get('origin')||'')});
@@ -48,7 +55,9 @@ Deno.serve(async (req:Request)=>{
    if(!/^\d{4,8}$/.test(code)||name.length<2||name.length>120)return reply(req,400,{error:'Mã hoặc họ tên không hợp lệ'});
    const dup=await request('/rest/v1/profiles?select=id&employee_code=eq.'+encodeURIComponent(code)+'&limit=1');
    if(dup.length)return reply(req,409,{error:'Mã nhân viên đã tồn tại'});
-   const pw=newPassword();
+   let pw:string;
+   try{pw=chooseInitialPassword(data.temporary_password,code)}
+   catch{return reply(req,400,{error:'Mật khẩu cần 10–72 ký tự, gồm chữ và số, không chứa mã nhân viên'})}
    const created=await request('/auth/v1/admin/users',{method:'POST',body:{email:code+'@112191work.pages.dev',password:pw,email_confirm:true,user_metadata:{employee_code:code,full_name:name}}});
    const uid=created?.user?.id||created?.id;
    if(!validId(uid))throw new Error('Could not create auth identity');
@@ -58,12 +67,19 @@ Deno.serve(async (req:Request)=>{
    try{await audit(signed.id,uid,code,'created')}catch{auditWarning=true;console.error('staff audit insert failed after creation')}
    return reply(req,200,{ok:true,employee_code:code,temporary_password:pw,audit_warning:auditWarning});
   }
-  if(action==='set_active'||action==='reset_password'){
+  if(action==='set_active'||action==='reset_password'||action==='update_name'){
    if(!validId(data.user_id))return reply(req,400,{error:'ID không hợp lệ'});
    const uid=data.user_id;
    const rows=await request('/rest/v1/profiles?select=id,employee_code,role,active,must_change_password&id=eq.'+encodeURIComponent(uid)+'&limit=1'),p=rows[0];
    if(!p||p.role!=='staff')return reply(req,404,{error:'Không tìm thấy tài khoản nhân viên'});
    const code=String(p.employee_code||'');
+   if(action==='update_name'){
+    const name=String(data.full_name||'').trim().replace(/\s+/g,' ');
+    if(name.length<2||name.length>120)return reply(req,400,{error:'Tên nhân viên cần từ 2 đến 120 ký tự'});
+    await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{method:'PATCH',prefer:'return=minimal',body:{full_name:name}});
+    try{await audit(signed.id,uid,code,'updated')}catch{console.error('staff name audit failed')}
+    return reply(req,200,{ok:true});
+   }
    if(action==='set_active'){
     if(typeof data.active!=='boolean')return reply(req,400,{error:'Trạng thái không hợp lệ'});
     // Archive instead of deleting: preserve assignments and activity history.
@@ -78,7 +94,9 @@ Deno.serve(async (req:Request)=>{
     await audit(signed.id,uid,code,data.active?'activated':'deactivated');
     return reply(req,200,{ok:true});
    }
-   const pw=newPassword();
+   let pw:string;
+   try{pw=chooseInitialPassword(data.temporary_password,code)}
+   catch{return reply(req,400,{error:'Mật khẩu cần 10–72 ký tự, gồm chữ và số, không chứa mã nhân viên'})}
    // Block work access while the employee changes their one-time password.
    // If the Auth update fails, restore the previous first-login flag.
    await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{method:'PATCH',prefer:'return=minimal',body:{must_change_password:true}});
