@@ -23,7 +23,7 @@ function chooseInitialPassword(value:unknown,code:string):string{
    throw new Error('Mật khẩu cần 10–72 ký tự, gồm chữ và số, không chứa mã nhân viên');
  return value;
 }
-async function audit(actor:string,target:string,code:string,action:string){await request('/rest/v1/staff_account_audit',{method:'POST',prefer:'return=minimal',body:{actor_id:actor,target_user_id:target,employee_code:code,action}})}
+async function audit(actor:string,target:string|null,code:string,action:string){await request('/rest/v1/staff_account_audit',{method:'POST',prefer:'return=minimal',body:{actor_id:actor,target_user_id:target,employee_code:code,action}})}
 Deno.serve(async (req:Request)=>{
  if(req.method==='OPTIONS')return new Response(null,{headers:headers(req.headers.get('origin')||'')});
  if(req.method!=='POST')return reply(req,405,{error:'Phương thức không hỗ trợ'});
@@ -67,12 +67,31 @@ Deno.serve(async (req:Request)=>{
    try{await audit(signed.id,uid,code,'created')}catch{auditWarning=true;console.error('staff audit insert failed after creation')}
    return reply(req,200,{ok:true,employee_code:code,temporary_password:pw,audit_warning:auditWarning});
   }
-  if(action==='set_active'||action==='reset_password'||action==='update_name'){
+  if(action==='set_active'||action==='reset_password'||action==='update_name'||action==='delete'){
    if(!validId(data.user_id))return reply(req,400,{error:'ID không hợp lệ'});
    const uid=data.user_id;
    const rows=await request('/rest/v1/profiles?select=id,employee_code,role,active,must_change_password&id=eq.'+encodeURIComponent(uid)+'&limit=1'),p=rows[0];
    if(!p||p.role!=='staff')return reply(req,404,{error:'Không tìm thấy tài khoản nhân viên'});
    const code=String(p.employee_code||'');
+   if(action==='delete'){
+    if(p.active)return reply(req,409,{error:'Hãy lưu trữ tài khoản trước khi xóa vĩnh viễn'});
+    if(data.confirm_code!==code)return reply(req,400,{error:'Xác nhận mã nhân viên chưa chính xác'});
+    // Strong safety barrier: do not remove linked tasks, reports, audit-worthy events or evidence.
+    const relationships=[
+      ['assignments','staff_id'],['recurring_members','staff_id'],
+      ['notifications','recipient_id'],['tasks','created_by'],['recurring_templates','created_by']
+    ] as const;
+    for(const [table,col] of relationships){
+      const linked=await request('/rest/v1/'+table+'?select=*&'+col+'=eq.'+encodeURIComponent(uid)+'&limit=1');
+      if(Array.isArray(linked)&&linked.length)return reply(req,409,{error:'Tài khoản đã có lịch sử công việc. Hãy giữ ở trạng thái lưu trữ để bảo toàn dữ liệu.'});
+    }
+    const evidence=await request('/storage/v1/object/list/task-evidence',{method:'POST',body:{prefix:uid,limit:1}});
+    if(Array.isArray(evidence)&&evidence.length)return reply(req,409,{error:'Tài khoản còn ảnh minh chứng. Không thể xóa vĩnh viễn.'});
+    try{await request('/auth/v1/admin/users/'+uid,{method:'DELETE'})}
+    catch{return reply(req,409,{error:'Không thể xóa: tài khoản còn dữ liệu liên kết. Hãy giữ lưu trữ.'})}
+    try{await audit(signed.id,null,code,'deleted')}catch{console.error('staff deletion audit failed')}
+    return reply(req,200,{ok:true});
+   }
    if(action==='update_name'){
     const name=String(data.full_name||'').trim().replace(/\s+/g,' ');
     if(name.length<2||name.length>120)return reply(req,400,{error:'Tên nhân viên cần từ 2 đến 120 ký tự'});
