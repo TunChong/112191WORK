@@ -202,17 +202,19 @@ function teamView(){if(!manager())return empty('Không có quyền','Chỉ quả
 
 function accountsView(){
  if(!manager())return empty('Không có quyền','Chỉ quản lý được xem tài khoản.','lock');
- const rows=state.staffAccounts?.accounts||users(),events=state.staffAccounts?.events||[],active=rows.filter(p=>p.active).length;
+ const rows=state.staffAccounts?.accounts||users(),events=state.staffAccounts?.events||[],active=rows.filter(p=>p.active).length,tab=state.staffAccountFilter==='archived'?'archived':'active',shownRows=rows.filter(p=>tab==='active'?p.active:!p.active);
  return `<div class="stack">
  <div class="notice">${ic('shield')}<div><b>Kho tài khoản nhân viên</b> · ${active} hoạt động / ${rows.length} tổng số. Không xóa lịch sử nhiệm vụ khi khóa người dùng. Mật khẩu riêng của nhân viên không thể xem lại.</div></div>
  ${state.staffAccountsError?`<div class="notice note-amber">${ic('warning')}<div>API quản trị chưa sẵn sàng: ${esc(state.staffAccountsError)}. Có thể xem danh sách, nhưng chưa thể tạo hoặc đặt lại mật khẩu.</div></div>`:''}
  ${state.oneTimeCredential?`<section class="panel"><div class="panel-head"><h2>Mật khẩu tạm thời · Chỉ hiển thị một lần</h2></div><p>Gửi riêng cho mã NV ${esc(state.oneTimeCredential.code)} và yêu cầu đổi ngay sau đăng nhập.</p><div class="row"><input aria-label="Mật khẩu tạm thời" readonly value="${esc(state.oneTimeCredential.password)}"><button class="btn" data-action="copy-temp-password">${ic('save')} Sao chép</button></div><button class="btn outline sm" data-action="dismiss-temp-password">Đóng và xóa khỏi màn hình</button></section>`:''}
- <section class="panel"><div class="panel-head"><div><h2>Thêm tài khoản nhân viên</h2><div class="subtitle">Mật khẩu tạm do máy chủ tạo, không lưu trong danh sách tài khoản</div></div></div><form id="createStaffForm" class="stack"><div class="form-grid">
+ <section class="panel"><div class="panel-head"><div><h2>Thêm tài khoản nhân viên</h2><div class="subtitle">Anh tự đặt mật khẩu ban đầu hoặc để hệ thống tạo tự động. Nhân viên phải đổi khi đăng nhập lần đầu.</div></div></div><form id="createStaffForm" class="stack"><div class="form-grid">
  <div class="form-field"><label for="newStaffCode">Mã NV *</label><input id="newStaffCode" name="code" pattern="[0-9]{4,8}" maxlength="8" required placeholder="Ví dụ: 257406"></div>
- <div class="form-field"><label for="newStaffName">Họ và tên *</label><input id="newStaffName" name="fullName" maxlength="120" required placeholder="Họ tên nhân viên"></div></div>
+ <div class="form-field"><label for="newStaffName">Họ và tên *</label><input id="newStaffName" name="fullName" maxlength="120" required placeholder="Họ tên nhân viên"></div>
+ <div class="form-field"><label for="newStaffPassword">Mật khẩu ban đầu (tùy chọn)</label><input id="newStaffPassword" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="72" placeholder="Để trống để hệ thống tạo"/></div></div>
+ <p class="fineprint">Mật khẩu tự đặt: 10–72 ký tự, có cả chữ và số, không chứa mã nhân viên. Hệ thống không lưu mật khẩu dạng văn bản; chỉ hiển thị lại một lần khi tạo tài khoản.</p>
  <button class="btn" type="submit" ${!state.staffAccounts?'disabled':''}>${ic('plus')} Thêm nhân viên</button></form></section>
- <section class="panel"><div class="panel-head"><div><h2>Danh sách tài khoản</h2><div class="subtitle">${rows.length} nhân viên · Chỉ quản lý được thao tác</div></div><button class="btn outline sm" data-action="refresh-accounts">${ic('refresh')} Làm mới</button></div><div class="person-list">
- ${rows.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name||'Chưa đặt tên')}</strong><small>Mã NV: ${esc(p.employee_code||'—')} · ${p.active?'Hoạt động':'Đã khóa'} · Tạo: ${esc(p.created_at?fmt(p.created_at):'—')}</small><small>Đổi MK gần nhất: ${esc(p.password_changed_at?fmt(p.password_changed_at):'Chưa có nhật ký')} · Đăng nhập: ${esc(p.last_sign_in_at?fmt(p.last_sign_in_at):'—')}</small></div><span class="badge ${p.active?'approved':'todo'}">${p.active?'Hoạt động':'Đã khóa'}</span>${state.staffAccounts?`<button class="btn sm outline" data-action="reset-staff-password" data-id="${esc(p.id)}">Đặt lại MK</button><button class="btn sm outline" data-action="toggle-staff-account" data-id="${esc(p.id)}">${p.active?'Lưu trữ':'Khôi phục'}</button>`:''}</div>`).join('')}</div></section>
+ <section class="panel"><div class="panel-head"><div><h2>Danh sách tài khoản</h2><div class="subtitle">${active} đang làm việc · ${rows.length-active} đã lưu trữ. Không xóa lịch sử công việc.</div></div><button class="btn outline sm" data-action="refresh-accounts">${ic('refresh')} Làm mới</button></div><div class="row" style="gap:8px;margin:12px 0"><button class="btn sm ${tab==='active'?'':'outline'}" data-action="account-filter" data-filter="active">Đang hoạt động (${active})</button><button class="btn sm ${tab==='archived'?'':'outline'}" data-action="account-filter" data-filter="archived">Đã xóa / lưu trữ (${rows.length-active})</button></div><div class="person-list">
+ ${shownRows.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name||'Chưa đặt tên')}</strong><small>Mã NV: ${esc(p.employee_code||'—')} · ${p.active?'Hoạt động':'Đã khóa'} · Tạo: ${esc(p.created_at?fmt(p.created_at):'—')}</small><small>Đổi MK gần nhất: ${esc(p.password_changed_at?fmt(p.password_changed_at):'Chưa có nhật ký')} · Đăng nhập: ${esc(p.last_sign_in_at?fmt(p.last_sign_in_at):'—')}</small></div><span class="badge ${p.active?'approved':'todo'}">${p.active?'Hoạt động':'Đã khóa'}</span>${state.staffAccounts?`<button class="btn sm outline" data-action="edit-staff-name" data-id="${esc(p.id)}">Sửa tên</button><button class="btn sm outline" data-action="reset-staff-password" data-id="${esc(p.id)}">Đặt lại MK</button><button class="btn sm ${p.active?'danger':'outline'}" data-action="toggle-staff-account" data-id="${esc(p.id)}">${p.active?'Xóa (lưu trữ)':'Khôi phục'}</button>`:''}</div>`).join('')}</div></section>
  <section class="panel"><div class="panel-head"><div><h2>Nhật ký quản trị tài khoản</h2><div class="subtitle">Không ghi mật khẩu, chỉ ghi sự kiện thay đổi</div></div></div><div class="person-list">${events.length?events.map(x=>`<div class="person-row"><div class="info"><strong>${esc(x.action||'Cập nhật')}</strong><small>Mã NV: ${esc(x.employee_code||'—')} · ${esc(x.created_at?fmt(x.created_at):'—')}</small></div></div>`).join(''):'<div class="subtitle">Chưa có sự kiện quản trị.</div>'}</div></section>
  </div>`;
 }
@@ -233,16 +235,16 @@ async function loadStaffAdmin(){
 }
 async function createStaff(e){
  e.preventDefault();if(!manager()||!state.staffAccounts)return;
- const form=e.target,fd=new FormData(form),code=String(fd.get('code')||'').trim(),name=String(fd.get('fullName')||'').trim();
+ const form=e.target,fd=new FormData(form),code=String(fd.get('code')||'').trim(),name=String(fd.get('fullName')||'').trim(),password=String(fd.get('password')||'');
  if(!/^[0-9]{4,8}$/.test(code)||name.length<2){toast('Kiểm tra mã NV hoặc họ tên.');return}
  const btn=form.querySelector('[type="submit"]');btn.disabled=true;
- try{const response=await staffAdminRequest({action:'create',employee_code:code,full_name:name});state.oneTimeCredential={code,password:response.temporary_password};await loadCloud();await loadStaffAdmin();toast('Đã tạo tài khoản. Gửi mật khẩu tạm riêng cho nhân viên.')}
+ try{const response=await staffAdminRequest({action:'create',employee_code:code,full_name:name,...(password?{temporary_password:password}:{})});state.oneTimeCredential={code,password:response.temporary_password};await loadCloud();await loadStaffAdmin();toast('Đã tạo tài khoản. Gửi mật khẩu tạm riêng cho nhân viên.')}
  catch(e){toast('Không thêm được nhân viên: '+e.message);btn.disabled=false}
 }
 async function changeStaffActive(uid){
  if(!manager()||!state.staffAccounts)return;
  const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p)return;
- if(!confirm(`${p.active?'Lưu trữ':'Khôi phục'} tài khoản ${p.employee_code} - ${p.full_name}? Lịch sử công việc sẽ được giữ lại.`))return;
+ if(!confirm(`${p.active?'Xóa (lưu trữ)':'Khôi phục'} tài khoản ${p.employee_code} - ${p.full_name}? Không xóa dữ liệu hay lịch sử đã giao việc.`))return;
  try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();await loadStaffAdmin();toast('Đã cập nhật trạng thái tài khoản.')}catch(e){toast(e.message)}
 }
 async function resetStaffPassword(uid){
