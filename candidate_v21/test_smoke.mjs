@@ -153,7 +153,7 @@ assert.match(app, /Không cần cài app:/);
 assert.match(app, /document\.visibilityState==='hidden'&&state\.pushEnabled/);
 assert.match(manageTasks, /action==='preview'/);
 assert.match(manageTasks, /action==='delete'/);
-assert.match(manageTasks, /Only Admin 112191/);
+assert.match(manageTasks, /Chỉ tài khoản Admin 112191/);
 assert.match(manageTasks, /storage\/v1\/object\/task-evidence/);
 assert.match(manageTasks, /work_admin_delete_task/);
 assert.match(manageTasks, /storage_cleanup_complete:true/);
