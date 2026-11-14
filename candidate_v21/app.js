@@ -129,9 +129,9 @@ async function loadCloud(){
  state.data={profiles,tasks,assignments,recurring_templates:templates,recurring_members:members,notifications};
 }
 async function refresh(){if(state.loading)return;state.loading=true;try{
- const known=new Set((state.data?.notifications||[]).map(n=>n.id));
+ const hadLoadedData=!!state.data;const known=new Set((state.data?.notifications||[]).map(n=>n.id));
  if(CLOUD){await loadCloud();
-  if(known.size && document.visibilityState==='visible'){
+  if(hadLoadedData && document.visibilityState==='visible'){
    const fresh=myNotifications().filter(n=>!known.has(n.id));
    const newTask=fresh.find(n=>n.event_key?.startsWith('new:'));
    if(newTask)showNewWorkPopup(newTask);
