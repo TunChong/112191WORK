@@ -266,7 +266,7 @@ function peopleLine(taskId){let a=taskAssignments(taskId);return `${a.length} ng
 function taskCard(t,a=null){const ass=a||taskAssignments(t.id)[0]||{status:'todo'};const st=a?assignStatus(a,t):taskAssignments(t.id).some(x=>x.status==='submitted')?'submitted':taskAssignments(t.id).every(x=>x.status==='approved')?'approved':taskAssignments(t.id).some(x=>isLate(x,t))?'overdue':'todo';
  return `<article class="task-card" role="button" tabindex="0" data-action="detail" data-id="${esc(t.id)}">
  <div class="task-symbol">${ic(STATUS_ICON[st]||'clipboard')}</div><div class="task-body"><div class="task-title">${esc(t.title)}</div>
- <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}</div></div>${statusBadge(st)}</article>`}
+ <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}${t.priority==='high'?'<span class="task-priority-label high">🚨 ƯU TIÊN CAO</span>':'<span class="task-priority-label">BÌNH THƯỜNG</span>'}</div></div>${statusBadge(st)}</article>`}
 function navEntries(){return manager()?[
  ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['accounts','Quản lý tài khoản','shield'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
  supervisor()?[
@@ -569,15 +569,18 @@ async function createTask(ev){ev.preventDefault();if(!supervisor())return;const 
  const error=f.querySelector('#createTaskError');if(error){error.hidden=true;error.textContent=''}
  const description=String(fd.get('description')||'').trim(),category=fd.get('category'),priority=fd.get('priority'),daily=manager()&&fd.get('daily')==='on';
  const button=f.querySelector('[type="submit"]');button.disabled=true;button.textContent='Đang tạo công việc...';
+ let pushInfo=null;
  try{
   if(CLOUD){
    if(daily){const time=String(fd.get('due')).split('T')[1].slice(0,5);
     const rec=(await tableInsert('recurring_templates',{title,description,category,priority,due_time:time,start_on:String(fd.get('due')).slice(0,10),active:true,created_by:state.user.id}))[0];
     await tableInsert('recurring_members',staff.map(staff_id=>({template_id:rec.id,staff_id})));
     await rpc('generate_daily_tasks');
+    try{pushInfo=await pushService({action:'dispatch_pending'})}catch(err){console.warn('Daily task push failed',err)}
    }else{
     const t=(await tableInsert('tasks',{title,description,category,priority,due_at:due.toISOString(),created_by:state.user.id}))[0];
     await tableInsert('assignments',staff.map(staff_id=>({task_id:t.id,staff_id})));
+    try{pushInfo=await pushService({action:'dispatch_task',task_id:t.id})}catch(err){console.warn('Task saved, push retry pending',err)}
    }
    await loadCloud();
   }else{
@@ -587,7 +590,7 @@ async function createTask(ev){ev.preventDefault();if(!supervisor())return;const 
     staff.forEach(staff_id=>{const a={id:id(),task_id:t.id,staff_id,status:'todo',report_notes:null,photo_paths:[],submitted_at:null,reviewed_at:null,review_feedback:null,created_at:nowDate()};state.data.assignments.push(a);notify(staff_id,'Nhiệm vụ mới',t.title,t.id,a.id)})
    }persist();
   }
-  state.screen='tasks';state.filter='all';state.search='';draw();toast('Đã tạo và giao nhiệm vụ.');
+  state.screen='tasks';state.filter='all';state.search='';draw();toast(pushInfo?.sent?'Đã giao việc và gửi '+pushInfo.sent+' thông báo đẩy.':'Đã giao việc. Nhân viên sẽ được thông báo trong ứng dụng; bật Push để nhận khi đóng app.');
  }catch(e){toast('Chưa thể giao việc: '+e.message);button.disabled=false;button.innerHTML=`${ic('plus')} Tạo và giao công việc`}
 }
 function imageBlob(file){return new Promise((resolve,reject)=>{
