@@ -1,5 +1,5 @@
-const CACHE_NAME = '112191-work-v2.2.0';
-const PRECACHE = ['./', './index.html', './styles.css?v=2.2', './app.js?v=2.2', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE_NAME = '112191-work-v2.3.0';
+const PRECACHE = ['./', './index.html', './styles.css?v=2.3', './app.js?v=2.3', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
