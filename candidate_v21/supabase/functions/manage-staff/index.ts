@@ -5,7 +5,7 @@ const BASE=Deno.env.get('SUPABASE_URL')||'';
 const ANON=Deno.env.get('SUPABASE_ANON_KEY')||'';
 const SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
 type Obj=Record<string,unknown>;
-function headers(origin:string){return {'content-type':'application/json','cache-control':'no-store','vary':'Origin','access-control-allow-origin':/^https:\/\/(?:[a-z0-9-]+\.)?112191work\.pages\.dev$/i.test(origin)?origin:'https://112191work.pages.dev','access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'authorization,apikey,content-type'};}
+function headers(origin:string){return {'content-type':'application/json','cache-control':'no-store','vary':'Origin','access-control-allow-origin':/^https:\/\/(?:[a-z0-9-]+\.)?(?:112191work|112191work-v21-preview)\.pages\.dev$/i.test(origin)?origin:'https://112191work.pages.dev','access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'authorization,apikey,content-type'};}
 function reply(req:Request,status:number,data:Obj){return new Response(JSON.stringify(data),{status,headers:headers(req.headers.get('origin')||'')});}
 async function request(path:string,o:{method?:string;body?:unknown;userToken?:string;prefer?:string}={}):Promise<any>{
  const jwt=o.userToken||SERVICE;
