@@ -17,6 +17,14 @@ assert.match(app, /'createStaffForm'/);
 assert.match(app, /data-action="reset-staff-password"/);
 assert.match(app, /data-action="toggle-staff-account"/);
 assert.match(app, /password_changed_at/);
+assert.match(app, /v\+='QUANLY'/);
+assert.match(app, /name="password" type="password" autocomplete="new-password"/);
+assert.match(app, /'staffResetForm'/);
+assert.match(app, /'staffEditForm'/);
+assert.match(app, /data-action="account-filter"/);
+assert.match(app, /Xóa \(lưu trữ\)/);
+assert.match(app, /users\(\)\{return state\.data\?\.profiles\.filter\(x=>x\.role==='staff'&&x\.active\)/);
+
 
 // Require server-side roles and a request token, never browser service role.
 assert.match(api, /managerProfiles\[0\]\?\.role!=='manager'/);
@@ -26,6 +34,11 @@ assert.match(sql, /new\.must_change_password is distinct from old\.must_change_p
 assert.match(api, /signed=await request\('\/auth\/v1\/user'/);
 assert.match(api, /action==='create'/);
 assert.match(api, /action==='reset_password'/);
+assert.match(api, /action==='update_name'/);
+assert.match(api, /chooseInitialPassword\(data\.temporary_password,code\)/);
+assert.match(api, /password:pw/);
+assert.match(sql, /'updated'/);
+
 assert.match(api, /ban_duration/);
 assert.match(api, /staff_account_audit/);
 assert.match(sql, /enable row level security/);
