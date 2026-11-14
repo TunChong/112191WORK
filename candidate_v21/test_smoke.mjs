@@ -7,6 +7,7 @@ const api=read('./supabase/functions/manage-staff/index.ts');
 const sql=read('./supabase/migrations/20261113_manage_staff.sql');
 const rbac=read('./supabase/migrations/20261114_admin_shift_lead_roles.sql');
 const deletionGrant=read('./supabase/migrations/20261114_fix_staff_delete_service_role_read.sql');
+const hardDelete=read('./supabase/migrations/20261114_safe_hard_delete_with_history.sql');
 const html=read('./index.html');
 
 // User-facing feature regression assertions.
@@ -32,7 +33,10 @@ assert.match(app, /\['accounts','Quản lý tài khoản','shield'\]/);
 
 assert.match(app, /data-action="account-filter"/);
 assert.match(app, /data-action="delete-staff"/);
-assert.match(app, /window.prompt\('Xóa VĨNH VIỄN/);
+assert.match(app, /window.prompt\(summary,/);
+assert.match(app, /action:'preview_delete'/);
+assert.match(app, /ack_delete_history:true/);
+assert.match(app, /expected_counts:counts/);
 
 assert.match(app, /Xóa \(lưu trữ\)/);
 assert.match(app, /users\(\)\{return state\.data\?\.profiles\.filter\(x=>x\.role==='staff'&&x\.active\)/);
@@ -100,3 +104,14 @@ assert.doesNotMatch(deletionGrant, /TO anon/);
 assert.match(api, /Không kiểm tra được lịch sử công việc/);
 assert.match(api, /Không kiểm tra được kho ảnh minh chứng/);
 assert.match(api, /Tài khoản đã có lịch sử công việc/);
+
+assert.match(hardDelete, /REVOKE ALL ON FUNCTION public.staff_delete_cleanup/);
+assert.match(hardDelete, /GRANT EXECUTE ON FUNCTION public.staff_delete_cleanup/);
+assert.match(hardDelete, /v_target.is_admin/);
+assert.match(hardDelete, /UPDATE public.tasks SET created_by=v_admin/);
+assert.match(hardDelete, /DELETE FROM public.assignments WHERE staff_id=p_target/);
+assert.doesNotMatch(hardDelete, /DELETE FROM storage.objects/i);
+assert.match(api, /action==='preview_delete'/);
+assert.match(api, /rpc\/staff_delete_cleanup/);
+assert.match(api, /storage\/v1\/object\/task-evidence/);
+assert.match(api, /ack_delete_history/);
