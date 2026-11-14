@@ -1,4 +1,4 @@
-name: Validate and package 112191 WORK v2.3
+name: Validate and package 112191 WORK v2.4
 on:
   workflow_dispatch:
   push:
@@ -23,7 +23,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add candidate_v21/icon-192.png candidate_v21/icon-512.png
           if ! git diff --cached --quiet; then
-            git commit -m "build: preserve icons in v2.3 preview"
+            git commit -m "build: preserve icons in v2.4 preview"
             git push
           fi
       - name: JavaScript syntax check
@@ -35,7 +35,9 @@ jobs:
         with:
           deno-version: v2.x
       - name: Check Edge Function TypeScript syntax and types
-        run: deno check candidate_v21/supabase/functions/manage-staff/index.ts
+        run: |
+          deno check candidate_v21/supabase/functions/manage-staff/index.ts
+          deno check candidate_v21/supabase/functions/work-push/index.ts
       - name: Check required features and prevent secrets in frontend
         run: |
           python3 - <<'PY'
@@ -47,8 +49,8 @@ jobs:
           assert 'createStaffForm' in app
           assert 'data-action="reset-staff-password"' in app
           html = Path('candidate_v21/index.html').read_text()
-          assert 'app.js?v=2.3' in html
-          assert 'styles.css?v=2.3' in html
+          assert 'app.js?v=2.4' in html
+          assert 'styles.css?v=2.4' in html
           assert not Path('candidate_v21/config.js').read_text().find('sb_secret_') >= 0
           print('Frontend checks passed')
           PY
@@ -62,6 +64,6 @@ jobs:
       - name: Upload site-only ZIP for Preview deployment
         uses: actions/upload-artifact@v4
         with:
-          name: 112191-work-v23-site-only
+          name: 112191-work-v24-site-only
           path: deploy_site/
           retention-days: 14
