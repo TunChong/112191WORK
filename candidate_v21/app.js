@@ -564,8 +564,17 @@ function shopsView(){
  const editing=state.shops.find(s=>s.id===state.shopEditId);
  const people=(state.shopMembers||[]).map(m=>{
    const p=m.profile||{},personName=p.full_name||'Chưa đặt tên',role=m.shop_role==='manager'?'Quản lý':m.shop_role==='shift_lead'?'Trưởng ca':'Nhân viên';
+   const uid=esc(m.user_id);
    return `<div class="person-row"><span class="initial">${esc(personName[0]||'?')}</span><div class="info"><strong>${esc(personName)}</strong><small>${esc(p.employee_code||'—')} · ${role} · ${m.active?'Hoạt động':'Đã lưu trữ'}</small></div>
-   ${state.shopReady && !p.is_admin?`<div style="display:flex;flex-wrap:wrap;gap:5px">${m.shop_role!=='manager'?`<button type="button" class="btn outline sm" data-action="shop-member-role" data-uid="${esc(m.user_id)}" data-role="${m.shop_role==='staff'?'shift_lead':'staff'}">${m.shop_role==='staff'?'Cấp Trưởng ca':'Về Nhân viên'}</button><button type="button" class="btn outline sm" data-action="shop-member-reset" data-uid="${esc(m.user_id)}">Đặt lại MK</button>`:''}<button type="button" class="btn outline sm" data-action="shop-member-active" data-uid="${esc(m.user_id)}" data-active="${m.active?'false':'true'}">${m.active?'Lưu trữ':'Kích hoạt'}</button></div>`:''}</div>`;
+   ${state.shopReady && !p.is_admin && m.user_id!==state.user?.id?`<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+   <select id="role-${uid}" aria-label="Chọn vai trò" style="max-width:125px;border-radius:9px;border:1px solid #d8e1f0;padding:8px;font-size:12px">
+    <option value="staff" ${m.shop_role==='staff'?'selected':''}>Nhân viên</option>
+    <option value="shift_lead" ${m.shop_role==='shift_lead'?'selected':''}>Trưởng ca</option>
+    <option value="manager" ${m.shop_role==='manager'?'selected':''}>Quản lý</option>
+   </select>
+   <button type="button" class="btn sm outline" data-action="shop-member-set-role" data-uid="${uid}">Lưu vai trò</button>
+   <button type="button" class="btn sm outline" data-action="shop-member-reset" data-uid="${uid}">Đặt lại MK</button>
+   <button type="button" class="btn sm ${m.active?'danger':'outline'}" data-action="shop-member-active" data-uid="${uid}" data-active="${m.active?'false':'true'}">${m.active?'Lưu trữ':'Kích hoạt'}</button></div>`:''}</div>`;
  }).join('');
  return `<div class="stack">
   <section class="panel"><div class="panel-head"><div><h2>Quản lý nhiều SHOP</h2><div class="subtitle">Danh mục kho / SHOP · Thiết kế phục vụ 500 SHOP</div></div></div>
@@ -894,6 +903,12 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='shop-member-reset'){
   if(!confirm('Đặt lại mật khẩu cho nhân viên này? Mật khẩu mới chỉ hiển thị một lần.'))return;
   return updateShopMember(el.dataset.uid,'reset_staff_password');
+ }
+ if(name==='shop-member-set-role'){
+  const role=document.getElementById('role-'+el.dataset.uid)?.value;
+  if(!['staff','shift_lead','manager'].includes(role))throw new Error('Vai trò không hợp lệ');
+  if(!confirm('Cập nhật nhân viên này thành '+({staff:'Nhân viên',shift_lead:'Trưởng ca',manager:'Quản lý'})[role]+' tại SHOP đang chọn?'))return;
+  return updateShopMember(el.dataset.uid,'set_member_role',{shop_role:role});
  }
  if(name==='shop-member-role'){
   const role=el.dataset.role;
