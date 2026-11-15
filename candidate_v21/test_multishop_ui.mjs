@@ -64,3 +64,13 @@ assert.match(backend,/if\(targetShop\.is_primary\)return answer\(req,403/);
 assert.match(backend,/active:operational,created_by:actor\.id/);
 assert.match(backend,/if\(!await enabled\(\)\)return answer\(req,423/);
 console.log('PASS: MÃ KHO - TÊN SHOP catalog add/edit/archive controls');
+
+assert.match(managerHTML, /name="shopRole"/);
+assert.match(managerHTML, /option value="manager"/);
+assert.match(managerHTML, /option value="shift_lead"/);
+assert.match(managerHTML, /shop-member-set-role/);
+assert.match(backend, /shop_role:shopRole/);
+assert.match(backend, /if\(!managerFor\(shop\)\)/);
+assert.match(app, /function accountsView\(\)\{\s*if\(!admin\(\)\)/);
+assert.match(app, /generate_daily_tasks_for_shop/);
+console.log('PASS: Admin accounts, SHOP manager role delegation, lead and staff forms');
