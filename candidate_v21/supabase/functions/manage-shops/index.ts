@@ -152,6 +152,8 @@ Deno.serve(async(req:Request)=>{
   if(action==='add_staff'){
    if(!managerFor(shop))return answer(req,403,{error:'Chỉ Quản lý SHOP được tạo nhân viên'});
    const code=String(data.employee_code||'').trim(),fullName=String(data.full_name||'').trim().replace(/\s+/g,' ');
+   const shopRole=String(data.shop_role||'staff');
+   if(!['manager','shift_lead','staff'].includes(shopRole))return answer(req,400,{error:'Vai trò SHOP không hợp lệ'});
    if(!codeOK(code)||fullName.length<2||fullName.length>120||code==='112191')
       return answer(req,400,{error:'Mã nhân viên hoặc tên không hợp lệ'});
    const existing=await one('/rest/v1/profiles?employee_code=eq.'+code+'&select=id');
@@ -162,12 +164,12 @@ Deno.serve(async(req:Request)=>{
    if(!validUUID(userId))return answer(req,503,{error:'Không tạo được tài khoản đăng nhập'});
    try {
     await api('/rest/v1/profiles?on_conflict=id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',
-     body:{id:userId,employee_code:code,full_name:fullName,role:'staff',active:true,must_change_password:true,is_admin:false}});
+     body:{id:userId,employee_code:code,full_name:fullName,role:shopRole,active:true,must_change_password:true,is_admin:false}});
     await api('/rest/v1/work_shop_memberships?on_conflict=shop_id,user_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',
-     body:{shop_id:shop,user_id:userId,shop_role:'staff',active:true,granted_by:actor.id}});
+     body:{shop_id:shop,user_id:userId,shop_role:shopRole,active:true,granted_by:actor.id}});
    }catch(err){try{await api('/auth/v1/admin/users/'+userId,{method:'DELETE'})}catch{};throw err}
    await logAction(shop,actor.id,userId,'create_staff');
-   return answer(req,200,{ok:true,employee_code:code,temporary_password:password});
+   return answer(req,200,{ok:true,employee_code:code,shop_role:shopRole,temporary_password:password});
   }
   if(action==='grant_member'){
    if(!isAdmin)return answer(req,403,{error:'Chỉ Super Admin được liên kết tài khoản có sẵn hoặc cấp quyền Quản lý'});
@@ -195,8 +197,8 @@ Deno.serve(async(req:Request)=>{
    if(!member)return answer(req,404,{error:'Nhân viên không thuộc SHOP'});
    const profile=await one('/rest/v1/profiles?id=eq.'+data.user_id+'&select=is_admin,role,active');
    if(!profile?.active||profile.is_admin)return answer(req,403,{error:'Không được sửa tài khoản này'});
-   if(!isAdmin&&(member.shop_role==='manager'||role==='manager'))
-     return answer(req,403,{error:'Chỉ Super Admin được cấp hoặc thu hồi quyền Quản lý'});
+   // Người quản lý SHOP được thêm, đổi và thu hồi quyền Quản lý khác trong cùng SHOP.
+   // Không được nâng quyền Super Admin hay thay đổi vai trò của chính mình.
    await api('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id,
     {method:'PATCH',prefer:'return=minimal',body:{shop_role:role,updated_at:new Date().toISOString()}});
    const memberships=await api('/rest/v1/work_shop_memberships?user_id=eq.'+data.user_id+'&active=eq.true&select=shop_role');
@@ -211,7 +213,7 @@ Deno.serve(async(req:Request)=>{
      return answer(req,403,{error:'Không có quyền cập nhật nhân sự'});
    const member=await one('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id+'&select=user_id,shop_role');
    if(!member)return answer(req,404,{error:'Nhân viên chưa thuộc SHOP'});
-   if(!isAdmin&&member.shop_role==='manager')return answer(req,403,{error:'Chỉ Super Admin được khóa Quản lý'});
+   // Quản lý SHOP có thể lưu trữ Quản lý khác trong SHOP, nhưng không thể tự thu hồi quyền.
    if(data.user_id===actor.id||data.user_id===signed.id&&isAdmin)return answer(req,403,{error:'Không thể tự thu hồi quyền của mình'});
    await api('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id,
     {method:'PATCH',prefer:'return=minimal',body:{active:data.active,updated_at:new Date().toISOString()}});
@@ -221,7 +223,7 @@ Deno.serve(async(req:Request)=>{
   if(action==='reset_staff_password'){
    if(!managerFor(shop)||!validUUID(data.user_id))return answer(req,403,{error:'Không có quyền cấp lại mật khẩu'});
    const member=await one('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id+'&select=shop_role,active');
-   if(!member||!member.active||member.shop_role==='manager'||data.user_id===actor.id)return answer(req,403,{error:'Không được đặt lại mật khẩu này'});
+   if(!member||!member.active||data.user_id===actor.id)return answer(req,403,{error:'Không được đặt lại mật khẩu này'});
    const all=await api('/rest/v1/work_shop_memberships?user_id=eq.'+data.user_id+'&active=eq.true&select=shop_id&limit=2');
    if(!isAdmin&&all.length>1)return answer(req,409,{error:'Nhân sự thuộc nhiều SHOP; cần Super Admin cấp lại mật khẩu'});
    const p=await one('/rest/v1/profiles?id=eq.'+data.user_id+'&select=employee_code,active,is_admin');
