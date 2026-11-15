@@ -53,3 +53,10 @@
  .inv-table{font-size:12px}
  .inv-variance{padding:10px}
 }
+
+/* v3.1.1: one scan per camera opening, immediate success confirmation. */
+.inv-scan-success{background:#e9f8ee!important;border:2px solid #36a46c;color:#106737!important;font-size:15px;font-weight:800;padding:17px!important;line-height:1.6}
+.inv-scan-error{background:#fff2ee!important;border:2px solid #e49c79;color:#a14227!important;line-height:1.6}
+.inv-camera-actions .btn{min-width:min(100%,195px);font-weight:800}
+.inv-camera-actions button:disabled{opacity:.68;cursor:wait}
+.inv-reader{border:2px solid #2459d4}
