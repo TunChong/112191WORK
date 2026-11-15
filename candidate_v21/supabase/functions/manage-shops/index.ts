@@ -66,6 +66,22 @@ Deno.serve(async(req:Request)=>{
    const byShop=new Map(own.map((x:Row)=>[x.shop_id,x.shop_role]));
    return answer(req,200,{shops:all.map((s:Row)=>({...s,shop_role:isAdmin?'super_admin':byShop.get(s.id)||null})),page,limit});
   }
+  if(action==='create_shop'){
+   if(!isAdmin)return answer(req,403,{error:'Chỉ Super Admin được tạo SHOP'});
+   if(!await enabled())return answer(req,423,{error:'Chưa hoàn tất cách ly dữ liệu Multi-SHOP'});
+   const code=String(data.shop_code||'').trim().toUpperCase();
+   const name=String(data.shop_name||'').trim().replace(/\s+/g,' ');
+   if(!shopCodeOK(code)||name.length<3||name.length>160)
+     return answer(req,400,{error:'Mã hoặc tên SHOP không hợp lệ'});
+   const previous=await one('/rest/v1/work_shops?shop_code=eq.'+encodeURIComponent(code)+'&select=id');
+   if(previous)return answer(req,409,{error:'Mã SHOP đã tồn tại'});
+   const made=await api('/rest/v1/work_shops',{method:'POST',prefer:'return=representation',
+     body:{shop_code:code,shop_name:name,active:true,created_by:actor.id}});
+   const fresh=made?.[0];
+   if(!validUUID(fresh?.id))throw new Error('Failed to create SHOP');
+   await logAction(fresh.id,actor.id,null,'create_shop');
+   return answer(req,200,{ok:true,shop:fresh});
+  }
   if(!validUUID(shop))return answer(req,400,{error:'Thiếu mã SHOP hợp lệ'});
   const targetShop=await one('/rest/v1/work_shops?id=eq.'+shop+'&select=id,shop_code,shop_name,active');
   if(!targetShop)return answer(req,404,{error:'SHOP không tồn tại'});
@@ -124,6 +140,26 @@ Deno.serve(async(req:Request)=>{
     await api('/rest/v1/profiles?id=eq.'+userId,{method:'PATCH',prefer:'return=minimal',body:{role:'shift_lead'}});
    await logAction(shop,actor.id,userId,'grant_'+role);
    return answer(req,200,{ok:true});
+  }
+  if(action==='set_member_role'){
+   if(!managerFor(shop)||!validUUID(data.user_id)||data.user_id===actor.id)
+     return answer(req,403,{error:'Không được thay đổi vai trò này'});
+   const role=String(data.shop_role||'');
+   if(!['manager','shift_lead','staff'].includes(role))return answer(req,400,{error:'Vai trò không hợp lệ'});
+   const member=await one('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id+'&select=shop_role,active');
+   if(!member)return answer(req,404,{error:'Nhân viên không thuộc SHOP'});
+   const profile=await one('/rest/v1/profiles?id=eq.'+data.user_id+'&select=is_admin,role,active');
+   if(!profile?.active||profile.is_admin)return answer(req,403,{error:'Không được sửa tài khoản này'});
+   if(!isAdmin&&(member.shop_role==='manager'||role==='manager'))
+     return answer(req,403,{error:'Chỉ Super Admin được cấp hoặc thu hồi quyền Quản lý'});
+   await api('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id,
+    {method:'PATCH',prefer:'return=minimal',body:{shop_role:role,updated_at:new Date().toISOString()}});
+   const memberships=await api('/rest/v1/work_shop_memberships?user_id=eq.'+data.user_id+'&active=eq.true&select=shop_role');
+   const roles=memberships.map((m:Row)=>String(m.shop_role));
+   const global=roles.includes('manager')?'manager':roles.includes('shift_lead')?'shift_lead':'staff';
+   await api('/rest/v1/profiles?id=eq.'+data.user_id,{method:'PATCH',prefer:'return=minimal',body:{role:global}});
+   await logAction(shop,actor.id,String(data.user_id),'set_role_'+role);
+   return answer(req,200,{ok:true,shop_role:role});
   }
   if(action==='set_membership_active'){
    if(!managerFor(shop)||!validUUID(data.user_id)||typeof data.active!=='boolean')
