@@ -38,3 +38,12 @@ assert.match(isolation,/work_evidence_read/);
 assert.match(app,/shop_id:state\.shopId/);
 assert.match(app,/data-action="navigate" data-screen="\$\{screen\}"/);
 console.log('PASS: shop manager/admin UI, guarded mutations, tenant RLS and shop-scoped writes');
+
+// Regression: exactly one of the two membership -> profiles foreign keys must be selected.
+assert.match(app, /profile:profiles!work_shop_memberships_user_id_fkey\(/);
+assert.match(app, /filter\(m=>m\.profile\)\.map\(m=>\(\{\.\.\.m\.profile/);
+assert.doesNotMatch(app, /profiles\(id,employee_code,full_name/);
+const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+assert.match(css, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+assert.match(css, /\.login-wrap\{width:100%;max-width:100%;grid-template-columns:minmax\(0,1fr\)/);
+console.log('PASS: explicit user_id foreign key and iPhone three-column login');
