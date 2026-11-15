@@ -737,7 +737,7 @@ async function createTask(ev){ev.preventDefault();if(!supervisor())return;const 
    if(daily){const time=String(fd.get('due')).split('T')[1].slice(0,5);
     const rec=(await tableInsert('recurring_templates',{shop_id:state.shopId,title,description,category,priority,due_time:time,start_on:String(fd.get('due')).slice(0,10),active:true,created_by:state.user.id}))[0];
     await tableInsert('recurring_members',staff.map(staff_id=>({template_id:rec.id,staff_id})));
-    await rpc('generate_daily_tasks');
+    await (admin()?rpc('generate_daily_tasks'):rpc('generate_daily_tasks_for_shop',{p_shop:state.shopId}));
     try{pushInfo=await pushService({action:'dispatch_pending'})}catch(err){console.warn('Daily task push failed',err)}
    }else{
     const t=(await tableInsert('tasks',{shop_id:state.shopId,title,description,category,priority,due_at:due.toISOString(),created_by:state.user.id}))[0];
@@ -939,7 +939,7 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='read-one')return readOne(el.dataset.id,el.dataset.task);
  if(name==='read-all')return readAll();
  if(name==='export-csv')return exportCsv();
- if(name==='generate-today'){try{if(CLOUD){await rpc('generate_daily_tasks');await loadCloud()}else demoGenerate();draw();toast('Đã kiểm tra và tạo nhiệm vụ hôm nay nếu chưa tồn tại.')}catch(e){toast(e.message)}return}
+ if(name==='generate-today'){try{if(CLOUD){await (admin()?rpc('generate_daily_tasks'):rpc('generate_daily_tasks_for_shop',{p_shop:state.shopId}));await loadCloud()}else demoGenerate();draw();toast('Đã kiểm tra và tạo nhiệm vụ hôm nay nếu chưa tồn tại.')}catch(e){toast(e.message)}return}
  if(name==='enable-notifs')return enablePhonePush();
  if(name==='disable-notifs')return disablePhonePush();
 }
