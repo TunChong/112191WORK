@@ -20,7 +20,7 @@ const taskDeleteSQL=read('./supabase/migrations/20261115_admin_delete_task.sql')
 assert.match(app, /<option>Công Việc Siêu Thị<\/option>/);
 assert.match(app, /function createView\(\)/);
 assert.match(app, /function accountsView\(\)\{\s*if\(!manager\(\)\)/);
-assert.match(app, /\['accounts','Quản lý tài khoản','shield'\]/);
+assert.match(app, /\['shops','Quản lý SHOP','users'\]/);
 assert.match(app, /staffAdminRequest\(\{action:'create'/);
 assert.match(app, /'createStaffForm'/);
 assert.match(app, /data-action="reset-staff-password"/);
@@ -51,7 +51,7 @@ assert.match(app, /function supervisor\(\)/);
 assert.match(app, /name="role" required/);
 assert.match(app, /data-action="edit-staff-role"/);
 assert.match(app, /'staffRoleForm'/);
-assert.match(app, /\['accounts','Quản lý tài khoản','shield'\]/);
+assert.match(app, /\['shops','Quản lý SHOP','users'\]/);
 
 assert.match(app, /data-action="account-filter"/);
 assert.match(app, /data-action="delete-staff"/);
