@@ -42,6 +42,7 @@ jobs:
           node --check candidate_v21/app.js
           node candidate_v21/test_smoke.mjs
           node candidate_v21/test_sw_push.mjs
+          node candidate_v21/test_multishop_ui.mjs
 
       - name: Package Cloudflare PREVIEW assets only
         run: |
