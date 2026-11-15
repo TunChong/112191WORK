@@ -510,7 +510,7 @@ function moreView(){
  const items=manager()?[
   ['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['accounts','Quản lý tài khoản','shield'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
  ]:[['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
- return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Tiện ích ${roleName(state.user)}</h2><div class="subtitle">Truy cập nhanh</div></div></div><div class="more-menu">${items.map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}</div></section></div>`;
+ return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Tiện ích ${roleName(state.user)}</h2><div class="subtitle">Truy cập nhanh</div></div></div><div class="more-menu">${items.map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}<button class="more-entry" type="button" data-action="logout" aria-label="Đăng xuất khỏi 112191 WORK" style="color:#b91c1c;font-weight:700">${ic('logout')}<span>Đăng xuất</span>${ic('chevron')}</button></div></section></div>`;
 }
 
 function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${roleName(state.user)} · ${CLOUD?'Dữ liệu trực tuyến':'Dùng thử trên thiết bị'}</div></div></div>
@@ -571,19 +571,20 @@ function draw(){if(!CLOUD){root.innerHTML=configRequiredView();return}if(!state.
 }
 async function loginDemo(uid){if(!state.data){state.data=migrateDemoRoster(JSON.parse(localStorage.getItem(KEY)||'null'))||initDemo()}state.user=state.data.profiles.find(p=>p.id===uid)||state.data.profiles[0];localStorage.setItem('work112191_user',state.user.id);state.screen='home';demoGenerate();demoCheckOverdue();persist();draw()}
 function normalizeLogin(raw,role){
- let v=String(raw||'').trim().toUpperCase();
- if(role==='manager'&&/^[0-9]{4,8}QUANLY$/.test(v))v=v.slice(0,-6);
+ const v=String(raw||'').trim().toUpperCase();
+ // Chỉ chấp nhận mã số; không tự chuyển tên đăng nhập QUANLY.
  if(!/^[0-9]{4,8}$/.test(v))throw new Error('Nhập mã tài khoản gồm 4–8 chữ số, ví dụ 112191.');
  return v;
 }
 async function signIn(username,password){
  const role=state.authRole,normalized=normalizeLogin(username,role);
- // All new accounts use numeric login. Legacy 2026 managers used 'codeQUANLY'.
+ // Chỉ nhận tên đăng nhập số. Email cũ bên dưới chỉ dùng làm fallback Auth trong giai đoạn chuyển đổi.
  let session;
  try{session=await authRequest('token?grant_type=password',{email:normalized.toLowerCase()+'@'+LOGIN_DOMAIN,password})}
  catch(e){
-  if(role!=='manager')throw e;
-  session=await authRequest('token?grant_type=password',{email:normalized.toLowerCase()+'quanly@'+LOGIN_DOMAIN,password});
+  if(role!=='manager'||normalized!=='112191')throw e;
+   // Giữ truy cập Admin trong lúc chuẩn bị đổi định danh Auth ở Supabase.
+   session=await authRequest('token?grant_type=password',{email:normalized.toLowerCase()+'quanly@'+LOGIN_DOMAIN,password});
  }
  storeSession(session);
  try{
