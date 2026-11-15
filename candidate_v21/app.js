@@ -57,7 +57,7 @@ const isLate = (a,t) => ['todo','rejected'].includes(a.status) && new Date(t.due
 const assignStatus = (a,t) => isLate(a,t)?'overdue':a.status;
 const NAMES={todo:'Chưa làm',submitted:'Chờ duyệt',approved:'Đã duyệt',rejected:'Làm lại',overdue:'Quá hạn'};
 const STATUS_ICON={todo:'clock',submitted:'camera',approved:'checkcircle',rejected:'refresh',overdue:'warning'};
-let state={shops:[],shopId:null,shopRoles:{},shopReady:false,shopReadyChecked:false,shopMembers:[],shopMemberLoading:false,shopSearch:'',pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
+let state={shops:[],shopEditId:null,shopId:null,shopRoles:{},shopReady:false,shopReadyChecked:false,shopMembers:[],shopMemberLoading:false,shopSearch:'',pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
 const root=document.getElementById('app');
 let ticking=false;
 const toast=(message)=>{document.querySelector('.alert-toast')?.remove();const a=document.createElement('div');a.className='alert-toast';a.textContent=message;document.body.appendChild(a);setTimeout(()=>a.remove(),3400)};
@@ -139,7 +139,7 @@ async function loadCloud(){
   return;
  }
  const [shops,memberships]=await Promise.all([
-  cloudRequest('/rest/v1/work_shops?select=id,shop_code,shop_name,active&order=shop_code.asc&limit=600'),
+  cloudRequest('/rest/v1/work_shops?select=id,shop_code,shop_name,active,is_primary&order=shop_code.asc&limit=600'),
   cloudRequest('/rest/v1/work_shop_memberships?select=shop_id,shop_role,active&user_id=eq.'+state.user.id+'&active=eq.true&limit=600')
  ]);
  state.shops=shops||[];
@@ -328,7 +328,7 @@ function headerTitle(){return ({shops:'Quản lý SHOP',home:'Tổng quan',tasks
 function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.0 PREVIEW</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
- ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(s.shop_code+' · '+s.shop_name)}</option>`).join('')}</select></div>`:''}
+ ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
  ${content}<div class="footbar">112191 WORK · Built for store teams</div></main>
  <nav class="bottomnav">${bottomItems().map(([key,label,icon])=>`<button class="${state.screen===key?'on':''} ${key==='create'?'primary-nav':''}" data-action="navigate" data-screen="${key}">${ic(icon)}<span>${label}</span></button>`).join('')}</nav></div>${state.modal?modalHtml():''}`}
 function displayStat(n,label,icon,extra=''){return `<div class="stat-card"><div class="stat-icon">${ic(icon)}</div><div class="stat-number">${n}</div><div class="stat-label">${label}</div>${extra?`<div class="stat-desc">${extra}</div>`:''}</div>`}
@@ -555,28 +555,53 @@ function moreView(){
 }
 
 
+function shopLabel(s){return s ? s.shop_code+' - '+s.shop_name : 'Chưa chọn SHOP'}
 function shopsView(){
  if(!supervisor())return empty('Không có quyền','Bạn chưa được ủy quyền quản lý SHOP','lock');
  const selected=state.shops.find(s=>s.id===state.shopId);
- const filtered=state.shops.filter(s=>(s.shop_code+' '+s.shop_name).toLowerCase().includes((state.shopSearch||'').toLowerCase()));
+ const search=(state.shopSearch||'').trim().toLowerCase();
+ const filtered=state.shops.filter(s=>shopLabel(s).toLowerCase().includes(search));
+ const editing=state.shops.find(s=>s.id===state.shopEditId);
  const people=(state.shopMembers||[]).map(m=>{
    const p=m.profile||{},personName=p.full_name||'Chưa đặt tên',role=m.shop_role==='manager'?'Quản lý':m.shop_role==='shift_lead'?'Trưởng ca':'Nhân viên';
    return `<div class="person-row"><span class="initial">${esc(personName[0]||'?')}</span><div class="info"><strong>${esc(personName)}</strong><small>${esc(p.employee_code||'—')} · ${role} · ${m.active?'Hoạt động':'Đã lưu trữ'}</small></div>
    ${state.shopReady && !p.is_admin?`<div style="display:flex;flex-wrap:wrap;gap:5px">${m.shop_role!=='manager'?`<button type="button" class="btn outline sm" data-action="shop-member-role" data-uid="${esc(m.user_id)}" data-role="${m.shop_role==='staff'?'shift_lead':'staff'}">${m.shop_role==='staff'?'Cấp Trưởng ca':'Về Nhân viên'}</button><button type="button" class="btn outline sm" data-action="shop-member-reset" data-uid="${esc(m.user_id)}">Đặt lại MK</button>`:''}<button type="button" class="btn outline sm" data-action="shop-member-active" data-uid="${esc(m.user_id)}" data-active="${m.active?'false':'true'}">${m.active?'Lưu trữ':'Kích hoạt'}</button></div>`:''}</div>`;
  }).join('');
  return `<div class="stack">
-  <section class="panel"><div class="panel-head"><div><h2>Quản lý nhiều SHOP</h2><div class="subtitle">Mục tiêu 500 SHOP · Quản lý theo quyền được cấp</div></div></div>
-   <div class="notice">${ic('shield')}<div><b>SHOP hiện tại: ${esc(selected?.shop_code||'—')} · ${esc(selected?.shop_name||'Chưa được phân quyền')}</b><p>Mã Admin 112191 quản lý toàn bộ hệ thống. Người khác chỉ thấy SHOP được ủy quyền.</p></div></div>
-   ${!state.shopReady?`<div class="notice note-amber">${ic('warning')}<div>Giai đoạn bảo mật Multi-SHOP đang được triển khai. Chức năng thêm SHOP và phân quyền mới chưa được mở để tránh lộ dữ liệu giữa các cửa hàng.</div></div>`:''}
+  <section class="panel"><div class="panel-head"><div><h2>Quản lý nhiều SHOP</h2><div class="subtitle">Danh mục kho / SHOP · Thiết kế phục vụ 500 SHOP</div></div></div>
+   <div class="notice">${ic('shield')}<div><b>SHOP hiện tại: ${esc(shopLabel(selected))}</b><p>Chỉ Super Admin 112191 được thêm, sửa hoặc xóa SHOP. Quản lý từng SHOP chỉ quản lý nhân viên trong phạm vi được cấp.</p></div></div>
+   ${!state.shopReady?`<div class="notice note-amber">${ic('warning')}<div><b>Quản lý danh mục SHOP đã mở.</b> Anh có thể thêm mã kho và tên SHOP, sửa hoặc xóa SHOP chưa có dữ liệu. SHOP tạo mới chưa được giao việc/cấp Quản lý cho đến khi hoàn tất kiểm thử cách ly dữ liệu.</div></div>`:''}
   </section>
-  ${admin()?`<section class="panel"><div class="panel-head"><div><h2>Danh sách SHOP (${state.shops.length})</h2><div class="subtitle">Bấm SHOP để quản lý riêng</div></div></div>
-  <input id="shopSearch" placeholder="Tìm mã hoặc tên SHOP..." value="${esc(state.shopSearch||'')}" style="width:100%;margin-bottom:12px;border:1px solid #dbe3f0;padding:11px;border-radius:10px"/>
-  <div class="person-list">${filtered.slice(0,80).map(s=>`<button type="button" class="more-entry" data-action="select-shop" data-id="${esc(s.id)}" style="width:100%;text-align:left"><span>${esc(s.shop_code)} · ${esc(s.shop_name)}</span><span class="badge ${s.active?'approved':''}">${s.active?'Hoạt động':'Đã khóa'}</span>${ic('chevron')}</button>`).join('')}${filtered.length>80?`<p class="fineprint">Đang hiển thị 80/${filtered.length} SHOP. Gõ mã SHOP để tìm chính xác.</p>`:''}</div></section>`:''}
-  ${admin()&&state.shopReady?`<section class="panel"><h2>Thêm SHOP mới</h2><form id="newShopForm" class="stack"><div class="form-grid"><div class="form-field"><label>Mã SHOP</label><input name="code" required minlength="2" maxlength="32" placeholder="Ví dụ: 103"></div><div class="form-field"><label>Tên SHOP</label><input name="name" required maxlength="160" placeholder="Tên và địa chỉ siêu thị"></div></div><button type="submit" class="btn">Tạo SHOP</button></form></section>`:''}
-  ${state.shopReady&&state.shopId?`<section class="panel"><h2>Thêm nhân viên cho SHOP đang chọn</h2><form id="newShopStaffForm" class="stack"><div class="form-grid"><div class="form-field"><label>Mã nhân viên</label><input name="code" required pattern="[0-9]{4,8}" maxlength="8"></div><div class="form-field"><label>Họ và tên</label><input name="name" required maxlength="120"></div></div><button type="submit" class="btn">Thêm nhân viên</button></form></section>`:''}
-  ${admin()&&state.shopReady&&state.shopId?`<section class="panel"><h2>Ủy quyền Quản lý SHOP</h2><form id="grantShopManagerForm" class="stack"><div class="form-field"><label>Mã nhân viên đã có tài khoản</label><input name="code" required pattern="[0-9]{4,8}"></div><button type="submit" class="btn">Cấp quyền Quản lý SHOP</button><p class="fineprint">Chỉ Admin 112191 được cấp và thu hồi vai trò Quản lý.</p></form></section>`:''}
+  ${admin()?`<section class="panel"><div class="panel-head"><div><h2>Thêm SHOP</h2><div class="subtitle">Nhập Mã kho và Tên SHOP để hiển thị dưới dạng Mã kho - Tên SHOP</div></div></div>
+  <form id="newShopForm" class="stack"><div class="form-grid">
+  <div class="form-field"><label for="newWarehouseCode">MÃ KHO *</label><input id="newWarehouseCode" name="code" required pattern="[A-Za-z0-9_-]{2,32}" maxlength="32" placeholder="Ví dụ: 97" autocomplete="off"></div>
+  <div class="form-field"><label for="newShopName">TÊN SHOP *</label><input id="newShopName" name="name" required minlength="3" maxlength="160" placeholder="Ví dụ: ĐMX 102 LÊ VĂN KHƯƠNG"></div></div>
+  <div class="notice" style="padding:11px"><span style="font-size:12px">Tên hiển thị: <b id="newShopPreview">MÃ KHO - TÊN SHOP</b></span></div>
+  <button type="submit" class="btn">${ic('plus')} Thêm SHOP</button></form></section>
+  <section class="panel"><div class="panel-head"><div><h2>Danh sách SHOP (${state.shops.length})</h2><div class="subtitle">Chọn để xem · Sửa mã kho/tên SHOP · Xóa an toàn</div></div></div>
+  <input id="shopSearch" placeholder="Tìm theo mã kho hoặc tên SHOP..." value="${esc(state.shopSearch||'')}" style="width:100%;margin-bottom:12px;border:1px solid #dbe3f0;padding:11px;border-radius:10px"/>
+  <div class="person-list">${filtered.slice(0,100).map(sh=>`<div class="person-row" style="display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="more-entry" data-action="select-shop" data-id="${esc(sh.id)}" style="flex:1;min-width:170px;text-align:left">
+     <span>${esc(shopLabel(sh))}</span><span class="badge ${sh.active?'approved':''}">${sh.active?'Hoạt động':'Chưa kích hoạt / lưu trữ'}</span>
+    </button>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="btn sm outline" data-action="shop-edit" data-id="${esc(sh.id)}">Sửa</button>
+      ${sh.is_primary?'<span class="fineprint">SHOP chính</span>':`
+      <button type="button" class="btn sm danger" data-action="shop-delete" data-id="${esc(sh.id)}">Xóa</button>
+      ${!sh.active&&state.shopReady?`<button type="button" class="btn sm outline" data-action="shop-restore" data-id="${esc(sh.id)}">Khôi phục</button>`:''}`}
+    </div></div>`).join('')}${filtered.length>100?`<p class="fineprint">Đang hiển thị 100/${filtered.length} SHOP. Gõ mã kho để tìm chính xác.</p>`:''}${!filtered.length?'<p class="fineprint">Không có SHOP phù hợp.</p>':''}</div></section>
+  ${editing?`<section class="panel" id="shopEditSection"><div class="panel-head"><div><h2>Chỉnh sửa SHOP</h2><div class="subtitle">Đang sửa: ${esc(shopLabel(editing))}</div></div></div>
+    <form id="editShopForm" class="stack"><input type="hidden" name="id" value="${esc(editing.id)}">
+    <div class="form-grid">
+      <div class="form-field"><label for="editWarehouseCode">MÃ KHO *</label><input id="editWarehouseCode" name="code" required pattern="[A-Za-z0-9_-]{2,32}" maxlength="32" value="${esc(editing.shop_code)}"></div>
+      <div class="form-field"><label for="editShopName">TÊN SHOP *</label><input id="editShopName" name="name" required minlength="3" maxlength="160" value="${esc(editing.shop_name)}"></div>
+    </div><div class="notice" style="padding:11px"><span style="font-size:12px">Tên hiển thị: <b id="editShopPreview">${esc(shopLabel(editing))}</b></span></div>
+    <div class="row"><button type="submit" class="btn">${ic('save')} Lưu thay đổi</button><button type="button" class="btn outline" data-action="shop-cancel-edit">Hủy</button></div></form></section>`:''}
+  `:''}
+  ${state.shopReady&&state.shopId&&selected?.active?`<section class="panel"><h2>Thêm nhân viên cho SHOP đang chọn</h2><form id="newShopStaffForm" class="stack"><div class="form-grid"><div class="form-field"><label>Mã nhân viên</label><input name="code" required pattern="[0-9]{4,8}" maxlength="8"></div><div class="form-field"><label>Họ và tên</label><input name="name" required maxlength="120"></div></div><button type="submit" class="btn">Thêm nhân viên</button></form></section>`:''}
+  ${admin()&&state.shopReady&&state.shopId&&selected?.active?`<section class="panel"><h2>Ủy quyền Quản lý SHOP</h2><form id="grantShopManagerForm" class="stack"><div class="form-field"><label>Mã nhân viên đã có tài khoản</label><input name="code" required pattern="[0-9]{4,8}"></div><button type="submit" class="btn">Cấp quyền Quản lý SHOP</button><p class="fineprint">Chỉ Admin 112191 được cấp và thu hồi vai trò Quản lý.</p></form></section>`:''}
   ${state.oneTimeCredential?`<section class="panel"><h2>Mật khẩu ban đầu · chỉ hiện một lần</h2><p>Mã nhân viên: <b>${esc(state.oneTimeCredential.code)}</b></p><div class="row"><input readonly value="${esc(state.oneTimeCredential.password)}"><button class="btn sm" data-action="copy-temp-password">Sao chép</button><button class="btn sm outline" data-action="dismiss-temp-password">Đóng</button></div></section>`:''}
-  <section class="panel"><div class="panel-head"><div><h2>Nhân sự SHOP đang chọn</h2><div class="subtitle">Quản lý có thể thêm và phân quyền Nhân viên/Trưởng ca</div></div><button class="btn sm outline" data-action="refresh-shop-members">Làm mới</button></div>
+  <section class="panel"><div class="panel-head"><div><h2>Nhân sự SHOP đang chọn</h2><div class="subtitle">Quản lý được ủy quyền theo từng SHOP</div></div><button class="btn sm outline" data-action="refresh-shop-members">Làm mới</button></div>
   <div class="person-list">${state.shopMemberLoading?'<p>Đang tải nhân sự...</p>':people||'<p class="fineprint">SHOP chưa có nhân sự.</p>'}</div></section>
  </div>`;
 }
