@@ -85,6 +85,7 @@ Deno.serve(async(req:Request)=>{
   if(!validUUID(shop))return answer(req,400,{error:'Thiếu mã SHOP hợp lệ'});
   const targetShop=await one('/rest/v1/work_shops?id=eq.'+shop+'&select=id,shop_code,shop_name,active,is_primary');
   if(!targetShop)return answer(req,404,{error:'SHOP không tồn tại'});
+  if(!isAdmin&&!targetShop.active)return answer(req,403,{error:'SHOP này chưa hoạt động hoặc đã bị lưu trữ'});
   // Catalog management remains available before multi-shop data isolation.
   // Only the sole Super Admin can modify shop metadata. Business operations stay gated.
   if(action==='update_shop'){
@@ -214,9 +215,17 @@ Deno.serve(async(req:Request)=>{
    const member=await one('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id+'&select=user_id,shop_role');
    if(!member)return answer(req,404,{error:'Nhân viên chưa thuộc SHOP'});
    // Quản lý SHOP có thể lưu trữ Quản lý khác trong SHOP, nhưng không thể tự thu hồi quyền.
-   if(data.user_id===actor.id||data.user_id===signed.id&&isAdmin)return answer(req,403,{error:'Không thể tự thu hồi quyền của mình'});
+   if(data.user_id===actor.id)return answer(req,403,{error:'Không thể tự thu hồi quyền của mình'});
+   const protectedAccount=await one('/rest/v1/profiles?id=eq.'+data.user_id+'&select=is_admin,employee_code');
+   if(protectedAccount?.is_admin||protectedAccount?.employee_code==='112191')
+     return answer(req,403,{error:'Không được thu hồi quyền của Super Admin'});
    await api('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+data.user_id,
     {method:'PATCH',prefer:'return=minimal',body:{active:data.active,updated_at:new Date().toISOString()}});
+   // Hồ sơ có vai trò cao nhất trên toàn bộ SHOP còn hiệu lực.
+   const memberships=await api('/rest/v1/work_shop_memberships?user_id=eq.'+data.user_id+'&active=eq.true&select=shop_role');
+   const roles=memberships.map((m:Row)=>String(m.shop_role));
+   const globalRole=roles.includes('manager')?'manager':roles.includes('shift_lead')?'shift_lead':'staff';
+   await api('/rest/v1/profiles?id=eq.'+data.user_id,{method:'PATCH',prefer:'return=minimal',body:{role:globalRole}});
    await logAction(shop,actor.id,String(data.user_id),data.active?'activate_member':'archive_member');
    return answer(req,200,{ok:true});
   }
