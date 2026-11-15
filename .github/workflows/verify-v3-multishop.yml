@@ -42,3 +42,17 @@ jobs:
           node --check candidate_v21/app.js
           node candidate_v21/test_smoke.mjs
           node candidate_v21/test_sw_push.mjs
+
+      - name: Package Cloudflare PREVIEW assets only
+        run: |
+          mkdir -p deploy_site
+          for filename in app.js index.html styles.css config.js sw.js manifest.webmanifest robots.txt icon-192.png icon-512.png; do
+            cp "candidate_v21/$filename" "deploy_site/$filename"
+          done
+          test "$(find deploy_site -maxdepth 1 -type f | wc -l)" -eq 9
+      - name: Upload PREVIEW ZIP contents (not Production)
+        uses: actions/upload-artifact@v4
+        with:
+          name: 112191-WORK-v3-multishop-PREVIEW
+          path: deploy_site/
+          retention-days: 14
