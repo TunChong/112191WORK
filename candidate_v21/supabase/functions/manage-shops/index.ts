@@ -60,6 +60,7 @@ Deno.serve(async(req:Request)=>{
    return state?.isolation_ready===true};
   if(action==='status')return answer(req,200,{ready:await enabled(),super_admin:isAdmin,shop_count:own.length});
   if(action==='list_shops'){
+   if(!isAdmin && own.length===0)return answer(req,200,{shops:[],page,limit});
    const all=isAdmin? await api('/rest/v1/work_shops?select=id,shop_code,shop_name,active&order=shop_code.asc&limit='+limit+'&offset='+(page*limit))
      : await api('/rest/v1/work_shops?select=id,shop_code,shop_name,active&id=in.('+own.map((x:Row)=>x.shop_id).filter(validUUID).join(',')+')&order=shop_code.asc&limit='+limit+'&offset='+(page*limit));
    const byShop=new Map(own.map((x:Row)=>[x.shop_id,x.shop_role]));
