@@ -30,6 +30,19 @@ assert.match(app, /normalized\.toLowerCase\(\)\+'quanly@'/);
 assert.doesNotMatch(app, /v=v\.slice\(0,-6\)/);
 assert.match(app, /normalized!=='112191'/);
 assert.match(app, /data-action="logout" aria-label="Đăng xuất khỏi 112191 WORK"/);
+
+// Phát hiện lỗi chuyển về Trang chủ khi bấm tab "Thêm" trên điện thoại.
+const guardLine=app.match(/const allowedScreens=new Set\(\[\.\.\.navEntries\(\),\.\.\.bottomItems\(\)\]\.map\(\(\[key\]\)=>key\)\);/)?.[0];
+const redirectLine=app.match(/if\(!allowedScreens\.has\(state\.screen\)&&state\.screen!=='change-password'\)state\.screen='home';/)?.[0];
+assert.ok(guardLine&&redirectLine,'Mobile more navigation guard must exist');
+const screenAfterDrawGuard=new Function('state','navEntries','bottomItems',guardLine+'\\n'+redirectLine+'\\nreturn state.screen;');
+assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['more']]),'more','Mobile Thêm must remain selected');
+assert.equal(screenAfterDrawGuard({screen:'bogus'},()=>[['home']],()=>[['more']]),'home','Unknown screens must redirect home');
+assert.equal(screenAfterDrawGuard({screen:'account'},()=>[['account']],()=>[['home']]),'account','Account view must remain available');
+assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['account']]),'home','Users without More must not open it');
+assert.match(html, /app\.js\?v=2\.5\.1/);
+assert.match(sw, /112191-work-v2\.5\.1/);
+
 assert.match(app, /name="password" type="password" autocomplete="new-password"/);
 assert.match(app, /'staffResetForm'/);
 assert.match(app, /'staffEditForm'/);
