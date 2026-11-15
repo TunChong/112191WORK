@@ -189,3 +189,64 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.generate_daily_tasks_internal() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.generate_daily_tasks_internal() TO service_role;
+
+-- Scheduled recurring work must keep the same shop_id, not default to SHOP 102.
+CREATE OR REPLACE FUNCTION public.generate_daily_tasks_internal()
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $$
+DECLARE r public.recurring_templates; v_task uuid; v_on date;
+ v_count int:=0; v_time timestamptz;
+BEGIN
+ v_on=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+ FOR r IN SELECT rt.* FROM public.recurring_templates rt
+ JOIN public.work_shops s ON s.id=rt.shop_id AND s.active
+ WHERE rt.active AND rt.start_on<=v_on LOOP
+   v_time=(v_on + r.due_time) AT TIME ZONE 'Asia/Ho_Chi_Minh';
+   INSERT INTO public.tasks(shop_id,title,description,category,priority,due_at,created_by,recurring_template_id,recurring_on)
+   VALUES(r.shop_id,r.title,r.description,r.category,r.priority,v_time,r.created_by,r.id,v_on)
+   ON CONFLICT(recurring_template_id,recurring_on) DO NOTHING RETURNING id INTO v_task;
+   IF v_task IS NOT NULL THEN v_count:=v_count+1;
+   ELSE SELECT t.id INTO v_task FROM public.tasks t
+    WHERE t.recurring_template_id=r.id AND t.recurring_on=v_on;END IF;
+   INSERT INTO public.assignments(task_id,staff_id)
+   SELECT v_task,m.user_id FROM public.recurring_members rm
+   JOIN public.work_shop_memberships m ON m.user_id=rm.staff_id AND m.shop_id=r.shop_id
+    AND m.active AND m.shop_role='staff'
+   JOIN public.profiles p ON p.id=rm.staff_id AND p.active AND NOT p.must_change_password
+   WHERE rm.template_id=r.id
+   ON CONFLICT(task_id,staff_id) DO NOTHING;
+   v_task:=NULL;
+ END LOOP;
+ RETURN v_count;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.process_work_deadlines()
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $$
+DECLARE x record; v_count int:=0; v_type text; v_title text; v_key text;
+BEGIN
+ FOR x IN
+ SELECT a.id AS aid,a.staff_id,t.id AS tid,t.title,t.due_at,t.shop_id
+ FROM public.assignments a JOIN public.tasks t ON t.id=a.task_id
+ JOIN public.work_shops s ON s.id=t.shop_id AND s.active
+ WHERE a.status IN ('todo','rejected')
+ AND t.due_at BETWEEN now()-interval '30 days' AND now()+interval '30 minutes'
+ LOOP
+  IF x.due_at<=now() THEN v_type:='late';v_title:='Công việc quá hạn';
+  ELSE v_type:='soon';v_title:='Sắp đến hạn';END IF;
+  v_key:=v_type||':'||x.aid::text;
+  INSERT INTO public.notifications(recipient_id,title,body,task_id,assignment_id,event_key,shop_id)
+  VALUES(x.staff_id,v_title,x.title,x.tid,x.aid,v_key,x.shop_id)
+  ON CONFLICT(recipient_id,event_key) DO NOTHING;
+  IF v_type='late' THEN
+   INSERT INTO public.notifications(recipient_id,title,body,task_id,assignment_id,event_key,shop_id)
+   SELECT m.user_id,'Nhân viên trễ hạn',x.title,x.tid,x.aid,v_key,x.shop_id
+   FROM public.work_shop_memberships m JOIN public.profiles p ON p.id=m.user_id
+   WHERE m.shop_id=x.shop_id AND m.shop_role IN ('manager','shift_lead')
+   AND m.active AND p.active AND NOT p.must_change_password
+   ON CONFLICT(recipient_id,event_key) DO NOTHING;
+  END IF;
+  v_count:=v_count+1;
+ END LOOP;
+ RETURN v_count;
+END $$;
