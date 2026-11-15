@@ -800,17 +800,27 @@ async function switchShop(shopId){
 }
 async function submitShopForm(f){
  const fd=new FormData(f);
- if(!state.shopReady)throw new Error('Multi-SHOP chưa mở phân quyền vì đang kiểm thử bảo mật');
  if(f.id==='newShopForm'){
    if(!admin())throw new Error('Chỉ Super Admin được tạo SHOP');
    const result=await shopAdminRequest({action:'create_shop',
      shop_code:String(fd.get('code')||'').trim().toUpperCase(),
      shop_name:String(fd.get('name')||'').trim()});
-   state.shopId=result.shop.id;
+   state.shopId=result.shop.id;state.shopEditId=null;
    localStorage.setItem('work112191_selected_shop',state.shopId);
    await loadCloud();await loadShopMembers();draw();
-   toast('Đã tạo SHOP mới. Hãy cấp quyền Quản lý cho SHOP này.');
+   toast(result.operational?'Đã thêm SHOP thành công.':'Đã thêm SHOP vào danh mục. Chưa mở giao việc tới khi hoàn tất bảo mật.');
+ }else if(f.id==='editShopForm'){
+   if(!admin())throw new Error('Chỉ Super Admin được sửa SHOP');
+   const shopId=String(fd.get('id')||'');
+   if(!state.shops.some(s=>s.id===shopId))throw new Error('Không tìm thấy SHOP');
+   const result=await shopAdminRequest({action:'update_shop',shop_id:shopId,
+     shop_code:String(fd.get('code')||'').trim().toUpperCase(),
+     shop_name:String(fd.get('name')||'').trim()});
+   state.shopEditId=null;
+   await loadCloud();await loadShopMembers();draw();
+   toast('Đã lưu: '+shopLabel(result.shop));
  }else if(f.id==='newShopStaffForm'){
+   if(!state.shopReady)throw new Error('Chưa hoàn tất bảo mật để thêm nhân viên vào nhiều SHOP');
    const code=String(fd.get('code')||'').trim();
    const result=await shopAdminRequest({action:'add_staff',shop_id:state.shopId,
      employee_code:code,full_name:String(fd.get('name')||'').trim()});
@@ -818,6 +828,7 @@ async function submitShopForm(f){
    await loadCloud();await loadShopMembers();draw();
    toast('Đã tạo nhân viên trong SHOP hiện tại.');
  }else if(f.id==='grantShopManagerForm'){
+   if(!state.shopReady)throw new Error('Chưa hoàn tất bảo mật để cấp quyền Quản lý SHOP');
    if(!admin())throw new Error('Chỉ Super Admin được cấp quyền Quản lý');
    const code=String(fd.get('code')||'').trim();
    const rows=await cloudRequest('/rest/v1/profiles?employee_code=eq.'+encodeURIComponent(code)+'&select=id,full_name&limit=1');
@@ -847,6 +858,33 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='back-account'){state.screen='account';draw();return}
  if(name==='navigate'){if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);if(state.screen==='accounts')await loadStaffAdmin();if(state.screen==='shops')await loadShopMembers();return}
  if(name==='select-shop')return switchShop(el.dataset.id);
+ if(name==='shop-edit'){
+  if(!admin())throw new Error('Chỉ Admin được sửa SHOP');
+  state.shopEditId=el.dataset.id;draw();
+  document.querySelector('#shopEditSection')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  return;
+ }
+ if(name==='shop-cancel-edit'){state.shopEditId=null;draw();return}
+ if(name==='shop-delete'){
+  if(!admin())throw new Error('Chỉ Admin được xóa SHOP');
+  const sh=state.shops.find(x=>x.id===el.dataset.id);
+  if(!sh)throw new Error('Không tìm thấy SHOP');
+  if(sh.is_primary){toast('Không thể xóa SHOP chính đang quản lý dữ liệu');return}
+  const typed=prompt('Xóa '+shopLabel(sh)+'? Nhập MÃ KHO '+sh.shop_code+' để xác nhận. SHOP có dữ liệu sẽ được lưu trữ thay vì xóa vĩnh viễn.');
+  if(typed===null)return;
+  if(typed.trim().toUpperCase()!==sh.shop_code){toast('Mã xác nhận chưa đúng, chưa xóa SHOP');return}
+  const result=await shopAdminRequest({action:'delete_shop',shop_id:sh.id,confirm_code:sh.shop_code});
+  if(state.shopEditId===sh.id)state.shopEditId=null;
+  if(state.shopId===sh.id)state.shopId=null;
+  await loadCloud();if(state.shopId)await loadShopMembers();draw();
+  toast(result.archived?'SHOP có dữ liệu đã được lưu trữ an toàn.':'Đã xóa SHOP trống.');
+  return;
+ }
+ if(name==='shop-restore'){
+  if(!admin()||!state.shopReady)throw new Error('SHOP chưa thể kích hoạt trong giai đoạn kiểm thử');
+  const result=await shopAdminRequest({action:'restore_shop',shop_id:el.dataset.id});
+  await loadCloud();await loadShopMembers();draw();toast('Đã khôi phục SHOP');return;
+ }
  if(name==='refresh-shop-members')return loadShopMembers();
  if(name==='shop-member-active'){
   const active=el.dataset.active==='true';
@@ -892,8 +930,8 @@ async function action(el,e){const name=el.dataset.action;
 }
 document.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(el)action(el,e).catch?.(err=>toast(err.message))});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;draw()};if((e.key==='Enter'||e.key===' ')&&e.target.matches('.task-card')){e.preventDefault();e.target.click()}});
-document.addEventListener('submit',async e=>{const f=e.target;if(['newShopForm','newShopStaffForm','grantShopManagerForm','createTaskForm','createStaffForm','staffResetForm','staffEditForm','staffRoleForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
- if(['newShopForm','newShopStaffForm','grantShopManagerForm'].includes(f.id))await submitShopForm(f);
+document.addEventListener('submit',async e=>{const f=e.target;if(['newShopForm','editShopForm','newShopStaffForm','grantShopManagerForm','createTaskForm','createStaffForm','staffResetForm','staffEditForm','staffRoleForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
+ if(['newShopForm','editShopForm','newShopStaffForm','grantShopManagerForm'].includes(f.id))await submitShopForm(f);
   else if(f.id==='createTaskForm')await createTask(e);
  else if(f.id==='createStaffForm')await createStaff(e);
  else if(f.id==='staffResetForm')await submitStaffReset(e);
@@ -907,6 +945,15 @@ document.addEventListener('submit',async e=>{const f=e.target;if(['newShopForm',
 document.addEventListener('change',e=>{
  if(e.target.id==='demoStaffSelect'&&e.target.value)loginDemo(e.target.value).catch(err=>toast(err.message));
  if(e.target.id==='activeShop'&&e.target.value)switchShop(e.target.value).catch(err=>toast(err.message));
+});
+document.addEventListener('input',e=>{
+ if(['newWarehouseCode','newShopName','editWarehouseCode','editShopName'].includes(e.target.id)){
+  const editing=e.target.id.startsWith('edit');
+  const code=document.getElementById(editing?'editWarehouseCode':'newWarehouseCode')?.value.trim().toUpperCase()||'MÃ KHO';
+  const name=document.getElementById(editing?'editShopName':'newShopName')?.value.trim()||'TÊN SHOP';
+  const preview=document.getElementById(editing?'editShopPreview':'newShopPreview');
+  if(preview)preview.textContent=code+' - '+name;
+ }
 });
 document.addEventListener('input',e=>{if(e.target.id==='shopSearch'){state.shopSearch=e.target.value;const pos=e.target.selectionStart;draw();const input=document.querySelector('#shopSearch');if(input){input.focus();input.setSelectionRange(pos,pos)}return}if(e.target.id==='taskSearch'){state.search=e.target.value;const where=e.target.selectionStart;draw();const input=document.querySelector('#taskSearch');if(input){input.focus();input.setSelectionRange(where,where)}}});
 async function boot(){
