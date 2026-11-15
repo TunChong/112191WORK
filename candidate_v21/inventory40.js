@@ -413,5 +413,5 @@ document.addEventListener('input',function(ev){
   if(fresh){fresh.focus();fresh.setSelectionRange(n,n);}
  }
 });
-window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera,isCameraRunning:()=>S.cameraActive||S.cameraPhase==='processing'||S.cameraPhase==='starting',_test:{startCamera,acceptCameraCode,countCode,state:S}};
+window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera,isCameraRunning:()=>S.cameraActive && !!S.cameraStartPromise,_test:{startCamera,acceptCameraCode,countCode,state:S}};
 })();
