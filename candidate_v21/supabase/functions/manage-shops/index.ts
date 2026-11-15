@@ -61,14 +61,14 @@ Deno.serve(async(req:Request)=>{
   if(action==='status')return answer(req,200,{ready:await enabled(),super_admin:isAdmin,shop_count:own.length});
   if(action==='list_shops'){
    if(!isAdmin && own.length===0)return answer(req,200,{shops:[],page,limit});
-   const all=isAdmin? await api('/rest/v1/work_shops?select=id,shop_code,shop_name,active&order=shop_code.asc&limit='+limit+'&offset='+(page*limit))
-     : await api('/rest/v1/work_shops?select=id,shop_code,shop_name,active&id=in.('+own.map((x:Row)=>x.shop_id).filter(validUUID).join(',')+')&order=shop_code.asc&limit='+limit+'&offset='+(page*limit));
+   const all=isAdmin? await api('/rest/v1/work_shops?select=id,shop_code,shop_name,active,is_primary&order=shop_code.asc&limit='+limit+'&offset='+(page*limit))
+     : await api('/rest/v1/work_shops?select=id,shop_code,shop_name,active,is_primary&id=in.('+own.map((x:Row)=>x.shop_id).filter(validUUID).join(',')+')&order=shop_code.asc&limit='+limit+'&offset='+(page*limit));
    const byShop=new Map(own.map((x:Row)=>[x.shop_id,x.shop_role]));
    return answer(req,200,{shops:all.map((s:Row)=>({...s,shop_role:isAdmin?'super_admin':byShop.get(s.id)||null})),page,limit});
   }
   if(action==='create_shop'){
    if(!isAdmin)return answer(req,403,{error:'Chỉ Super Admin được tạo SHOP'});
-   if(!await enabled())return answer(req,423,{error:'Chưa hoàn tất cách ly dữ liệu Multi-SHOP'});
+   const operational=await enabled();
    const code=String(data.shop_code||'').trim().toUpperCase();
    const name=String(data.shop_name||'').trim().replace(/\s+/g,' ');
    if(!shopCodeOK(code)||name.length<3||name.length>160)
@@ -76,15 +76,60 @@ Deno.serve(async(req:Request)=>{
    const previous=await one('/rest/v1/work_shops?shop_code=eq.'+encodeURIComponent(code)+'&select=id');
    if(previous)return answer(req,409,{error:'Mã SHOP đã tồn tại'});
    const made=await api('/rest/v1/work_shops',{method:'POST',prefer:'return=representation',
-     body:{shop_code:code,shop_name:name,active:true,created_by:actor.id}});
+     body:{shop_code:code,shop_name:name,active:operational,created_by:actor.id}});
    const fresh=made?.[0];
    if(!validUUID(fresh?.id))throw new Error('Failed to create SHOP');
    await logAction(fresh.id,actor.id,null,'create_shop');
-   return answer(req,200,{ok:true,shop:fresh});
+   return answer(req,200,{ok:true,shop:fresh,operational,notice:operational?'':'SHOP đã được thêm vào danh sách, chưa mở giao việc'});
   }
   if(!validUUID(shop))return answer(req,400,{error:'Thiếu mã SHOP hợp lệ'});
-  const targetShop=await one('/rest/v1/work_shops?id=eq.'+shop+'&select=id,shop_code,shop_name,active');
+  const targetShop=await one('/rest/v1/work_shops?id=eq.'+shop+'&select=id,shop_code,shop_name,active,is_primary');
   if(!targetShop)return answer(req,404,{error:'SHOP không tồn tại'});
+  // Catalog management remains available before multi-shop data isolation.
+  // Only the sole Super Admin can modify shop metadata. Business operations stay gated.
+  if(action==='update_shop'){
+   if(!isAdmin)return answer(req,403,{error:'Chỉ Admin 112191 được sửa SHOP'});
+   const code=String(data.shop_code||'').trim().toUpperCase();
+   const name=String(data.shop_name||'').trim().replace(/\s+/g,' ');
+   if(!shopCodeOK(code)||name.length<3||name.length>160)
+     return answer(req,400,{error:'Mã kho (2–32 ký tự) hoặc tên SHOP không hợp lệ'});
+   const duplicate=await one('/rest/v1/work_shops?shop_code=eq.'+encodeURIComponent(code)+'&select=id&limit=1');
+   if(duplicate && duplicate.id!==shop)return answer(req,409,{error:'Mã kho đã tồn tại ở SHOP khác'});
+   const saved=await api('/rest/v1/work_shops?id=eq.'+shop,{method:'PATCH',
+     prefer:'return=representation',body:{shop_code:code,shop_name:name,updated_at:new Date().toISOString()}});
+   await logAction(shop,actor.id,null,'update_shop_details');
+   return answer(req,200,{ok:true,shop:saved?.[0]||{...targetShop,shop_code:code,shop_name:name}});
+  }
+  if(action==='delete_shop'){
+   if(!isAdmin)return answer(req,403,{error:'Chỉ Admin 112191 được xóa SHOP'});
+   if(targetShop.is_primary)return answer(req,403,{error:'SHOP chính đang có tài khoản và dữ liệu. Không thể xóa SHOP này'});
+   if(data.confirm_code!==targetShop.shop_code)
+      return answer(req,400,{error:'Nhập đúng mã kho để xác nhận xóa SHOP'});
+   const children=['work_shop_memberships','tasks','recurring_templates','assignments','recurring_members','notifications'];
+   let linked=false;
+   for(const table of children){
+     const found=await api('/rest/v1/'+table+'?shop_id=eq.'+shop+'&select=shop_id&limit=1');
+     if(Array.isArray(found)&&found.length){linked=true;break}
+   }
+   if(linked){
+     await api('/rest/v1/work_shops?id=eq.'+shop,{method:'PATCH',prefer:'return=minimal',
+       body:{active:false,updated_at:new Date().toISOString()}});
+     await logAction(shop,actor.id,null,'archive_shop_has_history');
+     return answer(req,200,{ok:true,archived:true,deleted:false,
+       notice:'SHOP có nhân viên hoặc lịch sử: đã lưu trữ an toàn, không xóa dữ liệu'});
+   }
+   await logAction(shop,actor.id,null,'delete_empty_shop');
+   await api('/rest/v1/work_shops?id=eq.'+shop,{method:'DELETE',prefer:'return=minimal'});
+   return answer(req,200,{ok:true,deleted:true});
+  }
+  if(action==='restore_shop'){
+   if(!isAdmin)return answer(req,403,{error:'Chỉ Admin được khôi phục SHOP'});
+   if(!await enabled())return answer(req,423,{error:'SHOP chưa thể kích hoạt trước khi hoàn tất cách ly dữ liệu'});
+   await api('/rest/v1/work_shops?id=eq.'+shop,{method:'PATCH',prefer:'return=minimal',
+     body:{active:true,updated_at:new Date().toISOString()}});
+   await logAction(shop,actor.id,null,'restore_shop');
+   return answer(req,200,{ok:true});
+  }
   if(action==='list_members'){
    if(!managerFor(shop))return answer(req,403,{error:'Không được xem nhân sự của SHOP này'});
    const memberships=await api('/rest/v1/work_shop_memberships?select=user_id,shop_role,active,created_at&shop_id=eq.'+shop+'&order=created_at.asc&limit='+limit+'&offset='+(page*limit));
@@ -93,8 +138,8 @@ Deno.serve(async(req:Request)=>{
    const byId=new Map(profiles.map((p:Row)=>[p.id,p]));
    return answer(req,200,{members:memberships.map((m:Row)=>({...m,profile:byId.get(m.user_id)||null})),page,limit});
   }
-  // Legacy single-shop policies still grant global access to managers.
-  // WRITE MUTATIONS MUST NOT RUN until the full isolation migration and secure frontend are live.
+  // Legacy manager policies still allow global work access. ONLY catalog CRUD above is enabled while locked.
+  // Staff delegation, task management and membership mutations must remain disabled until RLS isolation is verified.
   if(!await enabled())return answer(req,423,{error:'Multi-SHOP đang chuẩn bị bảo mật; chưa bật thao tác quản lý SHOP'});
   if(!targetShop.active&&action!=='set_shop_active')return answer(req,409,{error:'SHOP đang bị khóa'});
   if(action==='set_shop_active'){
