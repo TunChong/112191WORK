@@ -75,8 +75,8 @@ Deno.serve(async (req:Request)=>{
    try{
      await request('/rest/v1/profiles?on_conflict=id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{id:uid,employee_code:code,full_name:name,role,active:true,must_change_password:true,is_admin:false}});
      // Preserve v2 single-shop workflow after v3 RLS goes live.
-     const defaultShop=await request('/rest/v1/work_shops?shop_code=eq.102&select=id&limit=1');
-     if(!defaultShop[0]?.id)throw new Error('Legacy SHOP 102 is missing');
+     const defaultShop=await request('/rest/v1/work_shops?is_primary=eq.true&select=id&limit=1');
+     if(!defaultShop[0]?.id)throw new Error('Primary SHOP is missing');
      await request('/rest/v1/work_shop_memberships?on_conflict=shop_id,user_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',
         body:{shop_id:defaultShop[0].id,user_id:uid,shop_role:role,active:true,granted_by:signed.id}});
    }
