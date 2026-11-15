@@ -1,0 +1,55 @@
+/* KIỂM KÊ 4.0 — scoped component styles. Works on desktop and mobile. */
+.inv40{display:flex;flex-direction:column;gap:16px;padding-bottom:25px;color:#1b2b4b;min-width:0}
+.inv40 .panel{min-width:0;overflow:hidden}
+.inv40 h2{font-size:17px;letter-spacing:.01em;margin:0 0 9px}
+.inv40 .panel-head h2{margin:0}
+.inv40 .subtitle{font-size:12px;color:#75839d}
+.inv-line{display:flex;align-items:center;gap:9px;margin-top:12px;flex-wrap:wrap}
+.inv-line label{font-weight:750;font-size:12px;color:#52637f}
+.inv-line select{flex:1;min-width:150px;max-width:100%;padding:11px 13px;border:1px solid #d4ddea;border-radius:11px;color:#22365c;background:#fff}
+.inv-sm{border:1px solid #cfdaeb;border-radius:10px;background:#fff;color:#214d9a;font-weight:700;padding:10px 12px;cursor:pointer;font-size:12px}
+.inv-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.inv-stats>div{background:#fff;border:1px solid #dfe6f0;border-radius:14px;padding:15px;min-width:0}
+.inv-stats small{display:block;font-size:10px;letter-spacing:.045em;color:#75839a;font-weight:700}
+.inv-stats strong{display:block;font-size:25px;font-weight:800;margin-top:7px;color:#192e57;line-height:1.1}
+.inv-stats .inv-red{color:#d13b48}.inv-stats .inv-green{color:#12935d}
+.inv-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:#eaf0fa;border-radius:14px;padding:6px}
+.inv-tabs button{border:0;border-radius:11px;min-width:0;font-size:13px;font-weight:800;background:transparent;color:#64758f;padding:12px 4px;cursor:pointer}
+.inv-tabs button.selected{background:#1c56d7;color:#fff;box-shadow:0 3px 9px #1545b51f}
+.inv-hint{font-size:12px;color:#6b7a91;line-height:1.6;margin:10px 0}
+.inv-search input,.inv-form input,.inv-form select{width:100%;max-width:100%;min-width:0;border:1px solid #d9e1ef;border-radius:11px;padding:12px 13px;color:#233758;background:#fff;font-size:14px;box-sizing:border-box}
+.inv-search input{background:#fff}
+.inv-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:12px;margin-top:16px}
+.inv-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:#586981;min-width:0}
+.inv-form .btn{min-height:44px}
+.inv-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #edf0f5;border-radius:11px}
+.inv-table{width:100%;border-collapse:collapse;table-layout:auto;font-size:12px;min-width:490px}
+.inv-table th{white-space:nowrap;text-align:left;background:#f0f5ff;color:#254780;padding:12px 10px;font-size:11px}
+.inv-table td{padding:11px 10px;border-top:1px solid #edf1f7;line-height:1.45}
+.inv-table td:nth-child(2){min-width:135px}
+.inv-table .inv-code{font-weight:700;white-space:nowrap}
+.inv-table .inv-num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.inv-camera-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0}
+.inv-reader{width:100%;max-width:490px;min-height:220px;background:#10192a;border-radius:15px;overflow:hidden;margin:12px auto}
+.inv-last{border-radius:12px;background:#e8f2ff;color:#174bb5;padding:13px;font-size:13px;font-weight:700;margin-top:15px}
+.inv-sidebyside{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.inv-variance{padding:15px;background:#fff;border:1px solid #dfe6f0;border-radius:15px;min-width:0}
+.inv-variance h3{font-size:13px;margin:0 0 14px;font-weight:800;line-height:1.5}
+.inv-variance.is-missing h3{color:#c63c40}.inv-variance.is-extra h3{color:#158255}
+.inv-variance.is-missing .inv-table th{background:#fff0f0;color:#9f2e36}
+.inv-variance.is-extra .inv-table th{background:#e7f9ef;color:#137e52}
+.inv-variance.is-missing strong{color:#cf2e38}.inv-variance.is-extra strong{color:#158a58}
+@media(max-width:950px){.inv-sidebyside{grid-template-columns:1fr}}
+@media(max-width:650px){
+ .inv40{gap:12px}
+ .inv-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .inv-stats>div{padding:12px}
+ .inv-stats strong{font-size:22px}
+ .inv-tabs button{font-size:11px;min-height:42px}
+ .inv-form{grid-template-columns:1fr}
+ .inv-line{align-items:stretch}
+ .inv-line label{width:100%}
+ .inv-line select{min-width:0}
+ .inv-table{font-size:12px}
+ .inv-variance{padding:10px}
+}
