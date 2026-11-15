@@ -3,7 +3,8 @@
 'use strict';
 const S={shop:null,tab:'stock',sessions:[],sessionId:null,stock:[],counts:[],busy:false,loading:false,
  importing:false,progress:'',query:'',last:null,camera:null,cameraActive:false,lastCameraCode:'',lastCameraAt:0,
- scanBusy:false,scanQueue:Promise.resolve(),requestSerial:0};
+ scanBusy:false,scanQueue:Promise.resolve(),requestSerial:0,
+ cameraEpoch:0,cameraPhase:'idle',cameraStartPromise:null,cameraStopping:null,scanAccepted:false,scanResult:'',scanError:''};
 let H=null;let xlsxLoading=null;let scannerLoading=null;
 const unknown='CHƯA CÓ TRONG DANH MỤC';
 const esc=x=>H&&H.esc?H.esc(String(x==null?'':x)):String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -187,11 +188,11 @@ function stockTable(){
 }
 function countTable(){
  const rows=filterRows(S.counts).sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||'')),shown=rows.slice(0,100);
- return '<div class="inv-scroll"><table class="inv-table"><thead><tr><th>MÃ SẢN PHẨM</th><th>TÊN SẢN PHẨM</th><th>ĐÃ QUÉT (TỰ CỘNG)</th>'+(manage()?'<th>SỬA</th>':'')+'</tr></thead><tbody>'+
- shown.map(r=>'<tr><td class="inv-code">'+esc(r.product_code)+'</td><td>'+esc(r.product_name)+'</td><td class="inv-num">'+format(r.counted_qty)+'</td>'+
- (manage()?'<td><button class="inv-sm" data-inv-action="adjust" data-code="'+esc(r.product_code)+'">Điều chỉnh</button></td>':'')+'</tr>').join('')+
- '</tbody></table></div><p class="inv-hint">Mỗi lượt quét hợp lệ tăng đúng 1. Không cần nhập ô số lượng.</p>';
+ return '<div class="inv-scroll"><table class="inv-table"><thead><tr><th>MÃ SẢN PHẨM</th><th>TÊN SẢN PHẨM</th><th>ĐÃ QUÉT (TỰ CỘNG)</th></tr></thead><tbody>'+
+ shown.map(r=>'<tr><td class="inv-code">'+esc(r.product_code)+'</td><td>'+esc(r.product_name)+'</td><td class="inv-num">'+format(r.counted_qty)+'</td></tr>').join('')+
+ '</tbody></table></div><p class="inv-hint">Số lượng chỉ tăng sau khi quét thành công. Không có chức năng sửa số lượng.</p>';
 }
+
 function varianceTable(label,rows,type){
  const shown=filterRows(rows.map(r=>({...r,product_code:r.code,product_name:r.name}))).slice(0,100);
  return '<section class="inv-variance '+(type==='missing'?'is-missing':'is-extra')+'"><h3>'+label+'</h3>'+
@@ -217,13 +218,20 @@ function view(){
  }else if(S.tab==='count'){
   body='<section class="panel"><h2>NHẬP LIỆU – QUÉT QR / BARCODE</h2>'+
   (!canScan?'<p class="inv-hint">Chọn kỳ kiểm kê đang mở và đã có tồn kho trước khi quét.</p>':
-  '<p class="inv-hint">Điện thoại: bấm Mở camera. Máy tính: nhập mã hoặc dùng máy quét USB (quét và Enter). Mỗi mã quét 1 lần cộng 1 sản phẩm.</p>'+
-  '<div class="inv-camera-actions"><button class="btn" type="button" data-inv-action="'+(S.cameraActive?'stop-camera':'start-camera')+'">'+(S.cameraActive?'Tắt camera':'📷 Quét QR / mã vạch')+'</button></div>'+
+  '<p class="inv-hint">Mỗi lượt camera chỉ nhận <b>1 mã và cộng 1 sản phẩm</b>. Khi nhận mã, camera tự tắt và hiện kết quả. Bấm QUÉT TIẾP để quét thêm.</p>'+
+  '<div class="inv-camera-actions"><button class="btn" type="button" data-inv-action="'+(S.cameraActive?'stop-camera':'start-camera')+'" '+(S.cameraPhase==='processing'||S.cameraPhase==='stopping'||S.cameraPhase==='starting'?'disabled':'')+'>'+
+   (S.cameraPhase==='processing'?'Đang ghi nhận...':S.cameraPhase==='stopping'?'Đang tắt camera...':S.cameraPhase==='starting'?'Đang mở camera...':S.cameraActive?'Tắt camera':S.scanResult==='success'?'📷 QUÉT TIẾP':'📷 MỞ CAMERA QUÉT MÃ')+'</button></div>'+
   (S.cameraActive?'<div id="inv-reader" class="inv-reader"></div>':'')+
   '<form id="invScanForm" class="inv-form"><label>MÃ SẢN PHẨM<input id="invScanCode" name="code" type="text" maxlength="100" autocapitalize="off" autocomplete="off" required placeholder="Quét mã hoặc nhập mã..."></label>'+
   '<label>TÊN SẢN PHẨM (nếu chưa có trong tồn kho)<input name="name" type="text" maxlength="300" placeholder="Tùy chọn – mã chưa có trong file tồn"></label>'+
   '<button type="submit" class="btn">+ Ghi nhận 1 lượt</button></form>')+
-  '<div class="inv-last" id="inv-last">'+(S.last?'Đã ghi: '+esc(S.last.product_code)+' · '+esc(S.last.product_name)+' · Số lượng '+format(S.last.counted_qty):'Chưa có lượt quét mới trong phiên này')+'</div></section>'+
+  '<div class="inv-last '+(S.scanResult==='success'?'inv-scan-success':S.scanResult==='error'?'inv-scan-error':'')+'" id="inv-last">'+
+   (S.scanResult==='success'&&S.last?'✅ ĐÃ QUÉT THÀNH CÔNG · Mã '+esc(S.last.product_code)+' · '+esc(S.last.product_name)+' · ĐÃ ĐẾM: '+format(S.last.counted_qty):
+   S.scanResult==='error'?'⚠️ CHƯA GHI NHẬN · '+esc(S.scanError)+' · Bấm QUÉT TIẾP để thử lại':
+   S.cameraPhase==='processing'?'Đang lưu 1 sản phẩm lên hệ thống...':
+   S.cameraActive?'Đưa mã QR/barcode vào khung quét. Camera sẽ tự tắt khi nhận mã.':
+   S.last?'Lượt gần nhất: '+esc(S.last.product_code)+' · Số lượng '+format(S.last.counted_qty):'Chưa có lượt quét mới trong phiên này')+
+   '</div></section>'+
   '<section class="panel"><h2>DANH SÁCH ĐÃ QUÉT</h2>'+(S.counts.length?countTable():'<p class="inv-hint">Chưa quét sản phẩm nào.</p>')+'</section>';
  }else{
   body='<section class="panel"><h2>BÁO CÁO THIẾU / DƯ</h2>'+
@@ -242,52 +250,105 @@ function view(){
  '<div class="inv-search"><input id="invSearch" placeholder="Tìm mã / tên sản phẩm..." value="'+esc(S.query)+'" autocomplete="off"></div>'+
  body+'</div>';
 }
-async function countCode(code,name='',cameraEvent=false){
+async function countCode(code,name=''){
  if(!current()||current().state!=='open')throw new Error('Kỳ kiểm kê chưa mở');
  code=normalizeCode(code);
  if(!code||code.length>100)throw new Error('Mã sản phẩm phải có từ 1–100 ký tự');
- if(cameraEvent){
-  const now=Date.now();
-  if(S.lastCameraCode===code&&now-S.lastCameraAt<1800)return;
-  if(S.scanBusy)return;
-  S.lastCameraCode=code;S.lastCameraAt=now;
- }
- if(cameraEvent&&S.scanBusy)return;
+ const selectedSession=S.sessionId,selectedShop=S.shop;
  const writeOne=async()=>{
- S.scanBusy=true;
- try{
-  const res=await rpc('inventory_scan',{p_session:S.sessionId,p_code:code,p_name:name||null});
-  const item=S.counts.find(x=>x.product_code===code);
-  const update={product_code:code,product_name:res.product_name||unknown,counted_qty:res.counted_qty,updated_at:new Date().toISOString()};
-  if(item)Object.assign(item,update);else S.counts.unshift(update);
-  S.last=res;
-  const el=document.getElementById('inv-last');
-  if(el)el.textContent='Đã quét: '+res.product_code+' · '+res.product_name+' · Số lượng '+format(res.counted_qty);
-  if(window.navigator&&navigator.vibrate&&cameraEvent)navigator.vibrate(60);
-  if(!S.cameraActive)redraw();
- }finally{S.scanBusy=false;}
+  S.scanBusy=true;
+  try{
+   const res=await rpc('inventory_scan',{p_session:selectedSession,p_code:code,p_name:name||null});
+   if(selectedSession!==S.sessionId||selectedShop!==S.shop)return res;
+   const item=S.counts.find(x=>x.product_code===code);
+   const update={product_code:code,product_name:res.product_name||unknown,counted_qty:res.counted_qty,updated_at:new Date().toISOString()};
+   if(item)Object.assign(item,update);else S.counts.unshift(update);
+   S.last=res;S.scanResult='success';S.scanError='';
+   if(window.navigator&&navigator.vibrate)navigator.vibrate(60);
+   redraw();
+   return res;
+  }finally{S.scanBusy=false;}
  };
- // A handheld barcode scanner may send multiple Enter presses before the network
- // responds. Queue every manual scan rather than silently dropping valid units.
+ // Queued USB/manual events each represent one deliberate Enter; never drop them.
  S.scanQueue=S.scanQueue.catch(()=>{}).then(writeOne);
  return S.scanQueue;
 }
+async function acceptCameraCode(decoded,epoch){
+ // Lock synchronously before ANY await: a QR library often emits 10+ callbacks/second.
+ if(epoch!==S.cameraEpoch||S.scanAccepted||S.cameraPhase!=='scanning')return;
+ S.scanAccepted=true;
+ S.cameraPhase='processing';
+ S.scanResult='';S.scanError='';
+ const code=normalizeCode(decoded);
+ const selectedSession=S.sessionId;
+ // Turn camera OFF before writing to database; never leave it reading while saving.
+ await stopCamera({keepProcessing:true});
+ if(epoch!==S.cameraEpoch||selectedSession!==S.sessionId)return;
+ if(!code||code.length>100){
+  S.scanResult='error';S.scanError='Mã quét không hợp lệ';S.cameraPhase='idle';redraw();return;
+ }
+ try{
+  await countCode(code);
+ }catch(e){
+  S.scanResult='error';S.scanError=e?.message||'Lỗi mạng khi ghi nhận';
+  notify('Kiểm kê 4.0: '+S.scanError);
+ }finally{
+  S.cameraPhase='idle';redraw();
+ }
+}
 async function startCamera(){
  if(!current()||current().state!=='open')throw new Error('Chưa có kỳ kiểm kê đang mở');
+ if(S.cameraPhase!=='idle'||S.cameraActive)return;
  if(!navigator.mediaDevices?.getUserMedia)throw new Error('Trình duyệt không hỗ trợ camera. Hãy dùng HTTPS hoặc nhập mã thủ công.');
- await scannerLib();
- if(S.cameraActive)return;
- S.cameraActive=true;redraw();
+ S.cameraPhase='starting';
+ const epoch=++S.cameraEpoch;
+ S.scanAccepted=false;
+ S.scanResult='';S.scanError='';
  try{
+  await scannerLib();
+  if(epoch!==S.cameraEpoch)return;
+  S.cameraActive=true;
+  redraw(); // Mount reader before Html5Qrcode.start; do not redraw while video is live.
   const camera=new window.Html5Qrcode('inv-reader',{verbose:false});
   S.camera=camera;
-  await camera.start({facingMode:'environment'},{fps:10,qrbox:(w,h)=>({width:Math.min(w-30,300),height:Math.min(h-30,220)})},
-    (decoded)=>{countCode(decoded,'',true).catch(e=>notify('Không ghi được mã: '+e.message));},()=>{});
- }catch(e){S.cameraActive=false;S.camera=null;redraw();throw new Error('Không mở được camera: '+(e.message||e)+'. Hãy cấp quyền Camera cho trình duyệt.');}
+  S.cameraStartPromise=camera.start({facingMode:'environment'},
+   {fps:10,qrbox:(w,h)=>({width:Math.min(w-30,300),height:Math.min(h-30,220)})},
+   decoded=>{if(epoch!==S.cameraEpoch)return;acceptCameraCode(decoded,epoch).catch(e=>{S.scanError=e?.message||'Lỗi khi quét';S.scanResult='error';S.cameraPhase='idle';redraw();});},
+   ()=>{});
+  await S.cameraStartPromise;
+  if(epoch===S.cameraEpoch&&S.cameraPhase==='starting')S.cameraPhase='scanning';
+ }catch(e){
+  if(epoch===S.cameraEpoch){
+   await stopCamera();
+   S.cameraPhase='idle';S.scanResult='error';S.scanError='Không mở được camera: '+(e?.message||e);
+   redraw();
+  }
+  throw new Error('Không mở được camera: '+(e?.message||e)+'. Kiểm tra quyền Camera.');
+ }
 }
-async function stopCamera(){
- const camera=S.camera;S.cameraActive=false;S.camera=null;
- if(camera){try{await camera.stop()}catch(_){}try{camera.clear()}catch(_){}}
+async function stopCamera(options={}){
+ // Invalidate callbacks immediately for manual stop. For a recognized code keep
+ // its generation token so the single accepted scan can finish saving.
+ if(!options.keepProcessing)S.cameraEpoch++;
+ S.scanAccepted=true;
+ if(S.cameraStopping)return S.cameraStopping;
+ const camera=S.camera;
+ S.cameraActive=false;
+ if(!options.keepProcessing)S.cameraPhase='stopping';
+ S.cameraStopping=(async()=>{
+  const boot=S.cameraStartPromise;
+  if(boot){try{await boot}catch(_){}}
+  if(camera){
+   try{await camera.stop()}catch(_){}
+   try{await camera.clear()}catch(_){}
+  }
+  if(S.camera===camera)S.camera=null;
+  S.cameraStartPromise=null;
+ })();
+ try{await S.cameraStopping;}finally{
+  S.cameraStopping=null;
+  if(!options.keepProcessing)S.cameraPhase='idle';
+ }
 }
 async function leave(){await stopCamera();}
 async function onShopChange(){await leave();S.shop=null;S.sessionId=null;S.sessions=[];S.stock=[];S.counts=[];S.requestSerial++;}
@@ -316,15 +377,6 @@ async function performAction(btn){
  if(act==='start-camera')return startCamera();
  if(act==='stop-camera'){await stopCamera();redraw();return;}
  if(act==='export')return exportExcel();
- if(act==='adjust'){
-  const code=btn.dataset.code,old=S.counts.find(x=>x.product_code===code);
-  const raw=prompt('Điều chỉnh số lượng đã đếm của mã '+code,old?old.counted_qty:0);
-  if(raw===null)return;
-  const n=normalizeQuantity(raw);
-  if(n===null||!Number.isInteger(n)||n<0)throw new Error('Số lượng phải là số nguyên không âm');
-  await rpc('inventory_adjust_count',{p_session:S.sessionId,p_code:code,p_quantity:n});
-  await readSession(S.sessionId);redraw();notify('Đã cập nhật kiểm đếm mã '+code);return;
- }
  if(act==='close-session'){
   if(!confirm('Khóa kỳ kiểm kê? Sau khi khóa sẽ không thể quét hay sửa số lượng.'))return;
   await rpc('inventory_close_session',{p_session:S.sessionId});await load();notify('Đã khóa kỳ kiểm kê.');return;
@@ -361,5 +413,5 @@ document.addEventListener('input',function(ev){
   if(fresh){fresh.focus();fresh.setSelectionRange(n,n);}
  }
 });
-window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera};
+window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera,isCameraRunning:()=>S.cameraActive||S.cameraPhase==='processing'||S.cameraPhase==='starting',_test:{startCamera,acceptCameraCode,countCode,state:S}};
 })();
