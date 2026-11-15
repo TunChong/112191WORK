@@ -36,6 +36,12 @@ Deno.serve(async (req:Request)=>{
   const managerProfiles=await request('/rest/v1/profiles?select=role,active,must_change_password,is_admin&id=eq.'+encodeURIComponent(signed.id)+'&limit=1');
   if(managerProfiles[0]?.role!=='manager'||managerProfiles[0]?.active!==true||managerProfiles[0]?.must_change_password!==false)return reply(req,403,{error:'Chỉ quản lý được phép'});
   const actorAdmin=managerProfiles[0]?.is_admin===true;
+  // When multi-shop isolation is enabled, legacy global staff management belongs
+  // to the single Super Admin. Shop managers must use manage-shops and its shop_id.
+  const multishop=await request('/rest/v1/work_multi_shop_config?key=eq.production&select=isolation_ready&limit=1');
+  if(multishop?.[0]?.isolation_ready===true && !actorAdmin)
+   return reply(req,403,{error:'Quản lý SHOP phải sử dụng quyền quản lý nhân sự theo SHOP'});
+
   const data=await req.json() as Obj,action=String(data.action||'');
   const validRole=(r:unknown):r is string=>r==='staff'||r==='shift_lead'||r==='manager';
   const positionName=(r:string)=>r==='manager'?'Quản lý':r==='shift_lead'?'Trưởng ca':'Nhân viên';
@@ -66,7 +72,14 @@ Deno.serve(async (req:Request)=>{
    const created=await request('/auth/v1/admin/users',{method:'POST',body:{email:code+'@112191work.pages.dev',password:pw,email_confirm:true,user_metadata:{employee_code:code,full_name:name}}});
    const uid=created?.user?.id||created?.id;
    if(!validId(uid))throw new Error('Could not create auth identity');
-   try{await request('/rest/v1/profiles?on_conflict=id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{id:uid,employee_code:code,full_name:name,role,active:true,must_change_password:true,is_admin:false}})}
+   try{
+     await request('/rest/v1/profiles?on_conflict=id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{id:uid,employee_code:code,full_name:name,role,active:true,must_change_password:true,is_admin:false}});
+     // Preserve v2 single-shop workflow after v3 RLS goes live.
+     const defaultShop=await request('/rest/v1/work_shops?shop_code=eq.102&select=id&limit=1');
+     if(!defaultShop[0]?.id)throw new Error('Legacy SHOP 102 is missing');
+     await request('/rest/v1/work_shop_memberships?on_conflict=shop_id,user_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',
+        body:{shop_id:defaultShop[0].id,user_id:uid,shop_role:role,active:true,granted_by:signed.id}});
+   }
    catch(e){try{await request('/auth/v1/admin/users/'+uid,{method:'DELETE'})}catch{};throw e}
    let auditWarning=false;
    try{await audit(signed.id,uid,code,'created')}catch{auditWarning=true;console.error('staff audit insert failed after creation')}
