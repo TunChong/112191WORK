@@ -121,6 +121,13 @@ WITH CHECK (bucket_id='task-evidence'
  AND a.staff_id=(select auth.uid()) AND a.status IN ('todo','rejected')
  AND public.work_is_shop_staff(t.shop_id,(select auth.uid()))));
 
+
+-- Shift leads need membership visibility to choose staff for task assignment,
+-- but cannot change membership records.
+DROP POLICY IF EXISTS work_shop_memberships_view ON public.work_shop_memberships;
+CREATE POLICY work_shop_memberships_view ON public.work_shop_memberships FOR SELECT TO authenticated
+USING (user_id=(select auth.uid()) OR public.work_can_supervise_shop(shop_id));
+
 -- Business RPCs run as DEFINER, so they must explicitly verify shop membership.
 CREATE OR REPLACE FUNCTION public.review_assignment(
  p_assignment_id uuid,p_approved boolean,p_feedback text DEFAULT ''
