@@ -158,14 +158,14 @@ async function loadCloud(){
  }
  const shopId=encodeURIComponent(state.shopId);
  const [members,tasks,assignments,templates,recurringMembers,notifications]=await Promise.all([
-  cloudRequest('/rest/v1/work_shop_memberships?shop_id=eq.'+shopId+'&select=user_id,shop_role,active,profiles(id,employee_code,full_name,role,is_admin,active,must_change_password,created_at)&limit=800'),
+  cloudRequest('/rest/v1/work_shop_memberships?shop_id=eq.'+shopId+'&select=user_id,shop_role,active,profile:profiles!work_shop_memberships_user_id_fkey(id,employee_code,full_name,role,is_admin,active,must_change_password,created_at)&limit=800'),
   cloudRequest('/rest/v1/tasks?shop_id=eq.'+shopId+'&select=*&order=due_at.desc&limit=400'),
   cloudRequest('/rest/v1/assignments?shop_id=eq.'+shopId+'&select=*&limit=1200'),
   cloudRequest('/rest/v1/recurring_templates?shop_id=eq.'+shopId+'&select=*&order=created_at.desc&limit=400'),
   cloudRequest('/rest/v1/recurring_members?shop_id=eq.'+shopId+'&select=*&limit=1200'),
   cloudRequest('/rest/v1/notifications?shop_id=eq.'+shopId+'&select=*&order=created_at.desc&limit=150')
  ]);
- const profiles=(members||[]).filter(m=>m.profiles).map(m=>({...m.profiles,role:m.shop_role,active:!!m.active&&!!m.profiles.active}));
+ const profiles=(members||[]).filter(m=>m.profile).map(m=>({...m.profile,role:m.shop_role,active:!!m.active&&!!m.profile.active}));
  if(!profiles.some(p=>p.id===state.user.id))profiles.unshift(state.user);
  state.data={profiles,tasks,assignments,recurring_templates:templates,recurring_members:recurringMembers,notifications};
 }
