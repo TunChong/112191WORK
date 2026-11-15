@@ -8,7 +8,7 @@
 .form-error{padding:12px 14px;border:1px solid #f0a08d;color:#a52814;background:#fff4ef;border-radius:12px;font-size:13px;font-weight:650}.form-error[hidden]{display:none!important}
 
 /* v2.0: login role selection and password-change view */
-.login-role-tabs{display:grid!important;grid-template-columns:1fr 1fr;gap:9px}.login-role-tabs .tab{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;white-space:nowrap;font-size:12px}.login-role-tabs svg{width:17px;height:17px}.login-box code{font-size:11px;overflow-wrap:anywhere}.login-form input{min-height:45px}.login-form .btn{min-height:45px}
+.login-role-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;min-width:0;width:100%}.login-role-tabs .tab{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:58px;white-space:normal;overflow-wrap:anywhere;text-align:center;font-size:11px;line-height:1.2;padding:7px 3px}.login-role-tabs svg{width:18px;height:18px;flex-shrink:0}.login-box code{font-size:11px;overflow-wrap:anywhere}.login-form input{min-height:45px}.login-form .btn{min-height:45px}
 
 .more-menu{display:flex;flex-direction:column;gap:8px}.more-entry{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:13px 12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--ink);font-size:13px;font-weight:650}.more-entry span{flex:1}.more-entry svg:last-child{color:var(--muted)}
 
@@ -31,3 +31,10 @@
 .task-delete-button:hover,.task-delete-button:focus-visible{background:#fee2e2;color:#991b1b;border-color:#e15d65;outline:0}
 .task-delete-button svg{width:15px;height:15px}
 @media(max-width:520px){.task-card{flex-wrap:wrap}.task-delete-button{margin-left:auto}.task-card .task-body{min-width:0;flex:1}}
+
+/* v3.0.1 iPhone login: keep all controls inside the viewport without hiding overflow bugs. */
+.login-wrap{width:100%;max-width:100%;grid-template-columns:minmax(0,1fr);min-width:0;padding:clamp(12px,4vw,18px)}
+.login-box{width:100%;max-width:420px;min-width:0;justify-self:center;padding:clamp(17px,4vw,24px)}
+.login-head,.login-form,.login-form .form-field{min-width:0;max-width:100%}
+.login-form input,.login-form button{max-width:100%;min-width:0}
+@media(max-width:340px){.login-role-tabs{gap:4px}.login-role-tabs .tab{font-size:10px;padding:7px 1px}.login-head h1{font-size:21px}}
