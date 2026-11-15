@@ -31,10 +31,10 @@ async function member(token:string){
  const r=await fetch(BASE+'/auth/v1/user',{headers:{'apikey':ANON,'authorization':'Bearer '+token}});
  if(!r.ok)return null;
  const user=await r.json();if(!user?.id)return null;
- const rows=await db('/rest/v1/profiles?select=id,role,active,must_change_password,is_admin&id=eq.'+encodeURIComponent(user.id)+'&limit=1');
+ const rows=await db('/rest/v1/profiles?select=id,employee_code,role,active,must_change_password,is_admin&id=eq.'+encodeURIComponent(user.id)+'&limit=1');
  const p=rows?.[0];
  if(!p||p.active!==true||p.must_change_password!==false)return null;
- return p as {id:string;role:string;active:boolean;is_admin:boolean};
+ return p as {id:string;employee_code:string;role:string;active:boolean;is_admin:boolean};
 }
 function validUUID(x:unknown):x is string{return typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x)}
 function endpointAllowed(endpoint:string):boolean{
@@ -147,16 +147,27 @@ Deno.serve(async(req:Request)=>{
   if(action==='dispatch_task'){
    if(!validUUID(data.task_id))return result(req,400,{error:'Mã công việc không hợp lệ'});
    if(!['manager','shift_lead'].includes(actor.role))return result(req,403,{error:'Chỉ quản lý hoặc trưởng ca được gửi thông báo giao việc'});
-   const t=await db('/rest/v1/tasks?select=id,created_by,created_at&id=eq.'+data.task_id+'&limit=1');
+   const t=await db('/rest/v1/tasks?select=id,created_by,created_at,shop_id&id=eq.'+data.task_id+'&limit=1');
    if(!t?.[0])return result(req,404,{error:'Công việc không tồn tại'});
-   if(t[0].created_by!==actor.id&&actor.is_admin!==true)return result(req,403,{error:'Không có quyền gửi thông báo của công việc này'});
+   const superAdmin=actor.is_admin===true&&actor.employee_code==='112191';
+   if(!superAdmin){
+     const grants=await db('/rest/v1/work_shop_memberships?select=shop_role,active&user_id=eq.'+actor.id+'&shop_id=eq.'+t[0].shop_id+'&active=eq.true&limit=1');
+     if(!['manager','shift_lead'].includes(grants?.[0]?.shop_role))
+       return result(req,403,{error:'Không có quyền gửi thông báo SHOP khác'});
+   }
+   if(t[0].created_by!==actor.id&&!superAdmin)return result(req,403,{error:'Không có quyền gửi thông báo của công việc này'});
    if(Date.now()-new Date(t[0].created_at).getTime()>7*86400000)return result(req,403,{error:'Chỉ gửi thông báo công việc mới'});
    const ass=await db('/rest/v1/assignments?select=id,task_id,staff_id,status&task_id=eq.'+data.task_id+'&limit=100');
    return result(req,200,{ok:true,...await dispatchAssignments(ass,actor)});
   }
   if(action==='dispatch_pending'){
    const since=new Date(Date.now()-48*3600000).toISOString();
-   let query='/rest/v1/assignments?select=id,task_id,staff_id,status,created_at&status=eq.todo&created_at=gte.'+encodeURIComponent(since)+'&order=created_at.desc&limit=30';
+   const superAdmin=actor.is_admin===true&&actor.employee_code==='112191';
+   const myMemberships=await db('/rest/v1/work_shop_memberships?select=shop_id,shop_role&user_id=eq.'+actor.id+'&active=eq.true&limit=1000');
+   const allowedShopIds=myMemberships.filter((m:J)=>actor.role==='staff'?m.shop_role==='staff':['manager','shift_lead'].includes(m.shop_role)).map((m:J)=>m.shop_id).filter(validUUID);
+   if(!superAdmin&&!allowedShopIds.length)return result(req,200,{ok:true,assignments:0,sent:0,already_sent:0,no_subscription:0,failed:0,expired_removed:0});
+   let query='/rest/v1/assignments?select=id,task_id,staff_id,status,created_at,shop_id&status=eq.todo&created_at=gte.'+encodeURIComponent(since)+'&order=created_at.desc&limit=30';
+   if(!superAdmin)query+='&shop_id=in.('+allowedShopIds.join(',')+')';
    if(actor.role==='staff')query+='&staff_id=eq.'+actor.id;
    const ass=await db(query);
    return result(req,200,{ok:true,...await dispatchAssignments(ass,actor)});
