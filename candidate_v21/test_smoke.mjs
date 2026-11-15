@@ -19,7 +19,7 @@ const taskDeleteSQL=read('./supabase/migrations/20261115_admin_delete_task.sql')
 // User-facing feature regression assertions.
 assert.match(app, /<option>Công Việc Siêu Thị<\/option>/);
 assert.match(app, /function createView\(\)/);
-assert.match(app, /function accountsView\(\)\{\s*if\(!manager\(\)\)/);
+assert.match(app, /function accountsView\(\)\{\s*if\(!admin\(\)\)/);
 assert.match(app, /\['shops','Quản lý SHOP','users'\]/);
 assert.match(app, /staffAdminRequest\(\{action:'create'/);
 assert.match(app, /'createStaffForm'/);
