@@ -3,7 +3,7 @@
 'use strict';
 const S={shop:null,tab:'stock',sessions:[],sessionId:null,stock:[],counts:[],busy:false,loading:false,
  importing:false,progress:'',query:'',last:null,camera:null,cameraActive:false,lastCameraCode:'',lastCameraAt:0,
- scanBusy:false,requestSerial:0};
+ scanBusy:false,scanQueue:Promise.resolve(),requestSerial:0};
 let H=null;let xlsxLoading=null;let scannerLoading=null;
 const unknown='CHƯA CÓ TRONG DANH MỤC';
 const esc=x=>H&&H.esc?H.esc(String(x==null?'':x)):String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -252,7 +252,8 @@ async function countCode(code,name='',cameraEvent=false){
   if(S.scanBusy)return;
   S.lastCameraCode=code;S.lastCameraAt=now;
  }
- if(S.scanBusy)return;
+ if(cameraEvent&&S.scanBusy)return;
+ const writeOne=async()=>{
  S.scanBusy=true;
  try{
   const res=await rpc('inventory_scan',{p_session:S.sessionId,p_code:code,p_name:name||null});
@@ -265,6 +266,11 @@ async function countCode(code,name='',cameraEvent=false){
   if(window.navigator&&navigator.vibrate&&cameraEvent)navigator.vibrate(60);
   if(!S.cameraActive)redraw();
  }finally{S.scanBusy=false;}
+ };
+ // A handheld barcode scanner may send multiple Enter presses before the network
+ // responds. Queue every manual scan rather than silently dropping valid units.
+ S.scanQueue=S.scanQueue.catch(()=>{}).then(writeOne);
+ return S.scanQueue;
 }
 async function startCamera(){
  if(!current()||current().state!=='open')throw new Error('Chưa có kỳ kiểm kê đang mở');
