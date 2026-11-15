@@ -677,7 +677,7 @@ async function logout(){if(CLOUD){
   }
   try{await cloudRequest('/auth/v1/logout',{method:'POST'})}catch{}
   localStorage.removeItem(TOKEN_KEY);state.session=null;state.pushEnabled=false;lastPendingPushCheck=0;
- }else localStorage.removeItem('work112191_user');state.user=null;state.data=CLOUD?null:state.data;state.screen='home';state.modal=null;state.staffAccounts=null;state.oneTimeCredential=null;draw()}
+ }else localStorage.removeItem('work112191_user');state.user=null;state.data=CLOUD?null:state.data;state.screen='home';state.modal=null;state.staffAccounts=null;state.oneTimeCredential=null;state.shops=[];state.shopMembers=[];state.shopId=null;state.shopRoles={};state.shopReady=false;state.shopReadyChecked=false;draw()}
 async function tableInsert(table,values){return await cloudRequest(`/rest/v1/${table}`,{method:'POST',body:values,headers:{'Prefer':'return=representation'}})}
 async function tablePatch(table,match,values){return await cloudRequest(`/rest/v1/${table}?${match}`,{method:'PATCH',body:values,headers:{'Prefer':'return=representation'}})}
 async function rpc(name,payload={}){return await cloudRequest(`/rest/v1/rpc/${name}`,{method:'POST',body:payload})}
@@ -762,6 +762,57 @@ async function readAll(){const items=myNotifications().filter(n=>!n.read_at);try
 async function toggleRecurrence(idValue){if(!manager())return;const r=state.data.recurring_templates.find(r=>r.id===idValue);if(!r)return;try{if(CLOUD)await tablePatch('recurring_templates',`id=eq.${encodeURIComponent(r.id)}`,{active:!r.active});r.active=!r.active;persist();draw()}catch(e){toast(e.message)}}
 async function toggleUser(uid){if(!manager()||!CLOUD)return;const p=state.data.profiles.find(p=>p.id===uid);if(!p||p.role==='manager')return;if(!confirm(`${p.active?'Lưu trữ':'Khôi phục'} tài khoản ${p.employee_code||''} - ${p.full_name}? Lịch sử công việc được giữ nguyên.`))return;try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();if(state.screen==='accounts')await loadStaffAdmin();draw();toast('Đã cập nhật tài khoản.')}catch(e){toast('Không cập nhật được: '+e.message)}}
 function exportCsv(){const lines=[['Tên công việc','Nhóm','Hạn hoàn thành','Mã nhân viên','Nhân viên','Trạng thái','Thời gian gửi','Thời gian duyệt','Phản hồi quản lý']];for(const {t,a} of myRows())lines.push([t.title,t.category,fmt(t.due_at),findUser(a.staff_id).employee_code||'',findUser(a.staff_id).full_name,NAMES[assignStatus(a,t)]||a.status,fmt(a.submitted_at),fmt(a.reviewed_at),a.review_feedback||'']);const csv='\ufeff'+lines.map(line=>line.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const anchor=document.createElement('a');anchor.href=url;anchor.download=`112191-work-${dayLocal()}.csv`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+
+async function switchShop(shopId){
+ if(!state.shops.some(s=>s.id===shopId))throw new Error('Bạn chưa được cấp quyền cho SHOP này');
+ state.shopId=shopId;
+ localStorage.setItem('work112191_selected_shop',shopId);
+ state.shopMembers=[];state.oneTimeCredential=null;
+ await loadCloud();
+ if(state.screen==='shops'&&supervisor())await loadShopMembers();
+ draw();
+}
+async function submitShopForm(f){
+ const fd=new FormData(f);
+ if(!state.shopReady)throw new Error('Multi-SHOP chưa mở phân quyền vì đang kiểm thử bảo mật');
+ if(f.id==='newShopForm'){
+   if(!admin())throw new Error('Chỉ Super Admin được tạo SHOP');
+   const result=await shopAdminRequest({action:'create_shop',
+     shop_code:String(fd.get('code')||'').trim().toUpperCase(),
+     shop_name:String(fd.get('name')||'').trim()});
+   state.shopId=result.shop.id;
+   localStorage.setItem('work112191_selected_shop',state.shopId);
+   await loadCloud();await loadShopMembers();draw();
+   toast('Đã tạo SHOP mới. Hãy cấp quyền Quản lý cho SHOP này.');
+ }else if(f.id==='newShopStaffForm'){
+   const code=String(fd.get('code')||'').trim();
+   const result=await shopAdminRequest({action:'add_staff',shop_id:state.shopId,
+     employee_code:code,full_name:String(fd.get('name')||'').trim()});
+   state.oneTimeCredential={code,password:result.temporary_password};
+   await loadCloud();await loadShopMembers();draw();
+   toast('Đã tạo nhân viên trong SHOP hiện tại.');
+ }else if(f.id==='grantShopManagerForm'){
+   if(!admin())throw new Error('Chỉ Super Admin được cấp quyền Quản lý');
+   const code=String(fd.get('code')||'').trim();
+   const rows=await cloudRequest('/rest/v1/profiles?employee_code=eq.'+encodeURIComponent(code)+'&select=id,full_name&limit=1');
+   if(!rows?.[0])throw new Error('Mã nhân viên chưa có tài khoản. Hãy thêm nhân viên trước.');
+   await shopAdminRequest({action:'grant_member',shop_id:state.shopId,user_id:rows[0].id,shop_role:'manager'});
+   await loadCloud();await loadShopMembers();draw();
+   toast('Đã ủy quyền Quản lý cho SHOP hiện tại.');
+ }
+}
+async function updateShopMember(uid,action,extra={}){
+ if(!state.shopReady||!state.shopId)throw new Error('Multi-SHOP chưa sẵn sàng');
+ if(!uid)throw new Error('Thiếu tài khoản nhân viên');
+ const result=await shopAdminRequest({action,shop_id:state.shopId,user_id:uid,...extra});
+ if(result.temporary_password){
+   const member=state.shopMembers.find(x=>x.user_id===uid);
+   state.oneTimeCredential={code:member?.profile?.employee_code||'—',password:result.temporary_password};
+ }
+ await loadCloud();await loadShopMembers();draw();
+ toast('Đã cập nhật quyền nhân viên của SHOP.');
+}
+
 async function action(el,e){const name=el.dataset.action;
  if(name==='close-overlay'){if(e.target===el){state.modal=null;draw()}return}
  if(name==='demo-login')return loginDemo(el.dataset.user);
@@ -769,6 +820,22 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='show-change-password'){state.screen='change-password';draw();return}
  if(name==='back-account'){state.screen='account';draw();return}
  if(name==='navigate'){if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);if(state.screen==='accounts')await loadStaffAdmin();if(state.screen==='shops')await loadShopMembers();return}
+ if(name==='select-shop')return switchShop(el.dataset.id);
+ if(name==='refresh-shop-members')return loadShopMembers();
+ if(name==='shop-member-active'){
+  const active=el.dataset.active==='true';
+  if(!confirm(active?'Kích hoạt nhân sự tại SHOP này?':'Lưu trữ nhân sự tại SHOP này?'))return;
+  return updateShopMember(el.dataset.uid,'set_membership_active',{active});
+ }
+ if(name==='shop-member-reset'){
+  if(!confirm('Đặt lại mật khẩu cho nhân viên này? Mật khẩu mới chỉ hiển thị một lần.'))return;
+  return updateShopMember(el.dataset.uid,'reset_staff_password');
+ }
+ if(name==='shop-member-role'){
+  const role=el.dataset.role;
+  if(!confirm(role==='shift_lead'?'Cấp quyền Trưởng ca trong SHOP này?':'Chuyển về vai trò Nhân viên trong SHOP này?'))return;
+  return updateShopMember(el.dataset.uid,'set_member_role',{shop_role:role});
+ }
  if(name==='filter'){state.filter=el.dataset.status;draw();return}
  if(name==='detail'){state.modal={type:'detail',taskId:el.dataset.id};draw();await signEvidence();return}
  if(name==='delete-task')return deleteTaskForever(el.dataset.id);
@@ -799,8 +866,9 @@ async function action(el,e){const name=el.dataset.action;
 }
 document.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(el)action(el,e).catch?.(err=>toast(err.message))});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;draw()};if((e.key==='Enter'||e.key===' ')&&e.target.matches('.task-card')){e.preventDefault();e.target.click()}});
-document.addEventListener('submit',async e=>{const f=e.target;if(['createTaskForm','createStaffForm','staffResetForm','staffEditForm','staffRoleForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
- if(f.id==='createTaskForm')await createTask(e);
+document.addEventListener('submit',async e=>{const f=e.target;if(['newShopForm','newShopStaffForm','grantShopManagerForm','createTaskForm','createStaffForm','staffResetForm','staffEditForm','staffRoleForm','reportForm','rejectForm','authForm','passwordChangeForm'].includes(f.id))e.preventDefault();try{
+ if(['newShopForm','newShopStaffForm','grantShopManagerForm'].includes(f.id))await submitShopForm(f);
+  else if(f.id==='createTaskForm')await createTask(e);
  else if(f.id==='createStaffForm')await createStaff(e);
  else if(f.id==='staffResetForm')await submitStaffReset(e);
  else if(f.id==='staffEditForm')await submitStaffEdit(e);
@@ -810,8 +878,11 @@ document.addEventListener('submit',async e=>{const f=e.target;if(['createTaskFor
  else if(f.id==='authForm'){const data=new FormData(f),username=String(data.get('username')||'').trim(),password=String(data.get('password')||'');if(!username||!password){toast('Vui lòng nhập tài khoản và mật khẩu.');return}const button=f.querySelector('[type=submit]');button.disabled=true;button.textContent='Đang đăng nhập...';try{await signIn(username,password)}finally{if(button.isConnected){button.disabled=false;button.textContent='Đăng nhập'}}}
  else if(f.id==='passwordChangeForm')await changePassword(e)
  }catch(err){toast(err.message)} });
-document.addEventListener('change',e=>{if(e.target.id==='demoStaffSelect'&&e.target.value)loginDemo(e.target.value).catch(err=>toast(err.message));});
-document.addEventListener('input',e=>{if(e.target.id==='taskSearch'){state.search=e.target.value;const where=e.target.selectionStart;draw();const input=document.querySelector('#taskSearch');if(input){input.focus();input.setSelectionRange(where,where)}}});
+document.addEventListener('change',e=>{
+ if(e.target.id==='demoStaffSelect'&&e.target.value)loginDemo(e.target.value).catch(err=>toast(err.message));
+ if(e.target.id==='activeShop'&&e.target.value)switchShop(e.target.value).catch(err=>toast(err.message));
+});
+document.addEventListener('input',e=>{if(e.target.id==='shopSearch'){state.shopSearch=e.target.value;const pos=e.target.selectionStart;draw();const input=document.querySelector('#shopSearch');if(input){input.focus();input.setSelectionRange(pos,pos)}return}if(e.target.id==='taskSearch'){state.search=e.target.value;const where=e.target.selectionStart;draw();const input=document.querySelector('#taskSearch');if(input){input.focus();input.setSelectionRange(where,where)}}});
 async function boot(){
  if('serviceWorker' in navigator && location.protocol!=='file:'){
   navigator.serviceWorker.register('./sw.js').catch(console.warn);
