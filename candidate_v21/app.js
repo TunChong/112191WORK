@@ -24,6 +24,7 @@ const ROSTER = [
   {employee_code:'288315',full_name:'Thúy'}
 ];
 const TOKEN_KEY = 'work112191_session';
+const SHOP_VERSION = '3.0-preview';
 const ICON_PATHS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   clipboard:'<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
@@ -56,7 +57,7 @@ const isLate = (a,t) => ['todo','rejected'].includes(a.status) && new Date(t.due
 const assignStatus = (a,t) => isLate(a,t)?'overdue':a.status;
 const NAMES={todo:'Chưa làm',submitted:'Chờ duyệt',approved:'Đã duyệt',rejected:'Làm lại',overdue:'Quá hạn'};
 const STATUS_ICON={todo:'clock',submitted:'camera',approved:'checkcircle',rejected:'refresh',overdue:'warning'};
-let state={pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
+let state={shops:[],shopId:null,shopRoles:{},shopReady:false,shopReadyChecked:false,shopMembers:[],shopMemberLoading:false,shopSearch:'',pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
 const root=document.getElementById('app');
 let ticking=false;
 const toast=(message)=>{document.querySelector('.alert-toast')?.remove();const a=document.createElement('div');a.className='alert-toast';a.textContent=message;document.body.appendChild(a);setTimeout(()=>a.remove(),3400)};
@@ -114,20 +115,58 @@ async function ensureFreshToken(){if(!CLOUD||!state.session)return;const expires
  const s=await authRequest('token?grant_type=refresh_token',{refresh_token:state.session.refresh_token});storeSession(s);
 }
 function storeSession(s){state.session={access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at||Math.floor(Date.now()/1000)+(s.expires_in||3600),user:s.user};localStorage.setItem(TOKEN_KEY,JSON.stringify(state.session));}
+async function shopAdminRequest(body) {
+ if(!CLOUD)throw new Error('Chưa có kết nối Supabase');
+ await ensureFreshToken();
+ return cloudRequest('/functions/v1/manage-shops',{method:'POST',body});
+}
+async function loadShopMembers() {
+ if(!state.shopId || !supervisor())return;
+ state.shopMemberLoading=true;
+ try{const data=await shopAdminRequest({action:'list_members',shop_id:state.shopId,page:0,limit:100});
+     state.shopMembers=data.members||[];}
+ catch(e){state.shopMembers=[];console.warn('SHOP members:',e)}
+ finally{state.shopMemberLoading=false;if(state.screen==='shops')draw()}
+}
 async function loadCloud(){
  await ensureFreshToken();if(!state.session)return;
- const profile=await cloudRequest(`/rest/v1/profiles?id=eq.${encodeURIComponent(state.session.user.id)}&select=*`);
+ const profile=await cloudRequest('/rest/v1/profiles?id=eq.'+encodeURIComponent(state.session.user.id)+'&select=*');
  state.user=profile?.[0]||null;
- if(!state.user){throw new Error('Chưa tìm thấy hồ sơ. Kiểm tra SQL khởi tạo dữ liệu.');}
- if(!state.user.active || state.user.must_change_password){state.data={profiles:[state.user],tasks:[],assignments:[],recurring_templates:[],recurring_members:[],notifications:[]};return;}
- const [profiles,tasks,assignments,templates,members,notifications]=await Promise.all([
-  cloudRequest('/rest/v1/profiles?select=id,employee_code,full_name,role,is_admin,active,must_change_password,created_at&order=full_name.asc'),
-  cloudRequest('/rest/v1/tasks?select=*&order=due_at.desc&limit=400'),
-  cloudRequest('/rest/v1/assignments?select=*&limit=1200'),
-  cloudRequest('/rest/v1/recurring_templates?select=*&order=created_at.desc'),
-  cloudRequest('/rest/v1/recurring_members?select=*&limit=300'),
-  cloudRequest('/rest/v1/notifications?select=*&order=created_at.desc&limit=150')]);
- state.data={profiles,tasks,assignments,recurring_templates:templates,recurring_members:members,notifications};
+ if(!state.user)throw new Error('Chưa tìm thấy hồ sơ người dùng');
+ if(!state.user.active||state.user.must_change_password){
+  state.data={profiles:[state.user],tasks:[],assignments:[],recurring_templates:[],recurring_members:[],notifications:[]};
+  return;
+ }
+ const [shops,memberships]=await Promise.all([
+  cloudRequest('/rest/v1/work_shops?select=id,shop_code,shop_name,active&order=shop_code.asc&limit=600'),
+  cloudRequest('/rest/v1/work_shop_memberships?select=shop_id,shop_role,active&user_id=eq.'+state.user.id+'&active=eq.true&limit=600')
+ ]);
+ state.shops=shops||[];
+ state.shopRoles=Object.fromEntries((memberships||[]).map(m=>[m.shop_id,m.shop_role]));
+ const preferred=localStorage.getItem('work112191_selected_shop');
+ state.shopId=state.shops.some(s=>s.id===(state.shopId||preferred))?(state.shopId||preferred):state.shops[0]?.id||null;
+ if(!state.user.is_admin)state.user.role=state.shopRoles[state.shopId]||'staff';
+ if(!state.shopReadyChecked){
+  try{state.shopReady=(await shopAdminRequest({action:'status'})).ready===true}
+  catch(e){state.shopReady=false;console.warn('SHOP management status unavailable',e)}
+  state.shopReadyChecked=true;
+ }
+ if(!state.shopId){
+  state.data={profiles:[state.user],tasks:[],assignments:[],recurring_templates:[],recurring_members:[],notifications:[]};
+  return;
+ }
+ const shopId=encodeURIComponent(state.shopId);
+ const [members,tasks,assignments,templates,recurringMembers,notifications]=await Promise.all([
+  cloudRequest('/rest/v1/work_shop_memberships?shop_id=eq.'+shopId+'&select=user_id,shop_role,active,profiles(id,employee_code,full_name,role,is_admin,active,must_change_password,created_at)&limit=800'),
+  cloudRequest('/rest/v1/tasks?shop_id=eq.'+shopId+'&select=*&order=due_at.desc&limit=400'),
+  cloudRequest('/rest/v1/assignments?shop_id=eq.'+shopId+'&select=*&limit=1200'),
+  cloudRequest('/rest/v1/recurring_templates?shop_id=eq.'+shopId+'&select=*&order=created_at.desc&limit=400'),
+  cloudRequest('/rest/v1/recurring_members?shop_id=eq.'+shopId+'&select=*&limit=1200'),
+  cloudRequest('/rest/v1/notifications?shop_id=eq.'+shopId+'&select=*&order=created_at.desc&limit=150')
+ ]);
+ const profiles=(members||[]).filter(m=>m.profiles).map(m=>({...m.profiles,role:m.shop_role,active:!!m.active&&!!m.profiles.active}));
+ if(!profiles.some(p=>p.id===state.user.id))profiles.unshift(state.user);
+ state.data={profiles,tasks,assignments,recurring_templates:templates,recurring_members:recurringMembers,notifications};
 }
 async function refresh(){if(state.loading)return;state.loading=true;try{
  const hadLoadedData=!!state.data;const known=new Set((state.data?.notifications||[]).map(n=>n.id));
@@ -592,7 +631,7 @@ async function signIn(username,password){
  storeSession(session);
  try{
   await loadCloud();
-  if(state.user?.role!==role || String(state.user.employee_code||'').toUpperCase()!==normalized){
+  if((!state.user?.is_admin && !Object.values(state.shopRoles).includes(role)) || (state.user?.is_admin && role!=='manager') || String(state.user.employee_code||'').toUpperCase()!==normalized){
    await logout();throw new Error('Tài khoản không thuộc vị trí đăng nhập đã chọn.');
   }
   state.screen='home';draw();resumeDevicePush().catch(console.warn);
