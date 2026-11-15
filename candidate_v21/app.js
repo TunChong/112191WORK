@@ -24,7 +24,7 @@ const ROSTER = [
   {employee_code:'288315',full_name:'Thúy'}
 ];
 const TOKEN_KEY = 'work112191_session';
-const SHOP_VERSION = '3.0-preview';
+const SHOP_VERSION = '3.1-inventory-preview';
 const ICON_PATHS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   clipboard:'<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
@@ -318,14 +318,14 @@ function taskCard(t,a=null){const ass=a||taskAssignments(t.id)[0]||{status:'todo
  <div class="task-symbol">${ic(STATUS_ICON[st]||'clipboard')}</div><div class="task-body"><div class="task-title">${esc(t.title)}</div>
  <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}${t.priority==='high'?'<span class="task-priority-label high">🚨 ƯU TIÊN CAO</span>':'<span class="task-priority-label">BÌNH THƯỜNG</span>'}</div></div>${statusBadge(st)}${admin()?`<button type="button" class="task-delete-button" data-action="delete-task" data-id="${esc(t.id)}" title="Xóa vĩnh viễn công việc">${ic('trash')} Xóa</button>`:''}</article>`}
 function navEntries(){return manager()?[
- ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['shops','Quản lý SHOP','users'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
+ ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['shops','Quản lý SHOP','users'],['inventory40','Kiểm kê 4.0','camera'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
  supervisor()?[
- ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['team','Nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
- [['home','Tổng quan','home'],['tasks','Việc của tôi','list'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
-function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
+ ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['team','Nhân viên','users'],['inventory40','Kiểm kê 4.0','camera'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
+ [['home','Tổng quan','home'],['tasks','Việc của tôi','list'],['inventory40','Kiểm kê 4.0','camera'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
+function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['inventory40','Kiểm kê','camera'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
-function headerTitle(){return ({shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
-function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.0.4 PREVIEW</div></aside><main class="content">
+function headerTitle(){return ({inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
+function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.1 KIỂM KÊ 4.0 PREVIEW</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
@@ -549,8 +549,8 @@ function alertsView(){const items=myNotifications();return `<section class="pane
  <div>${items.length?items.map(n=>`<div class="notification ${n.read_at?'read':''}" data-action="read-one" data-id="${esc(n.id)}" data-task="${esc(n.task_id||'')}"><span class="bulb">${ic('bell')}</span><div style="flex:1"><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p><time>${fmt(n.created_at)}</time></div>${!n.read_at?'<span style="width:7px;height:7px;background:var(--blue);border-radius:50%"></span>':''}</div>`).join(''):empty('Không có thông báo','Khi có công việc hoặc thay đổi kết quả, thông báo sẽ hiển thị ở đây.','bell')}</div></section>`}
 function moreView(){
  const items=manager()?[
-  ['shops','Quản lý SHOP / Nhân sự','users'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
- ]:[['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
+  ['shops','Quản lý SHOP / Nhân sự','users'],['inventory40','Kiểm kê 4.0','camera'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
+ ]:[['inventory40','Kiểm kê 4.0','camera'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
  return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Tiện ích ${roleName(state.user)}</h2><div class="subtitle">Truy cập nhanh</div></div></div><div class="more-menu">${items.map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}<button class="more-entry" type="button" data-action="logout" aria-label="Đăng xuất khỏi 112191 WORK" style="color:#b91c1c;font-weight:700">${ic('logout')}<span>Đăng xuất</span>${ic('chevron')}</button></div></section></div>`;
 }
 
@@ -668,7 +668,11 @@ function changePasswordView(force=true){return `<div class="login-wrap"><div cla
 function draw(){if(!CLOUD){root.innerHTML=configRequiredView();return}if(!state.user){root.innerHTML=loginView();return}if(!state.data){root.innerHTML='<div class="splash"><span class="spinner"></span><b>Đang tải...</b></div>';return}
  if(CLOUD&&!state.user.active){root.innerHTML=appShell(pendingView());return}
  if(state.user.must_change_password || state.screen==='change-password'){root.innerHTML=changePasswordView(!!state.user.must_change_password);return}
- const views={home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
+ if(window.INV40&&state.screen==='inventory40'){
+  window.INV40.configure({shopId:()=>state.shopId,shopCode:()=>state.shops.find(s=>s.id===state.shopId)?.shop_code||'SHOP',
+    manager:()=>manager(),api:cloudRequest,esc,toast,draw});
+ }
+ const views={home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,inventory40:()=>window.INV40?window.INV40.view():empty('Kiểm kê 4.0','Chưa tải module kiểm kê.','camera'),shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
  // Điều hướng di động có thêm màn hình `more`, không xuất hiện trong navEntries của desktop.
  const allowedScreens=new Set([...navEntries(),...bottomItems()].map(([key])=>key));
  if(!allowedScreens.has(state.screen)&&state.screen!=='change-password')state.screen='home';
@@ -799,6 +803,7 @@ async function toggleUser(uid){if(!manager()||!CLOUD)return;const p=state.data.p
 function exportCsv(){const lines=[['Tên công việc','Nhóm','Hạn hoàn thành','Mã nhân viên','Nhân viên','Trạng thái','Thời gian gửi','Thời gian duyệt','Phản hồi quản lý']];for(const {t,a} of myRows())lines.push([t.title,t.category,fmt(t.due_at),findUser(a.staff_id).employee_code||'',findUser(a.staff_id).full_name,NAMES[assignStatus(a,t)]||a.status,fmt(a.submitted_at),fmt(a.reviewed_at),a.review_feedback||'']);const csv='\ufeff'+lines.map(line=>line.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const anchor=document.createElement('a');anchor.href=url;anchor.download=`112191-work-${dayLocal()}.csv`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 
 async function switchShop(shopId){
+ if(state.screen==='inventory40')await window.INV40?.onShopChange();
  if(!state.shops.some(s=>s.id===shopId))throw new Error('Bạn chưa được cấp quyền cho SHOP này');
  state.shopId=shopId;
  localStorage.setItem('work112191_selected_shop',shopId);
@@ -806,6 +811,7 @@ async function switchShop(shopId){
  await loadCloud();
  if(state.screen==='shops'&&supervisor())await loadShopMembers();
  draw();
+ if(state.screen==='inventory40')window.INV40?.load();
 }
 async function submitShopForm(f){
  const fd=new FormData(f);
@@ -865,7 +871,10 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='auth-role'){state.authRole=['manager','shift_lead','staff'].includes(el.dataset.role)?el.dataset.role:'staff';draw();return}
  if(name==='show-change-password'){state.screen='change-password';draw();return}
  if(name==='back-account'){state.screen='account';draw();return}
- if(name==='navigate'){if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);if(state.screen==='accounts')await loadStaffAdmin();if(state.screen==='shops')await loadShopMembers();return}
+ if(name==='navigate'){if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;if(state.screen==='inventory40'&&el.dataset.screen!=='inventory40')window.INV40?.leave();
+ state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);
+ if(state.screen==='inventory40')window.INV40?.load();
+ if(state.screen==='accounts')await loadStaffAdmin();if(state.screen==='shops')await loadShopMembers();return}
  if(name==='select-shop')return switchShop(el.dataset.id);
  if(name==='shop-edit'){
   if(!admin())throw new Error('Chỉ Admin được sửa SHOP');
