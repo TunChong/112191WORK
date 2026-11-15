@@ -40,8 +40,8 @@ assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['more']])
 assert.equal(screenAfterDrawGuard({screen:'bogus'},()=>[['home']],()=>[['more']]),'home','Unknown screens must redirect home');
 assert.equal(screenAfterDrawGuard({screen:'account'},()=>[['account']],()=>[['home']]),'account','Account view must remain available');
 assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['account']]),'home','Users without More must not open it');
-assert.match(html, /app\.js\?v=2\.5\.1/);
-assert.match(sw, /112191-work-v2\.5\.1/);
+assert.match(html, /app\.js\?v=3\.0/);
+assert.match(sw, /112191-work-v3\.0-preview/);
 
 assert.match(app, /name="password" type="password" autocomplete="new-password"/);
 assert.match(app, /'staffResetForm'/);
@@ -147,7 +147,7 @@ assert.match(app, /task-priority-label high/);
 assert.match(sw, /addEventListener\('push'/);
 assert.match(sw, /self\.registration\.showNotification/);
 assert.match(sw, /work-push-click/);
-assert.match(sw, /v2\.5\.1/);
+assert.match(sw, /v3\.0-preview/);
 assert.match(push, /generateVapidKeys/);
 assert.match(push, /work_push_claim_delivery/);
 assert.match(push, /work_push_subscriptions/);
@@ -179,3 +179,9 @@ assert.match(taskDeleteSQL, /REVOKE ALL ON FUNCTION public\.work_admin_delete_ta
 assert.match(taskDeleteSQL, /ALTER TABLE public\.work_deleted_task_audit ENABLE ROW LEVEL SECURITY/);
 assert.match(taskDeleteSQL, /DELETE FROM public\.tasks WHERE id=p_task/);
 assert.doesNotMatch(taskDeleteSQL, /DELETE FROM storage\.objects/i);
+
+assert.match(app, /work112191_selected_shop/);
+assert.match(app, /shop_id:state\.shopId/);
+assert.match(app, /function shopsView\(\)/);
+assert.match(app, /action:'add_staff'/);
+assert.match(app, /action:'grant_member'/);
