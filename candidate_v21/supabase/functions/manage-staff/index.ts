@@ -135,7 +135,7 @@ Deno.serve(async (req:Request)=>{
     const hasLinkedData=fields.some(k=>counts[k]>0);
     if(data.ack_delete_history!==true&&hasLinkedData)
       return reply(req,409,{error:'Tài khoản có lịch sử công việc. Vui lòng cập nhật website lên bản v2.3 để xem dữ liệu và xác nhận xóa.'});
-    if(data.ack_delete_history===true){
+    if(data.ack_delete_history===true&&data.expected_counts!==undefined){
       const expected=(data.expected_counts||{}) as Obj;
       if(fields.some(k=>Number(expected[k])!==counts[k]))
         return reply(req,409,{error:'Lịch sử tài khoản đã thay đổi. Vui lòng kiểm tra và xác nhận lại số liệu trước khi xóa.'});
