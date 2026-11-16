@@ -53,7 +53,7 @@ browser.print=()=>{printed=true};
 const context={window:browser,document,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
  console,Map,Set,Math,Date,Intl,String,Number,Promise,Image:MockImage,
  URL:{createObjectURL:()=> 'blob:mock',revokeObjectURL(){}},Uint8ClampedArray,
- setTimeout,clearTimeout};
+ setTimeout:(fn,ms,...args)=>setTimeout(fn,Math.min(ms,40),...args),clearTimeout};
 vm.runInNewContext(src,context);
 const q=browser.QUOTE40;
 q.configure({shopId:()=> 'shop97',shopCode:()=> '97',user:()=>null,
