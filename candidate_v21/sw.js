@@ -1,5 +1,5 @@
-const CACHE_NAME = '112191-work-v3.1.2-fast-scan-preview';
-const PRECACHE = ['./', './index.html', './styles.css?v=3.1.2', './app.js?v=3.1.2', './config.js', './inventory40.js?v=3.1.2', './inventory40.css?v=3.1.2', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE_NAME = '112191-work-v3.1.3-direct-actions-preview';
+const PRECACHE = ['./', './index.html', './styles.css?v=3.1.3', './app.js?v=3.1.3', './config.js', './inventory40.js?v=3.1.3', './inventory40.css?v=3.1.3', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
