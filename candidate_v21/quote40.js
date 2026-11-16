@@ -1,4 +1,4 @@
-/* BÁO GIÁ 4.0 — 112191 WORK. Sheet reference: BẢNG BÁO GIÁ, 6 sản phẩm. */
+/* BÁO GIÁ 4.0 — Companion-MWG. Sheet reference: BẢNG BÁO GIÁ, 6 sản phẩm. */
 (function(){
 'use strict';
 const SOURCE='https://docs.google.com/spreadsheets/d/1A_ejAz3RKIpMOFOz6y4xeEp-ut76USMZBSB4RKn6sFM/edit?gid=1265564069';
@@ -6,7 +6,8 @@ const CHANNELS=['ĐIỆN MÁY XANH','THẾ GIỚI DI ĐỘNG'],DEFAULT_STORE='Đ
 const emptyProduct=()=>({url:'',name:'',image:'',price:'',discount:'',status:'',fallback:''});
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const initial=()=>({channel:CHANNELS[0],store:'',search:'',extra:'',date:today(),valid:today(),client:'',clientAddress:'',clientTax:'',clientEmail:'',contact:'',contactPhone:'',products:Array.from({length:6},emptyProduct)});
-let helper=null,shopId=null,model=initial();const activeLookups=new Map(),timers=new Map();
+let helper=null,shopId=null,model=initial(),exporting=false;const activeLookups=new Map(),timers=new Map();
+const exportLoaders=new Map();
 const h=x=>String(x==null?'':x).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const el=id=>document.getElementById(id),toast=m=>helper?.toast?.('Báo giá: '+m);
 const money=n=>Math.max(0,Math.round(Number(n)||0)).toLocaleString('vi-VN')+' đ';
@@ -57,13 +58,13 @@ function printPreview(){
  '<div><b>BẢO HÀNH & GIAO NHẬN</b><p>3. Hàng hóa được bảo hành theo tiêu chuẩn nhà sản xuất và phân phối.<br>4. Hàng hóa được giao tại 34 tỉnh thành.</p></div></div>'+
  '<div class="q-sign"><div>Nếu quý khách cần hỗ trợ thêm thông tin, vui lòng liên hệ với:</div><strong>QUẢN LÝ SIÊU THỊ'+(model.contact?' | '+h(model.contact):'')+
  (model.contactPhone?' - '+h(model.contactPhone):'')+'</strong><small>Địa chỉ: '+h(fullAddress||'—')+'</small>'+
- '<p>Cảm ơn Quý khách đã cộng tác với Thegioididong.com!</p></div></div>';
+ '<p>Cảm ơn Quý khách đã cộng tác với '+(model.channel==='ĐIỆN MÁY XANH'?'Dienmayxanh.com':'Thegioididong.com')+'!</p></div></div>';
 }
 function view(){
  enter();
  return '<div class="quote40"><section class="panel q-head"><div><h2>BÁO GIÁ</h2><div class="subtitle">Theo Google Sheet: chọn siêu thị, dán 6 link sản phẩm và tự nhận tên / hình</div></div>'+
  '<div class="q-actions"><a class="q-secondary" href="'+h(SOURCE)+'" target="_blank" rel="noopener noreferrer">Mở Google Sheet gốc</a>'+
- '<button class="btn" type="button" data-q-action="print">In / Xuất PDF A4 ngang</button></div></section>'+
+ '<button class="btn" type="button" data-q-action="capture-quote">📷 Chụp bảng báo giá</button><button class="btn" type="button" data-q-action="export-pdf">📄 Xuất PDF</button></div></section>'+
  '<section class="panel"><h2>1. CHỌN SIÊU THỊ</h2><div class="q-grid">'+
  '<label class="q-field"><span>KÊNH</span><select id="qChannel" data-q-field="qChannel">'+CHANNELS.map(x=>'<option '+(model.channel===x?'selected':'')+'>'+h(x)+'</option>').join('')+'</select></label>'+
  field('TÌM KIẾM','qSearch',model.search,'Gõ địa chỉ hoặc mã siêu thị')+
@@ -89,7 +90,7 @@ function view(){
  '<label class="q-field q-wide"><span>Hoặc chọn ảnh trên điện thoại / máy tính</span><input type="file" accept="image/jpeg,image/png,image/webp" data-q-upload="'+i+'"></label></div></div>'+
  '<div class="q-item-foot"><small>Giá bán lẻ: <strong id="qPrice'+i+'">'+money(total(v))+'</strong></small>'+
  '<button type="button" class="q-secondary q-danger" data-q-action="clear-product" data-index="'+i+'">Xóa sản phẩm</button></div></div>').join('')+'</div></section>'+
- '<section class="panel q-preview-wrap"><div class="q-preview-head"><h2>4. XEM TRƯỚC BẢNG BÁO GIÁ</h2><button class="btn" data-q-action="print" type="button">In / Lưu PDF</button></div>'+
+ '<section class="panel q-preview-wrap"><div class="q-preview-head"><h2>4. XEM TRƯỚC BẢNG BÁO GIÁ</h2><div class="q-actions"><button class="btn" data-q-action="capture-quote" type="button">📷 Chụp bảng báo giá</button><button class="btn" data-q-action="export-pdf" type="button">📄 Xuất PDF</button></div></div>'+
  '<div id="qPreview">'+printPreview()+'</div></section></div>';
 }
 const FIELDS={qChannel:'channel',qSearch:'search',qStore:'store',qExtra:'extra',qDate:'date',qValid:'valid',
@@ -157,10 +158,90 @@ function onInput(target){
   persist();
  }
 }
-function printQuote(){
- if(!filled().length){toast('Anh cần thêm ít nhất 1 sản phẩm trước khi in');return}
- if(!currentStore()){toast('Anh cần chọn siêu thị trong danh mục trước khi in');return}
- window.print();
+function exportFileName(ext){
+ const store=(currentStore()?.label||'SHOP').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+   .replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,56);
+ return 'BAO_GIA_'+store+'_'+(model.date||today())+'.'+ext;
+}
+function validateExport(){
+ if(!filled().length)throw new Error('Anh cần thêm ít nhất một sản phẩm trước khi xuất file');
+ if(!currentStore())throw new Error('Anh cần chọn siêu thị trước khi xuất file');
+ const node=el('quotePrint');
+ if(!node)throw new Error('Chưa tải khung bảng báo giá');
+ return node;
+}
+function lazyScript(key,urls,ready){
+ if(ready())return Promise.resolve();
+ if(exportLoaders.has(key))return exportLoaders.get(key);
+ const tryLoad=(index)=>new Promise((resolve,reject)=>{
+  if(index>=urls.length){reject(new Error('Không tải được thư viện tạo file. Kiểm tra kết nối Internet.'));return}
+  const script=document.createElement('script');
+  let settled=false;
+  const done=(err)=>{
+   if(settled)return;settled=true;clearTimeout(timer);
+   if(err){script.remove?.();tryLoad(index+1).then(resolve,reject)}
+   else resolve();
+  };
+  const timer=setTimeout(()=>done(new Error('Hết thời gian tải thư viện')),15000);
+  script.src=urls[index];script.async=true;
+  script.onload=()=>done(ready()?null:new Error('Thư viện chưa sẵn sàng'));
+  script.onerror=()=>done(new Error('Không tải được thư viện'));
+  document.head.appendChild(script);
+ });
+ const promise=tryLoad(0).catch(e=>{exportLoaders.delete(key);throw e});
+ exportLoaders.set(key,promise);return promise;
+}
+async function requireCanvas(){
+ await lazyScript('canvas',[
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+ ],()=>typeof window.html2canvas==='function');
+}
+async function requirePdf(){
+ await lazyScript('pdf',[
+  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
+  'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js'
+ ],()=>typeof window.html2pdf==='function');
+}
+function downloader(blob,filename){
+ const href=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=href;a.download=filename;
+ document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(href),60000);
+}
+async function captureQuote(){
+ const node=validateExport();
+ await requireCanvas();
+ const canvas=await window.html2canvas(node,{
+  backgroundColor:'#ffffff',scale:Math.min(2,Math.max(1,window.devicePixelRatio||1)),
+  useCORS:true,allowTaint:false,imageTimeout:10000,logging:false,scrollX:0,scrollY:0
+ });
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+ if(!blob)throw new Error('Không thể tạo ảnh bảng báo giá');
+ downloader(blob,exportFileName('png'));
+ toast('Đã tạo ảnh PNG của bảng báo giá.');
+}
+async function exportPDF(){
+ const node=validateExport();
+ await requirePdf();
+ // A4 landscape, landscape-sized preview as in the existing paper quotation.
+ await window.html2pdf().set({
+  margin:5,filename:exportFileName('pdf'),
+  image:{type:'jpeg',quality:0.97},
+  html2canvas:{scale:2,useCORS:true,allowTaint:false,imageTimeout:10000,backgroundColor:'#fff',logging:false},
+  jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
+  pagebreak:{mode:['css','legacy']}
+ }).from(node).save();
+ toast('Đã tạo file PDF báo giá.');
+}
+async function runExport(action){
+ if(exporting)return;
+ exporting=true;
+ const btns=[...document.querySelectorAll('.quote40 [data-q-action="capture-quote"],.quote40 [data-q-action="export-pdf"]')];
+ btns.forEach(x=>x.disabled=true);
+ try{if(action==='capture-quote')await captureQuote();else await exportPDF()}
+ catch(e){toast('Không xuất được báo giá: '+(e?.message||e))}
+ finally{exporting=false;btns.forEach(x=>{if(x.isConnected)x.disabled=false})}
 }
 document.addEventListener('input',e=>{if(e.target.closest('.quote40'))onInput(e.target)});
 document.addEventListener('change',e=>{
@@ -171,11 +252,11 @@ document.addEventListener('change',e=>{
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-q-action]');if(!b)return;e.preventDefault();enter();
  if(b.dataset.qAction==='lookup')lookup(Number(b.dataset.index));
- if(b.dataset.qAction==='print')printQuote();
+ if(b.dataset.qAction==='capture-quote'||b.dataset.qAction==='export-pdf')runExport(b.dataset.qAction);
  if(b.dataset.qAction==='clear-product'){
   const i=Number(b.dataset.index);activeLookups.set(i,(activeLookups.get(i)||0)+1);
   clearTimeout(timers.get(i));model.products[i]=emptyProduct();persist();helper.draw();
  }
 });
-window.QUOTE40={configure,enter,onShopChange,view,data,printPreview,lookup,_test:{options,total,formatDate}};
+window.QUOTE40={configure,enter,onShopChange,view,data,printPreview,lookup,_test:{options,total,formatDate,exportFileName,validateExport}};
 })();
