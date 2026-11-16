@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const start=app.indexOf('function loginView(){'),end=app.indexOf('function changePasswordView(',start);
+assert.ok(start>=0&&end>start,'login view must exist');
+const login=app.slice(start,end);
+assert.match(login,/data-role="staff"/);
+assert.match(login,/data-role="shift_lead"/);
+assert.match(login,/data-role="manager"/);
+assert.match(login,/name="username" required/);
+assert.match(login,/autocomplete="off"/);
+assert.doesNotMatch(login,/placeholder="\$\{isManager/);
+assert.doesNotMatch(login,/Ví dụ: 111566|Ví dụ: 112191/);
+assert.doesNotMatch(app.slice(app.indexOf('function normalizeLogin('),app.indexOf('async function signIn(')),/ví dụ 112191/);
+assert.match(login,/name="password" type="password"/);
+console.log('PASS: login has no suggested account IDs on any of three roles; credential fields retained');
