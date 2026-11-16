@@ -42,3 +42,16 @@
 /* Supplied Companion-MWG app icon, consistent on login, desktop and iPhone. */
 .brand .logo.app-icon,.login-logo.app-icon,.splash .mark.app-icon{padding:0;background:transparent;overflow:hidden}
 .brand .logo.app-icon img,.login-logo.app-icon img,.splash .mark.app-icon img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+
+/* v3.3.5 – Work grouping. Only navigation styles; existing tool styles untouched. */
+.workhub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.workhub-card{appearance:none;display:flex;align-items:center;gap:12px;min-width:0;width:100%;border:1px solid #dce7f5;border-radius:14px;background:#fff;text-align:left;padding:17px 15px;color:var(--ink);transition:background .16s,border-color .16s}
+.workhub-card:hover,.workhub-card:focus-visible{border-color:#78a5f4;background:#f5f9ff;outline-offset:3px}
+.workhub-symbol{flex:0 0 44px;height:44px;border-radius:13px;background:#eaf1ff;display:grid;place-items:center;color:var(--blue)}
+.workhub-symbol svg{width:22px;height:22px}
+.workhub-text{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.workhub-text strong{font-size:14px;font-weight:800}
+.workhub-text small{font-size:11px;color:var(--muted);line-height:1.5}
+.workhub-card>svg:last-child{width:17px;height:17px;flex:0 0 17px;color:#94a4bf}
+.workhub-return{margin:0 0 13px}
+@media(max-width:700px){.workhub-grid{grid-template-columns:1fr;gap:9px}.workhub-card{min-height:72px;padding:12px}}
