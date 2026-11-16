@@ -9,7 +9,6 @@ function setup({hung=false,missingLib=false}={}){
  const video={readyState:4,srcObject:{getTracks:()=>[{stop:()=>tracksStopped++}]},
   setAttribute(){},pause(){},playsInline:false,muted:false,autoplay:false};
  const reader={querySelector:(q)=>q==='video'?video:null,querySelectorAll:()=>[video]};
- const photoReader={querySelector:()=>null,querySelectorAll:()=>[]};
  let camera=null;
  class Scanner{
   constructor(id,options){this.id=id;this.options=options;camera=this}
@@ -23,7 +22,7 @@ function setup({hung=false,missingLib=false}={}){
  }
  if(!missingLib)win.Html5Qrcode=Scanner;
  const dom={addEventListener:(type,fn)=>events[type]=fn,
-  getElementById:(id)=>id==='inv-reader'?reader:id==='inv-reader-photo'?photoReader:id==='inv-last'?status:null,
+  getElementById:(id)=>id==='inv-reader'?reader:id==='inv-last'?status:null,
   querySelector:(q)=>q.includes('stop-camera')?liveButton:null,
   createElement:()=>({remove(){}}),head:{append(el){win.Html5Qrcode=Scanner;setImmediate(()=>el.onload?.())}}};
  const timers=hung?(fn,ms)=>setTimeout(fn,Math.min(ms,5)):setTimeout;
@@ -56,6 +55,7 @@ assert.equal(one.video.playsInline,true);
 assert.equal(one.video.muted,true);
 assert.equal(one.video.autoplay,true);
 assert.equal(one.s.camera.settings.fps,30);
+assert.ok(one.s.camera.settings.qrbox(480,360).width>=420,'wide scan frame for 1D barcodes');
 for(let i=0;i<20;i++)one.s.camera.onSuccess('00012');
 await new Promise(r=>setTimeout(r,30));
 assert.equal(one.rpcCalls,1,'burst of 20 decoded frames increments exactly once');
@@ -81,4 +81,4 @@ assert.equal(failure.s.cameraActive,false,'hung start must reset active flag');
 assert.equal(failure.s.cameraPhase,'idle','hung start must restore controls');
 assert.equal(failure.s.scanResult,'error','report camera black screen rather than hanging');
 assert.match(failure.s.scanError,/9 giây/);
-console.log('PASS: synchronous iOS camera start, 30fps, 1 scan per tap, photo fallback, robust black-screen timeout');
+console.log('PASS: synchronous iOS camera start, 30fps, 1 scan per tap, direct QR/barcode only, robust black-screen timeout');
