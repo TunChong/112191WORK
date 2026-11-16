@@ -41,7 +41,7 @@ assert.equal(screenAfterDrawGuard({screen:'bogus'},()=>[['home']],()=>[['more']]
 assert.equal(screenAfterDrawGuard({screen:'account'},()=>[['account']],()=>[['home']]),'account','Account view must remain available');
 assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['account']]),'home','Users without More must not open it');
 assert.match(html, /app\.js\?v=3\.3\.0/);
-assert.match(sw, /112191-work-v3\.3\.0-quote-inventory-lifecycle/);
+assert.match(sw, /companion-mwg-v3\.3\.0-audio/);
 
 assert.match(app, /name="password" type="password" autocomplete="new-password"/);
 assert.match(app, /'staffResetForm'/);
@@ -147,7 +147,7 @@ assert.match(app, /task-priority-label high/);
 assert.match(sw, /addEventListener\('push'/);
 assert.match(sw, /self\.registration\.showNotification/);
 assert.match(sw, /work-push-click/);
-assert.match(sw, /v3\.3\.0-quote-inventory-lifecycle/);
+assert.match(sw, /v3\.3\.0-audio/);
 assert.match(push, /generateVapidKeys/);
 assert.match(push, /work_push_claim_delivery/);
 assert.match(push, /work_push_subscriptions/);
