@@ -26,7 +26,7 @@ const decode=(t:string)=>t.replace(/&(?:amp|quot|lt|gt|apos|nbsp|#39|#x27|#34|#(
  if(decimal||hex){const n=parseInt(decimal||hex,hex?16:10);return n>=32&&n<0x110000?String.fromCodePoint(n):''}
  return map[m.toLowerCase()]||m;
 });
-function readMeta(html:string){
+function readMeta(html:string,target:URL){
  const tags=html.match(/<meta\b[^>]*>/gi)||[];
  const found=new Map<string,string>();
  for(const tag of tags){
@@ -40,21 +40,46 @@ function readMeta(html:string){
  }
  const txt=(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'';
  let title=found.get('og:title')||found.get('twitter:title')||decode(txt.replace(/<[^>]*>/g,''));
- let image=found.get('og:image:secure_url')||found.get('og:image')||found.get('twitter:image')||'';
- if(!image){
-  const ld=html.match(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
-  if(ld){
-   try{
-    const raw=JSON.parse(ld[1]);
-    const arr=Array.isArray(raw)?raw:Array.isArray(raw['@graph'])?raw['@graph']:[raw];
-    const product=arr.find((x:Record<string,unknown>)=>String(x?.['@type']||'').toLowerCase().includes('product'));
-    if(product){title=title||String(product.name||'');const images=product.image;image=typeof images==='string'?images:Array.isArray(images)?String(images[0]||''):'';}
-   }catch{ /* Keep OG fallback */ }
+ const candidates:{url:string;source:string}[]=[];
+ const add=(v:unknown,source:string)=>{
+  if(typeof v==='string'&&v.length>5)candidates.push({url:v,source});
+  else if(v&&typeof v==='object'){
+   if(Array.isArray(v))v.slice(0,30).forEach(x=>add(x,source));
+   else{
+    const x=v as Record<string,unknown>;
+    add(x.url||x.contentUrl||x.src,source);
+   }
   }
+ };
+ // Prioritize actual Product schema images over generic share-card / advertising banners.
+ const ldBlocks=html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+ for(const block of ldBlocks){
+  try{
+   const raw=JSON.parse(block[1]);
+   const nodes=Array.isArray(raw)?raw:Array.isArray(raw['@graph'])?raw['@graph']:[raw];
+   for(const n of nodes){
+    const obj=n as Record<string,unknown>;
+    if(!obj||typeof obj!=='object')continue;
+    const type=Array.isArray(obj['@type'])?obj['@type'].join(' '):String(obj['@type']||'');
+    if(!/\bProduct\b/i.test(type))continue;
+    if(!title&&typeof obj.name==='string')title=obj.name;
+    add(obj.image,'schema-product');
+   }
+  }catch{ /* ignore malformed JSON-LD */ }
  }
+ add(found.get('og:image:secure_url'),'og');
+ add(found.get('og:image'),'og');
+ add(found.get('twitter:image'),'twitter');
+ // Image src attributes are only a fallback. Marketing photos are filtered below.
+ for(const m of html.matchAll(/<(?:img|source)\b[^>]*(?:data-src|src|data-original)\s*=\s*["']([^"']+)["'][^>]*>/gi)){
+  if(candidates.length>150)break;
+  if(/Products\/Images|timerseo/i.test(m[1]))add(decode(m[1]),'gallery');
+ }
+ const image=chooseHeroImage(candidates,target);
  title=String(title||'').replace(/\s*\|\s*(Điện máy XANH|Thế Giới Di Động|Thegioididong).*$/i,'').replace(/\s+/g,' ').trim().slice(0,250);
  return {title,image};
 }
+
 async function readPage(url:URL){
  let current=url;
  for(let i=0;i<4;i++){
@@ -87,7 +112,7 @@ async function readPage(url:URL){
   const merged=new Uint8Array(size);
   let off=0;for(const chunk of chunks){merged.set(chunk,off);off+=chunk.byteLength;}
   const raw=new TextDecoder().decode(merged);
-  const info=readMeta(raw);
+  const info=readMeta(raw,current);
   let image='';
   if(info.image){
    try{const img=new URL(info.image,current);if(img.protocol==='https:')image=img.href}catch{ /* no image */ }
@@ -112,6 +137,54 @@ function safeImage(value:string):string{
   return uri.href;
  }catch{return ''}
 }
+type CandidateImage={url:string;source:string};
+function normalizeRetailImage(raw:string):string{
+ // Image CDN often exposes resizer URLs wrapping the real product image.
+ const value=decode(String(raw||'')).replace(/\\_/g,'_').replace(/\\-/g,'-');
+ const nested=value.lastIndexOf('https://cdn.tgdd.vn/');
+ const link=nested>=0?value.slice(nested):value;
+ return safeImage(link);
+}
+function heroImageScore(raw:string,target:URL,source:string):number{
+ const candidate=normalizeRetailImage(raw);
+ if(!candidate)return -1000;
+ const path=new URL(candidate).pathname;
+ const low=decodeURIComponent(path).toLowerCase();
+ // These photos contain banners, feature text, collages or promotions.
+ if(/\/slider\/|\/banner\/|(?:banner|promo|promotion|khuyen-mai|khuyenmai|tra-gop|tragop|gia-hop-ly|marketing|infographic|feature-)/i.test(low))
+   return -1000;
+ if(/\.gif(?:$|\?)/i.test(low))return -1000;
+ const clean=/-clean(?:[-_.]|$)|-isolated(?:[-_.]|$)|-main(?:[-_.]|$)/i.test(low);
+ const productImage=/\/products\/images\//i.test(low);
+ const timer=/\/timerseo\//i.test(low);
+ if(!clean&&!productImage)return -1000;
+ let score=clean?180:0;
+ if(productImage)score+=95;
+ if(timer)score+=10;
+ if(source==='schema-product')score+=55;
+ else if(source==='og')score+=30;
+ else if(source==='cache')score+=25;
+ else if(source==='reader')score+=10;
+ const itemCode=target.searchParams.get('code');
+ if(itemCode&&path.includes(itemCode))score+=60;
+ const slugPieces=target.pathname.split('/').filter(Boolean).at(-1)?.toLowerCase().split('-')||[];
+ const modelTokens=slugPieces.filter(t=>/\d/.test(t)&&t.length>=3);
+ if(modelTokens.some(token=>low.includes(token)))score+=25;
+ if(/\b(?:600x600|700x700|500x500|400x400|450x450|300x300)\b/i.test(low))score+=8;
+ if(/-1020x570|-1460x940|_banner|loi-gia/i.test(low))score-=75;
+ return score;
+}
+function chooseHeroImage(candidates:CandidateImage[],target:URL):string{
+ let best='',max=85;
+ for(const item of candidates){
+  const url=normalizeRetailImage(item.url);
+  if(!url)continue;
+  const score=heroImageScore(url,target,item.source);
+  if(score>max){max=score;best=url;}
+ }
+ return best;
+}
+
 async function cached(key:string):Promise<ProductResult|null>{
  try{
   const link=BASE+'/rest/v1/quote_product_cache?url_key=eq.'+encodeURIComponent(key)+'&select=title,image,source,expires_at&limit=1';
@@ -120,7 +193,7 @@ async function cached(key:string):Promise<ProductResult|null>{
   const rows=await res.json();
   if(!Array.isArray(rows)||!rows.length||!rows[0]?.title||!rows[0]?.image)return null;
   if(Date.parse(rows[0].expires_at)<Date.now())return null;
-  const image=safeImage(rows[0].image);
+  const image=chooseHeroImage([{url:rows[0].image,source:'cache'}],new URL(key));
   return image?{title:String(rows[0].title),image,url:key,source:rows[0].source||'cache',cached:true}:null;
  }catch{return null}
 }
@@ -135,21 +208,15 @@ async function writeCache(key:string,item:ProductResult){
   });
  }catch{ /* Metadata cache is best-effort; never break quotation */ }
 }
-function parseReaderMarkdown(body:string):ProductResult{
+function parseReaderMarkdown(body:string,target:URL):ProductResult{
  const titleText=(body.match(/^Title:\s*(.+)$/m)||body.match(/^#\s+(.+)$/m)||[])[1]||'';
  const title=decode(titleText).replace(/\s+-\s+(giá rẻ|giao ngay|mua ngay|chính hãng).*$/i,'').replace(/\s+/g,' ').trim().slice(0,250);
  const matches=[...body.matchAll(/!\[([^\]]{0,300})\]\((https:\/\/[^)\s]{1,1200})\)/gi)];
- let image='';
- for(const m of matches){
-  let candidate=m[2].replace(/\\_/g,'_').replace(/\\-/g,'-');
-  const nested=candidate.lastIndexOf('https://cdn.tgdd.vn/');
-  if(nested>=0)candidate=candidate.slice(nested);
-  const url=safeImage(candidate);
-  if(!url||!(/\/Products\/Images\/|\/timerseo\//i.test(url)))continue;
-  if(/\.(?:jpg|jpeg|png|webp)(?:\?|$)/i.test(url)){image=url;break}
- }
- return {title,image,url:'',source:'reader-fallback'};
+ const images=matches.map(m=>({url:m[2],source:'reader'}));
+ const image=chooseHeroImage(images,target);
+ return {title,image,url:target.href,source:'reader-fallback'};
 }
+
 async function readerFallback(target:URL):Promise<ProductResult>{
  // Reader accesses only the already validated public product page. Do not forward
  // authentication headers or customer data to the external extraction service.
@@ -175,7 +242,7 @@ async function resolveProduct(target:URL):Promise<ProductResult>{
  const partials:ProductResult[]=[];
  const requireComplete=async(p:Promise<ProductResult>):Promise<ProductResult>=>{
   const item=await p;
-  item.image=safeImage(item.image);
+  item.image=chooseHeroImage([{url:item.image,source:item.source||'metadata'}],target);
   if(item.title&&item.image)return item;
   if(item.title)partials.push(item);
   throw new Error('Thiếu hình sản phẩm');
