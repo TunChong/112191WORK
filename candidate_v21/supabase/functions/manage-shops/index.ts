@@ -165,10 +165,34 @@ Deno.serve(async(req:Request)=>{
    const byId=new Map(profiles.map((p:Row)=>[p.id,p]));
    return answer(req,200,{members:memberships.map((m:Row)=>({...m,profile:byId.get(m.user_id)||null})),page,limit});
   }
+  if(action==='remove_member'){
+   // Hard-remove one SHOP membership. A Super Admin can operate in any SHOP
+   // (including an archived SHOP); delegated managers are scoped to active SHOPs.
+   if(!managerFor(shop)||!validUUID(data.user_id))
+     return answer(req,403,{error:'Không có quyền xóa nhân sự khỏi SHOP'});
+   const targetId=String(data.user_id);
+   if(targetId===actor.id)return answer(req,403,{error:'Không thể xóa quyền SHOP đang đăng nhập của chính mình'});
+   const protectedProfile=await one('/rest/v1/profiles?id=eq.'+targetId+'&select=id,employee_code,is_admin');
+   if(!protectedProfile)return answer(req,404,{error:'Không tìm thấy nhân sự'});
+   if(protectedProfile.is_admin||protectedProfile.employee_code==='112191')
+     return answer(req,403,{error:'Không được xóa Super Admin 112191'});
+   const membership=await one('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+targetId+'&select=user_id,shop_role');
+   if(!membership)return answer(req,404,{error:'Nhân sự không còn thuộc SHOP này'});
+   // Audit first; if a subsequent step fails no browser-side promise of success.
+   await logAction(shop,actor.id,targetId,'remove_member_permanently');
+   await api('/rest/v1/work_shop_memberships?shop_id=eq.'+shop+'&user_id=eq.'+targetId,
+    {method:'DELETE',prefer:'return=minimal'});
+   const rest=await api('/rest/v1/work_shop_memberships?user_id=eq.'+targetId+'&active=eq.true&select=shop_role');
+   const roles=rest.map((m:Row)=>String(m.shop_role));
+   const role=roles.includes('manager')?'manager':roles.includes('shift_lead')?'shift_lead':'staff';
+   await api('/rest/v1/profiles?id=eq.'+targetId,
+    {method:'PATCH',prefer:'return=minimal',body:{role}});
+   return answer(req,200,{ok:true,removed:true,other_shops_active:rest.length});
+  }
   // Legacy manager policies still allow global work access. ONLY catalog CRUD above is enabled while locked.
   // Staff delegation, task management and membership mutations must remain disabled until RLS isolation is verified.
   if(!await enabled())return answer(req,423,{error:'Multi-SHOP đang chuẩn bị bảo mật; chưa bật thao tác quản lý SHOP'});
-  if(!targetShop.active&&action!=='set_shop_active')return answer(req,409,{error:'SHOP đang bị khóa'});
+  if(!targetShop.active&&action!=='set_shop_active'&&!isAdmin)return answer(req,409,{error:'SHOP đang bị khóa'});
   if(action==='set_shop_active'){
    if(!isAdmin)return answer(req,403,{error:'Chỉ Super Admin được khóa hoặc mở SHOP'});
    if(typeof data.active!=='boolean')return answer(req,400,{error:'Trạng thái không hợp lệ'});
