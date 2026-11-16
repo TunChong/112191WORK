@@ -33,9 +33,9 @@ Deno.serve(async (req:Request)=>{
   if(!token.startsWith('Bearer '))return reply(req,401,{error:'Cần đăng nhập'});
   const signed=await request('/auth/v1/user',{userToken:token.slice(7)});
   if(!signed?.id)return reply(req,401,{error:'Phiên đăng nhập không hợp lệ'});
-  const managerProfiles=await request('/rest/v1/profiles?select=role,active,must_change_password,is_admin&id=eq.'+encodeURIComponent(signed.id)+'&limit=1');
+  const managerProfiles=await request('/rest/v1/profiles?select=employee_code,role,active,must_change_password,is_admin&id=eq.'+encodeURIComponent(signed.id)+'&limit=1');
   if(managerProfiles[0]?.role!=='manager'||managerProfiles[0]?.active!==true||managerProfiles[0]?.must_change_password!==false)return reply(req,403,{error:'Chỉ quản lý được phép'});
-  const actorAdmin=managerProfiles[0]?.is_admin===true;
+  const actorAdmin=managerProfiles[0]?.is_admin===true&&managerProfiles[0]?.employee_code==='112191';
   // When multi-shop isolation is enabled, legacy global staff management belongs
   // to the single Super Admin. Shop managers must use manage-shops and its shop_id.
   const multishop=await request('/rest/v1/work_multi_shop_config?key=eq.production&select=isolation_ready&limit=1');
@@ -104,8 +104,21 @@ Deno.serve(async (req:Request)=>{
    }
    if(action==='preview_delete'||action==='delete'){
     if(!actorAdmin)return reply(req,403,{error:'Chỉ Admin 112191 được xóa tài khoản vĩnh viễn'});
-    if(p.active)return reply(req,409,{error:'Hãy lưu trữ tài khoản trước khi xóa vĩnh viễn'});
     if(action==='delete'&&data.confirm_code!==code)return reply(req,400,{error:'Mã xác nhận chưa chính xác'});
+    if(p.active){
+     if(action==='preview_delete')return reply(req,200,{ok:true,active:true,employee_code:code,counts:{}});
+     // One explicit Delete click: secure the active account first, then run
+     // the existing archived-account cleanup and Auth deletion workflow.
+     await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{
+      method:'PATCH',prefer:'return=minimal',body:{active:false}});
+     try{await request('/auth/v1/admin/users/'+uid,{
+      method:'PUT',body:{ban_duration:'876000h'}})}
+     catch(e){
+      await request('/rest/v1/profiles?id=eq.'+encodeURIComponent(uid),{
+       method:'PATCH',prefer:'return=minimal',body:{active:true}});
+      throw e;
+     }
+    }
 
     // Preflight and cleanup are server-only database RPCs. Public client roles
     // have no EXECUTE grant. Created tasks for other staff are REASSIGNED to
