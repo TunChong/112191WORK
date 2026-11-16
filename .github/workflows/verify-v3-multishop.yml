@@ -23,6 +23,7 @@ jobs:
           deno check candidate_v21/supabase/functions/manage-staff/index.ts
           deno check candidate_v21/supabase/functions/work-push/index.ts
           deno check candidate_v21/supabase/functions/quote-product/index.ts
+          deno check candidate_v21/supabase/functions/quote-image/index.ts
           node --check candidate_v21/quote40.js
           node --check candidate_v21/audio40.js
           node --check candidate_v21/inventory40.js
@@ -54,6 +55,7 @@ jobs:
           node candidate_v21/test_shop_delete_direct.mjs
           node candidate_v21/test_login_no_suggestions.mjs
           node candidate_v21/test_quote40.mjs
+          node candidate_v21/test_quote_export_nonblank.mjs
           node candidate_v21/test_audio40.mjs
           node candidate_v21/test_quote_inventory_323.mjs
 
