@@ -95,7 +95,7 @@ assert.match(sql, /app_private\.track_staff_password_change/);
 assert.match(sql, /app_private\.guard_profile_permissions/);
 assert.doesNotMatch(app,/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 assert.doesNotMatch(read('./config.js'),/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
-assert.match(html,/styles\.css\?v=3\.3\.3/);
+assert.match(html,/styles\.css\?v=3\.3\.2/);
 assert.match(html,/app\.js\?v=3\.3\.3/);
 
 console.log('PASS: task category, manager account UI, server-side auth, archive and secret checks');
