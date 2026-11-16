@@ -5,7 +5,7 @@ const S={shop:null,tab:'stock',sessions:[],sessionId:null,stock:[],counts:[],bus
  importing:false,progress:'',query:'',last:null,camera:null,cameraActive:false,lastCameraCode:'',lastCameraAt:0,
  scanBusy:false,scanQueue:Promise.resolve(),sessionBusy:false,requestSerial:0,
  cameraEpoch:0,cameraPhase:'idle',cameraStartPromise:null,cameraStopping:null,scanAccepted:false,scanResult:'',scanError:'',
- cameraMounting:false,scannerReady:false,scannerError:'',cameraObserver:null,cameraStartRaw:null,photoBusy:false};
+ cameraMounting:false,scannerReady:false,scannerError:'',cameraObserver:null,cameraStartRaw:null};
 let H=null;let xlsxLoading=null;let scannerLoading=null;
 const unknown='CHƯA CÓ TRONG DANH MỤC';
 const esc=x=>H&&H.esc?H.esc(String(x==null?'':x)):String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -71,14 +71,15 @@ async function scannerLib(){
 // Prefer mainstream retail formats; gracefully retain all when enumeration unavailable.
 function fastScannerOptions(){
  const f=window.Html5QrcodeSupportedFormats;
- const names=['QR_CODE','CODE_128','CODE_39','CODE_93','EAN_13','EAN_8','UPC_A','UPC_E','ITF','DATA_MATRIX'];
+ const names=['QR_CODE','CODE_128','EAN_13','EAN_8','UPC_A','UPC_E','CODE_39','CODE_93','ITF'];
  const formats=f?names.map(n=>f[n]).filter(n=>Number.isInteger(n)):null;
+ // Restrict supported formats when available, instead of scanning every format.
  return {verbose:false,useBarCodeDetectorIfSupported:true,
-  ...(formats&&formats.length===names.length?{formatsToSupport:formats}:{})};
+  ...(formats&&formats.length>=3?{formatsToSupport:formats}:{})};
 }
 function fastScanRegion(w,h){
  // Favor enough height for QR and enough width for traditional 1D barcodes.
- return {width:Math.max(120,Math.min(w-16,360)),height:Math.max(110,Math.min(h-16,250))};
+ return {width:Math.max(120,Math.min(w-12,440)),height:Math.max(110,Math.min(h-12,250))};
 }
 const normalizeCode=s=>String(s==null?'':s).trim();
 function normalizeQuantity(value){
@@ -251,9 +252,6 @@ function view(){
   '<div class="inv-camera-actions"><button class="btn" type="button" data-inv-action="'+(S.cameraActive?'stop-camera':'start-camera')+'" '+(S.cameraPhase==='processing'||S.cameraPhase==='stopping'||S.cameraPhase==='starting'?'disabled':'')+'>'+
    (S.cameraPhase==='processing'?'Đang ghi nhận...':S.cameraPhase==='stopping'?'Đang tắt camera...':S.cameraPhase==='starting'?'Đang mở camera...':S.cameraActive?'Tắt camera':!window.Html5Qrcode?'⏳ CHUẨN BỊ BỘ QUÉT · BẤM ĐỂ TẢI':S.scanResult==='success'?'📷 QUÉT TIẾP':'📷 MỞ CAMERA QUÉT MÃ')+'</button></div>'+
   (S.cameraActive?'<div id="inv-reader" class="inv-reader"></div>':'')+
-  '<label class="inv-photo-trigger" for="invPhotoInput">📷 CHỤP ẢNH MÃ (khi camera trực tiếp không mở)</label>'+
-  '<input id="invPhotoInput" type="file" accept="image/*" capture="environment" '+(S.photoBusy?'disabled':'')+' class="inv-photo-input" aria-label="Chụp ảnh QR hoặc barcode để quét">'+
-  '<div id="inv-reader-photo" class="inv-photo-reader" aria-hidden="true"></div>'+
   '<form id="invScanForm" class="inv-form"><label>MÃ SẢN PHẨM<input id="invScanCode" name="code" type="text" maxlength="100" autocapitalize="off" autocomplete="off" required placeholder="Quét mã hoặc nhập mã..."></label>'+
   '<label>TÊN SẢN PHẨM (nếu chưa có trong tồn kho)<input name="name" type="text" maxlength="300" placeholder="Tùy chọn – mã chưa có trong file tồn"></label>'+
   '<button type="submit" class="btn">+ Ghi nhận 1 lượt</button></form>')+
@@ -462,38 +460,6 @@ async function stopCamera(options={}){
   if(!options.keepProcessing)S.cameraPhase='idle';
  }
 }
-async function scanPhoto(file){
- if(!file||S.photoBusy)return;
- if(!current()||current().state!=='open')throw new Error('Kỳ kiểm kê chưa mở');
- if(file.size>14*1024*1024)throw new Error('Ảnh vượt quá 14 MB');
- const sessionId=S.sessionId,shop=S.shop;
- S.photoBusy=true;
- let decoder=null;
- try{
-  await stopCamera();
-  await scannerLib();
-  const reader=document.getElementById('inv-reader-photo');
-  if(!reader)throw new Error('Không thấy vùng giải mã ảnh');
-  const status=document.getElementById('inv-last');
-  if(status)status.textContent='Đang nhận diện mã từ ảnh đã chụp...';
-  decoder=new window.Html5Qrcode('inv-reader-photo',fastScannerOptions());
-  const raw=await withDeadline(decoder.scanFile(file,true),12000,'Không nhận diện được mã trong ảnh sau 12 giây');
-  const code=normalizeCode(typeof raw==='string'?raw:raw?.decodedText);
-  if(!code)throw new Error('Ảnh chưa có mã QR/barcode rõ nét');
-  try{await Promise.resolve(decoder.clear?.())}catch(_){}
-  decoder=null;
-  if(sessionId!==S.sessionId||shop!==S.shop)throw new Error('SHOP hoặc kỳ kiểm kê đã thay đổi');
-  S.cameraPhase='processing';S.scanResult='';
-  await countCode(code);
-  S.scanResult='success';S.scanError='';
- }catch(e){
-  S.scanResult='error';S.scanError=e?.message||'Không đọc được ảnh mã';
-  notify('Kiểm kê 4.0: '+S.scanError);
- }finally{
-  if(decoder)try{await Promise.resolve(decoder.clear?.())}catch(_){}
-  S.photoBusy=false;S.cameraPhase='idle';redraw();
- }
-}
 async function leave(){await stopCamera();}
 async function onShopChange(){await leave();S.shop=null;S.sessionId=null;S.sessions=[];S.stock=[];S.counts=[];S.requestSerial++;}
 async function exportExcel(){
@@ -572,7 +538,6 @@ document.addEventListener('submit',async function(ev){
 });
 document.addEventListener('change',function(ev){
  if(ev.target.id==='invSessionSelect')changeSession(ev.target.value).catch(e=>notify(e.message));
- if(ev.target.id==='invPhotoInput'){const file=ev.target.files?.[0];ev.target.value='';if(file)scanPhoto(file).catch(e=>notify('Kiểm kê 4.0: '+e.message));}
 });
 document.addEventListener('input',function(ev){
  if(ev.target.id==='invSearch'){
@@ -582,5 +547,5 @@ document.addEventListener('input',function(ev){
   if(fresh){fresh.focus();fresh.setSelectionRange(n,n);}
  }
 });
-window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera,isCameraRunning:()=>S.cameraActive && !S.cameraMounting,_test:{startCamera,acceptCameraCode,countCode,performAction,scanPhoto,state:S}};
+window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera,isCameraRunning:()=>S.cameraActive && !S.cameraMounting,_test:{startCamera,acceptCameraCode,countCode,performAction,state:S}};
 })();
