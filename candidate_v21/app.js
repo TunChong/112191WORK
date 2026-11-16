@@ -1,4 +1,4 @@
-/* 112191 WORK v2.0 | Đồng bộ Supabase, đăng nhập mã NV, 2 quản lý. */
+/* Companion-MWG v2.0 | Đồng bộ Supabase, đăng nhập mã NV, 2 quản lý. */
 const CONF = window.WORK_CONFIG || {};
 const CLOUD = !!(CONF.supabaseUrl && CONF.supabasePublishableKey);
 const BASE = (CONF.supabaseUrl || '').replace(/\/$/, '');
@@ -24,7 +24,7 @@ const ROSTER = [
   {employee_code:'288315',full_name:'Thúy'}
 ];
 const TOKEN_KEY = 'work112191_session';
-const SHOP_VERSION = '3.2.3-quote-inventory-lifecycle';
+const SHOP_VERSION = '3.3.0-companion-audio';
 const ICON_PATHS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   clipboard:'<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
@@ -32,6 +32,7 @@ const ICON_PATHS = {
   plus:'<path d="M12 5v14M5 12h14"/>',bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3-8 8-8s8 3 8 8"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M15 3a4 4 0 0 1 0 8M23 21v-2a4 4 0 0 0-3-3.9"/><circle cx="8.5" cy="7" r="4"/>',
   chart:'<path d="M3 3v18h18M8 16v-5M13 16V6M18 16v-8"/>',check:'<path d="m5 12 4 4L19 6"/>',checkcircle:'<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+  headphones:'<path d="M3 14v-3a9 9 0 0 1 18 0v3M4 14h4v7H6a3 3 0 0 1-3-3v-2a2 2 0 0 1 1-2M20 14h-4v7h2a3 3 0 0 0 3-3v-2a2 2 0 0 0-1-2"/>',
   receipt:'<path d="M4 3h16v18l-4-2-4 2-4-2-4 2zM8 8h8M8 12h8M8 16h5"/>',
   camera:'<path d="M14 4H9l-2 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z"/><circle cx="12" cy="13" r="4"/>',
   repeat:'<path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>',
@@ -164,7 +165,7 @@ async function loadCloud(){
   cloudRequest('/rest/v1/assignments?shop_id=eq.'+shopId+'&select=*&limit=1200'),
   cloudRequest('/rest/v1/recurring_templates?shop_id=eq.'+shopId+'&select=*&order=created_at.desc&limit=400'),
   cloudRequest('/rest/v1/recurring_members?shop_id=eq.'+shopId+'&select=*&limit=1200'),
-  cloudRequest('/rest/v1/notifications?shop_id=eq.'+shopId+'&select=*&order=created_at.desc&limit=150')
+  cloudRequest('/rest/v1/notifications?or=(shop_id.eq.'+shopId+',shop_id.is.null)&select=*&order=created_at.desc&limit=150')
  ]);
  const profiles=(members||[]).filter(m=>m.profile).map(m=>({...m.profile,role:m.shop_role,active:!!m.active&&!!m.profile.active}));
  if(!profiles.some(p=>p.id===state.user.id))profiles.unshift(state.user);
@@ -319,18 +320,18 @@ function taskCard(t,a=null){const ass=a||taskAssignments(t.id)[0]||{status:'todo
  <div class="task-symbol">${ic(STATUS_ICON[st]||'clipboard')}</div><div class="task-body"><div class="task-title">${esc(t.title)}</div>
  <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}${t.priority==='high'?'<span class="task-priority-label high">🚨 ƯU TIÊN CAO</span>':'<span class="task-priority-label">BÌNH THƯỜNG</span>'}</div></div>${statusBadge(st)}${admin()?`<button type="button" class="task-delete-button" data-action="delete-task" data-id="${esc(t.id)}" title="Xóa vĩnh viễn công việc">${ic('trash')} Xóa</button>`:''}</article>`}
 function navEntries(){return manager()?[
- ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['shops','Quản lý SHOP','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
+ ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['shops','Quản lý SHOP','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
  supervisor()?[
- ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['team','Nhân viên','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
- [['home','Tổng quan','home'],['tasks','Việc của tôi','list'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
-function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
+ ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['team','Nhân viên','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
+ [['home','Tổng quan','home'],['tasks','Việc của tôi','list'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],['alerts','Thông báo','bell'],['more','Thêm','more']];}
+function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
-function headerTitle(){return ({quote40:'Báo giá',inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
-function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.2.3 BÁO GIÁ & KIỂM KÊ</div></aside><main class="content">
- <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
+function headerTitle(){return ({audio40:'Audio',quote40:'Báo giá',inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
+function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">C</div><div><strong>Companion-MWG</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>Companion-MWG · Phiên bản v3.3.0 AUDIO</div></aside><main class="content">
+ <div class="topbar"><div><div class="eyebrow">Companion-MWG / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
- ${content}<div class="footbar">112191 WORK · Built for store teams</div></main>
+ ${content}<div class="footbar">Companion-MWG · Built for store teams</div></main>
  <nav class="bottomnav">${bottomItems().map(([key,label,icon])=>`<button class="${state.screen===key?'on':''} ${key==='create'?'primary-nav':''}" data-action="navigate" data-screen="${key}">${ic(icon)}<span>${label}</span></button>`).join('')}</nav></div>${state.modal?modalHtml():''}`}
 function displayStat(n,label,icon,extra=''){return `<div class="stat-card"><div class="stat-icon">${ic(icon)}</div><div class="stat-number">${n}</div><div class="stat-label">${label}</div>${extra?`<div class="stat-desc">${extra}</div>`:''}</div>`}
 function empty(title,desc,icon='clipboard'){return `<div class="empty">${ic(icon)}<h3>${esc(title)}</h3><p>${esc(desc)}</p></div>`}
@@ -373,7 +374,7 @@ function teamView(){
  const leaders=active.filter(p=>p.role==='manager'||p.role==='shift_lead');
  const workers=active.filter(p=>p.role==='staff');
  return `<div class="stack">
- <div class="notice">${ic('info')}<div><b>${leaders.length} quản lý/trưởng ca</b> · <b>${workers.length} nhân viên đang hoạt động</b>. Admin 112191 là chủ quản trị cao nhất; tài khoản đã lưu trữ không xuất hiện tại đây.</div></div>
+ <div class="notice">${ic('info')}<div><b>${leaders.length} quản lý/trưởng ca</b> · <b>${workers.length} nhân viên đang hoạt động</b>. Super Admin là chủ quản trị cao nhất; tài khoản đã lưu trữ không xuất hiện tại đây.</div></div>
  <section class="panel"><div class="panel-head"><div><h2>Danh sách nhân sự</h2><div class="subtitle">Chỉ hiển thị người đang hoạt động</div></div>${manager()?`<button class="btn sm" data-action="navigate" data-screen="shops">${ic('plus')} Thêm nhân viên</button>`:''}</div><div class="person-list">
  ${leaders.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name)}</strong><small>${esc(p.employee_code)} · ${roleName(p)} · Đang hoạt động</small></div><span class="badge approved">${roleName(p)}</span></div>`).join('')}
  ${workers.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name)}</strong><small>Mã NV: ${esc(p.employee_code||'—')} · Nhân Viên</small></div><span class="badge approved">Hoạt động</span>${manager()?`<button class="btn sm outline" data-action="navigate" data-screen="shops">Quản lý trong SHOP</button>`:''}</div>`).join('')}
@@ -381,10 +382,10 @@ function teamView(){
 }
 
 function accountsView(){
- if(!admin())return empty('Không có quyền','Chỉ Admin 112191 được quản lý tài khoản toàn hệ thống.','lock');
+ if(!admin())return empty('Không có quyền','Chỉ Super Admin được quản lý tài khoản toàn hệ thống.','lock');
  const rows=state.staffAccounts?.accounts||users(),events=state.staffAccounts?.events||[],active=rows.filter(p=>p.active).length,tab=state.staffAccountFilter==='archived'?'archived':'active',shownRows=rows.filter(p=>tab==='active'?p.active:!p.active);
  return `<div class="stack">
- <div class="notice">${ic('shield')}<div><b>Tài khoản SHOP chính (97 - ĐMX 102 LÊ VĂN KHƯƠNG)</b> · ${active} hoạt động / ${rows.length} tài khoản (không gồm Admin 112191). Không xóa lịch sử nhiệm vụ khi khóa người dùng. Mật khẩu riêng của nhân viên không thể xem lại.</div></div>
+ <div class="notice">${ic('shield')}<div><b>Tài khoản SHOP chính (97 - ĐMX 102 LÊ VĂN KHƯƠNG)</b> · ${active} hoạt động / ${rows.length} tài khoản (không gồm Super Admin). Không xóa lịch sử nhiệm vụ khi khóa người dùng. Mật khẩu riêng của nhân viên không thể xem lại.</div></div>
  ${state.staffAccountsError?`<div class="notice note-amber">${ic('warning')}<div>API quản trị chưa sẵn sàng: ${esc(state.staffAccountsError)}. Có thể xem danh sách, nhưng chưa thể tạo hoặc đặt lại mật khẩu.</div></div>`:''}
  ${state.oneTimeCredential?`<section class="panel"><div class="panel-head"><h2>Mật khẩu tạm thời · Chỉ hiển thị một lần</h2></div><p>Gửi riêng cho mã NV ${esc(state.oneTimeCredential.code)} và yêu cầu đổi ngay sau đăng nhập.</p><div class="row"><input aria-label="Mật khẩu tạm thời" readonly value="${esc(state.oneTimeCredential.password)}"><button class="btn" data-action="copy-temp-password">${ic('save')} Sao chép</button></div><button class="btn outline sm" data-action="dismiss-temp-password">Đóng và xóa khỏi màn hình</button></section>`:''}
  <section class="panel"><div class="panel-head"><div><h2>Thêm tài khoản theo vị trí</h2><div class="subtitle">Anh tự đặt mật khẩu ban đầu hoặc để hệ thống tạo tự động. Nhân viên phải đổi khi đăng nhập lần đầu.</div></div></div><form id="createStaffForm" class="stack"><div class="form-grid">
@@ -400,7 +401,7 @@ function accountsView(){
  </div>`;
 }
 async function taskAdminRequest(body){
- if(!admin()||!CLOUD)throw new Error('Chỉ Admin 112191 được xóa công việc.');
+ if(!admin()||!CLOUD)throw new Error('Chỉ Super Admin được xóa công việc.');
  await ensureFreshToken();
  const resp=await fetch(BASE+'/functions/v1/manage-tasks',{
   method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+state.session.access_token,
@@ -568,9 +569,9 @@ function alertsView(){const items=myNotifications();return `<section class="pane
  <div>${items.length?items.map(n=>`<div class="notification ${n.read_at?'read':''}" data-action="read-one" data-id="${esc(n.id)}" data-task="${esc(n.task_id||'')}"><span class="bulb">${ic('bell')}</span><div style="flex:1"><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p><time>${fmt(n.created_at)}</time></div>${!n.read_at?'<span style="width:7px;height:7px;background:var(--blue);border-radius:50%"></span>':''}</div>`).join(''):empty('Không có thông báo','Khi có công việc hoặc thay đổi kết quả, thông báo sẽ hiển thị ở đây.','bell')}</div></section>`}
 function moreView(){
  const items=manager()?[
-  ['shops','Quản lý SHOP / Nhân sự','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
-  ]:[['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
- return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Tiện ích ${roleName(state.user)}</h2><div class="subtitle">Truy cập nhanh</div></div></div><div class="more-menu">${items.map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}<button class="more-entry" type="button" data-action="logout" aria-label="Đăng xuất khỏi 112191 WORK" style="color:#b91c1c;font-weight:700">${ic('logout')}<span>Đăng xuất</span>${ic('chevron')}</button></div></section></div>`;
+  ['shops','Quản lý SHOP / Nhân sự','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
+  ]:[['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
+ return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Tiện ích ${roleName(state.user)}</h2><div class="subtitle">Truy cập nhanh</div></div></div><div class="more-menu">${items.map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}<button class="more-entry" type="button" data-action="logout" aria-label="Đăng xuất khỏi Companion-MWG" style="color:#b91c1c;font-weight:700">${ic('logout')}<span>Đăng xuất</span>${ic('chevron')}</button></div></section></div>`;
 }
 
 
@@ -599,7 +600,7 @@ function shopsView(){
  }).join('');
  return `<div class="stack">
   <section class="panel"><div class="panel-head"><div><h2>Quản lý nhiều SHOP</h2><div class="subtitle">Danh mục kho / SHOP · Thiết kế phục vụ 500 SHOP</div></div></div>
-   <div class="notice">${ic('shield')}<div><b>SHOP hiện tại: ${esc(shopLabel(selected))}</b><p>Chỉ Super Admin 112191 được thêm, sửa hoặc xóa SHOP. Quản lý từng SHOP chỉ quản lý nhân viên trong phạm vi được cấp.</p></div></div>
+   <div class="notice">${ic('shield')}<div><b>SHOP hiện tại: ${esc(shopLabel(selected))}</b><p>Chỉ Super Super Admin được thêm, sửa hoặc xóa SHOP. Quản lý từng SHOP chỉ quản lý nhân viên trong phạm vi được cấp.</p></div></div>
    ${!state.shopReady?`<div class="notice note-amber">${ic('warning')}<div><b>Quản lý danh mục SHOP đã mở.</b> Anh có thể thêm mã kho và tên SHOP, sửa hoặc xóa SHOP chưa có dữ liệu. SHOP tạo mới chưa được giao việc/cấp Quản lý cho đến khi hoàn tất kiểm thử cách ly dữ liệu.</div></div>`:''}
   </section>
   ${admin()?`<section class="panel"><div class="panel-head"><div><h2>Thêm SHOP</h2><div class="subtitle">Nhập Mã kho và Tên SHOP để hiển thị dưới dạng Mã kho - Tên SHOP</div></div></div>
@@ -629,7 +630,7 @@ function shopsView(){
     <div class="row"><button type="submit" class="btn">${ic('save')} Lưu thay đổi</button><button type="button" class="btn outline" data-action="shop-cancel-edit">Hủy</button></div></form></section>`:''}
   `:''}
   ${state.shopReady&&state.shopId&&selected?.active?`<section class="panel"><h2>Thêm nhân viên cho SHOP đang chọn</h2><form id="newShopStaffForm" class="stack"><div class="form-grid"><div class="form-field"><label>Mã nhân viên</label><input name="code" required pattern="[0-9]{4,8}" maxlength="8"></div><div class="form-field"><label>Họ và tên</label><input name="name" required maxlength="120"></div><div class="form-field"><label>Vai trò trong SHOP *</label><select name="shopRole" required><option value="staff">Nhân viên</option><option value="shift_lead">Trưởng ca</option><option value="manager">Quản lý</option></select></div></div><button type="submit" class="btn">Tạo tài khoản nhân sự SHOP</button></form></section>`:''}
-  ${admin()&&state.shopReady&&state.shopId&&selected?.active?`<section class="panel"><h2>Ủy quyền Quản lý SHOP</h2><form id="grantShopManagerForm" class="stack"><div class="form-field"><label>Mã nhân viên đã có tài khoản</label><input name="code" required pattern="[0-9]{4,8}"></div><button type="submit" class="btn">Cấp quyền Quản lý SHOP</button><p class="fineprint">Chỉ Admin 112191 được cấp và thu hồi vai trò Quản lý.</p></form></section>`:''}
+  ${admin()&&state.shopReady&&state.shopId&&selected?.active?`<section class="panel"><h2>Ủy quyền Quản lý SHOP</h2><form id="grantShopManagerForm" class="stack"><div class="form-field"><label>Mã nhân viên đã có tài khoản</label><input name="code" required pattern="[0-9]{4,8}"></div><button type="submit" class="btn">Cấp quyền Quản lý SHOP</button><p class="fineprint">Chỉ Super Admin được cấp và thu hồi vai trò Quản lý.</p></form></section>`:''}
   ${state.oneTimeCredential?`<section class="panel"><h2>Mật khẩu ban đầu · chỉ hiện một lần</h2><p>Mã nhân viên: <b>${esc(state.oneTimeCredential.code)}</b></p><div class="row"><input readonly value="${esc(state.oneTimeCredential.password)}"><button class="btn sm" data-action="copy-temp-password">Sao chép</button><button class="btn sm outline" data-action="dismiss-temp-password">Đóng</button></div></section>`:''}
   <section class="panel"><div class="panel-head"><div><h2>Nhân sự SHOP đang chọn</h2><div class="subtitle">Quản lý được ủy quyền theo từng SHOP</div></div><button class="btn sm outline" data-action="refresh-shop-members">Làm mới</button></div>
   <div class="person-list">${state.shopMemberLoading?'<p>Đang tải nhân sự...</p>':people||'<p class="fineprint">SHOP chưa có nhân sự.</p>'}</div></section>
@@ -637,7 +638,7 @@ function shopsView(){
 }
 
 function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${roleName(state.user)} · ${CLOUD?'Dữ liệu trực tuyến':'Dùng thử trên thiết bị'}</div></div></div>
- <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">112191 WORK · v3.0.4 PREVIEW · MULTI SHOP</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${state.pushEnabled?'Đã bật Push kể cả khi đóng web':Notification.permission==='granted'?'Đã bật thông báo khi link web còn mở':Notification.permission==='denied'?'Thông báo trình duyệt bị chặn; popup trong web vẫn bật':'Popup trong web luôn bật; chưa cấp quyền trình duyệt'}`:'Popup khi mở link web luôn bật. iPhone cần thêm Màn hình chính để nhận khi đóng web'}</div></div>
+ <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">Companion-MWG · v3.0.4 PREVIEW · MULTI SHOP</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${state.pushEnabled?'Đã bật Push kể cả khi đóng web':Notification.permission==='granted'?'Đã bật thông báo khi link web còn mở':Notification.permission==='denied'?'Thông báo trình duyệt bị chặn; popup trong web vẫn bật':'Popup trong web luôn bật; chưa cấp quyền trình duyệt'}`:'Popup khi mở link web luôn bật. iPhone cần thêm Màn hình chính để nhận khi đóng web'}</div></div>
  <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button>${state.pushEnabled?`<button class="btn outline" data-action="disable-notifs">${ic('bell')} Tắt thông báo đẩy trên thiết bị</button>`:`<button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo web / điện thoại</button>`}<button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
  ${!CLOUD?`<hr class="divider"/><div class="mini-label" style="margin-bottom:9px">Đổi tài khoản dùng thử</div><div class="row"><button class="btn outline sm" data-action="switch-demo" data-user="mgr">Quản lý</button><select id="demoStaffSelect" aria-label="Chọn nhân viên dùng thử" style="max-width:230px"><option value="">Chọn nhân viên...</option>${users().map(p=>`<option value="${esc(p.id)}" ${p.id===state.user.id?'selected':''}>${esc(personLabel(p))}</option>`).join('')}</select></div><p class="fineprint">Chuyển vai trò để thử luồng công việc trên cùng một thiết bị. Đây không phải đăng nhập bảo mật.</p><button class="btn outline sm" data-action="reset-demo">Đặt lại dữ liệu dùng thử</button>`:''}
  <hr class="divider"/><p class="fineprint">${CLOUD?'Tài khoản dùng chung được kiểm soát bằng Supabase Auth và Row Level Security.':'Chế độ dùng thử lưu vào localStorage; ảnh và dữ liệu không tự sao lưu hoặc đồng bộ.'} Đăng nhập bằng link web vẫn nhận popup khi trang đang mở. Chrome/Android và trình duyệt có Web Push có thể nhận khi đóng tab nếu đã cấp quyền. Trên iPhone muốn nhận khi đóng Safari phải thêm website vào Màn hình chính rồi cấp quyền. Chế độ Không làm phiền hoặc tiết kiệm pin có thể làm chậm thông báo.</p></section>`}
@@ -664,7 +665,7 @@ function modalHtml(){if(state.modal?.type==='detail'){const t=getTask(state.moda
  if(state.modal?.type==='staff-role'){
   if(!admin()||!state.staffAccounts)return '';
   const p=state.staffAccounts.accounts.find(x=>x.id===state.modal.uid);if(!p||p.is_admin)return '';
-  return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Đổi vị trí nhân sự</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><p>${esc(p.employee_code)} · ${esc(p.full_name)}</p><form id="staffRoleForm" data-id="${esc(p.id)}" class="stack"><div class="form-field"><label>Chọn vị trí *</label><select name="role" required><option value="staff" ${p.role==='staff'?'selected':''}>Nhân Viên</option><option value="shift_lead" ${p.role==='shift_lead'?'selected':''}>Trưởng Ca</option><option value="manager" ${p.role==='manager'?'selected':''}>Quản Lý</option></select></div><p class="fineprint">Chỉ Admin 112191 có thể cấp hoặc thu hồi quyền Quản Lý; lịch sử công việc giữ nguyên.</p><button class="btn full" type="submit">Lưu vị trí mới</button></form></div></div>`;
+  return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Đổi vị trí nhân sự</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><p>${esc(p.employee_code)} · ${esc(p.full_name)}</p><form id="staffRoleForm" data-id="${esc(p.id)}" class="stack"><div class="form-field"><label>Chọn vị trí *</label><select name="role" required><option value="staff" ${p.role==='staff'?'selected':''}>Nhân Viên</option><option value="shift_lead" ${p.role==='shift_lead'?'selected':''}>Trưởng Ca</option><option value="manager" ${p.role==='manager'?'selected':''}>Quản Lý</option></select></div><p class="fineprint">Chỉ Super Admin có thể cấp hoặc thu hồi quyền Quản Lý; lịch sử công việc giữ nguyên.</p><button class="btn full" type="submit">Lưu vị trí mới</button></form></div></div>`;
  }
  if(state.modal?.type==='staff-reset'||state.modal?.type==='staff-edit'){
   if(!manager()||!state.staffAccounts)return '';
@@ -674,15 +675,15 @@ function modalHtml(){if(state.modal?.type==='detail'){const t=getTask(state.moda
  }
  if(state.modal?.type==='reject')return `<div class="modal-screen" data-action="close-overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h2>Yêu cầu nhân viên làm lại</h2><button class="icononly" data-action="close-modal">${ic('close')}</button></div><form id="rejectForm" data-aid="${esc(state.modal.aid)}" class="stack"><div class="form-field"><label>Lý do cần chỉnh sửa *</label><textarea name="feedback" required minlength="5" maxlength="800" placeholder="Nêu rõ nội dung chưa đạt và yêu cầu thực hiện lại"></textarea></div><button class="btn danger full" type="submit">Gửi yêu cầu làm lại</button></form></div></div>`;
  return ''}
-function configRequiredView(){return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>112191 WORK</h1><p>Phiên bản dùng chung · Cấu hình chưa hoàn tất</p></div><div class="notice note-amber">${ic('lock')}<div>Ứng dụng cần kết nối Supabase trước khi nhân viên đăng nhập. Hãy nhập <b>Project URL</b> và <b>Publishable key</b> vào file <code>config.js</code> rồi triển khai lại. Không có chế độ dùng thử trong bản chính thức.</div></div></div></div>`}
-function loginView(){if(!CLOUD)return configRequiredView();const isManager=state.authRole==='manager',isLead=state.authRole==='shift_lead';return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>112191 WORK</h1><p>Quản lý và triển khai công việc siêu thị<br>ĐỒNG BỘ TRỰC TUYẾN</p></div>
+function configRequiredView(){return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">C</div><h1>Companion-MWG</h1><p>Phiên bản dùng chung · Cấu hình chưa hoàn tất</p></div><div class="notice note-amber">${ic('lock')}<div>Ứng dụng cần kết nối Supabase trước khi nhân viên đăng nhập. Hãy nhập <b>Project URL</b> và <b>Publishable key</b> vào file <code>config.js</code> rồi triển khai lại. Không có chế độ dùng thử trong bản chính thức.</div></div></div></div>`}
+function loginView(){if(!CLOUD)return configRequiredView();const isManager=state.authRole==='manager',isLead=state.authRole==='shift_lead';return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">C</div><h1>Companion-MWG</h1><p>Quản lý và triển khai công việc siêu thị<br>ĐỒNG BỘ TRỰC TUYẾN</p></div>
  <div class="tabs login-role-tabs" style="justify-content:center;margin-bottom:18px"><button class="tab ${!isManager&&!isLead?'on':''}" type="button" data-action="auth-role" data-role="staff">${ic('user')} NHÂN VIÊN</button><button class="tab ${isLead?'on':''}" type="button" data-action="auth-role" data-role="shift_lead">${ic('checkcircle')} TRƯỞNG CA</button><button class="tab ${isManager?'on':''}" type="button" data-action="auth-role" data-role="manager">${ic('shield')} QUẢN LÝ</button></div>
  <form id="authForm" class="login-form" novalidate>
  <div class="form-field"><label>${isManager?'Mã quản lý':isLead?'Mã trưởng ca':'Mã nhân viên'} *</label><input name="username" required inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="${isManager?'Mã quản lý':isLead?'Mã trưởng ca':'Mã nhân viên'}" /></div>
  <div class="form-field"><label>Mật khẩu *</label><input name="password" type="password" required autocomplete="current-password" placeholder="Nhập mật khẩu tài khoản" /></div>
  <div id="loginError" class="form-error" hidden role="alert"></div>
  <button class="btn full" type="submit">${ic('lock')} Đăng nhập</button></form><p class="fineprint" style="text-align:center;margin-top:14px">Tài khoản do quản lý cung cấp. Lần đầu đăng nhập cần đổi mật khẩu riêng. Không có chức năng tự đăng ký.</p></div></div>`}
-function changePasswordView(force=true){return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>${force?'Đổi mật khẩu lần đầu':'Đổi mật khẩu'}</h1><p>${esc(state.user?.full_name||'')} · ${esc(state.user?.employee_code||'')}</p></div>
+function changePasswordView(force=true){return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">C</div><h1>${force?'Đổi mật khẩu lần đầu':'Đổi mật khẩu'}</h1><p>${esc(state.user?.full_name||'')} · ${esc(state.user?.employee_code||'')}</p></div>
  <div class="notice note-amber" style="margin-bottom:15px">${ic('shield')}<div>${force?'Mật khẩu ban đầu chỉ dùng một lần. Bạn phải đổi mật khẩu trước khi xem công việc hoặc báo cáo.':'Dùng mật khẩu mới của riêng bạn; không gửi cho người khác.'}</div></div>
  <form id="passwordChangeForm" class="login-form" novalidate><div class="form-field"><label>Mật khẩu mới (ít nhất 8 ký tự) *</label><input name="newPassword" type="password" minlength="8" required autocomplete="new-password" placeholder="Tối thiểu 8 ký tự, nên có chữ và số" /></div><div class="form-field"><label>Nhập lại mật khẩu mới *</label><input name="confirmPassword" type="password" required autocomplete="new-password" placeholder="Nhập lại mật khẩu mới" /></div><button class="btn full" type="submit">${ic('check')} Lưu mật khẩu mới</button></form>
  <div class="row" style="margin-top:15px"><button class="btn outline full" data-action="${force?'logout':'back-account'}">${force?'Đăng xuất':'Quay lại'}</button></div></div></div>`}
@@ -690,6 +691,17 @@ function draw(){if(state.screen==='inventory40'&&window.INV40?.isCameraRunning?.
  if(!CLOUD){root.innerHTML=configRequiredView();return}if(!state.user){root.innerHTML=loginView();return}if(!state.data){root.innerHTML='<div class="splash"><span class="spinner"></span><b>Đang tải...</b></div>';return}
  if(CLOUD&&!state.user.active){root.innerHTML=appShell(pendingView());return}
  if(state.user.must_change_password || state.screen==='change-password'){root.innerHTML=changePasswordView(!!state.user.must_change_password);return}
+ if(window.AUDIO40&&state.screen==='audio40'){
+  window.AUDIO40.configure({
+    shopId:()=>state.shopId,
+    shopName:()=>state.shops.find(x=>x.id===state.shopId)?.shop_name||'',
+    userId:()=>state.user?.id||null,
+    admin:()=>admin(),
+    current:()=>state.screen,
+    api:cloudRequest,toast,draw,
+    refreshNotifications:()=>refresh().catch(console.warn)
+  });
+ }
  if(window.QUOTE40&&state.screen==='quote40'){
   window.QUOTE40.configure({shopId:()=>state.shopId,shopCode:()=>state.shops.find(s=>s.id===state.shopId)?.shop_code||'',
    user:()=>state.user,resolveProduct:resolveQuoteProduct,toast,draw});
@@ -698,7 +710,7 @@ function draw(){if(state.screen==='inventory40'&&window.INV40?.isCameraRunning?.
   window.INV40.configure({shopId:()=>state.shopId,shopCode:()=>state.shops.find(s=>s.id===state.shopId)?.shop_code||'SHOP',
     manager:()=>manager(),api:cloudRequest,esc,toast,draw});
  }
- const views={home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,quote40:()=>window.QUOTE40?window.QUOTE40.view():empty('Báo giá','Chưa tải bộ tạo báo giá','receipt'),inventory40:()=>window.INV40?window.INV40.view():empty('Kiểm kê 4.0','Chưa tải module kiểm kê.','camera'),shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
+ const views={audio40:()=>window.AUDIO40?window.AUDIO40.view():empty('Audio','Chưa tải công cụ Audio.','headphones'),home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,quote40:()=>window.QUOTE40?window.QUOTE40.view():empty('Báo giá','Chưa tải bộ tạo báo giá','receipt'),inventory40:()=>window.INV40?window.INV40.view():empty('Kiểm kê 4.0','Chưa tải module kiểm kê.','camera'),shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
  // Điều hướng di động có thêm màn hình `more`, không xuất hiện trong navEntries của desktop.
  const allowedScreens=new Set([...navEntries(),...bottomItems()].map(([key])=>key));
  if(!allowedScreens.has(state.screen)&&state.screen!=='change-password')state.screen='home';
@@ -839,6 +851,7 @@ async function resolveQuoteProduct(url){
  return data;
 }
 async function switchShop(shopId){
+ window.AUDIO40?.onShopChange();
  if(state.screen==='quote40')window.QUOTE40?.onShopChange();
  if(state.screen==='inventory40')await window.INV40?.onShopChange();
  if(!state.shops.some(s=>s.id===shopId))throw new Error('Bạn chưa được cấp quyền cho SHOP này');
@@ -850,6 +863,7 @@ async function switchShop(shopId){
  draw();
  if(state.screen==='inventory40')window.INV40?.load();
  if(state.screen==='quote40')window.QUOTE40?.enter();
+ if(state.screen==='audio40')window.AUDIO40?.load();
 }
 async function submitShopForm(f){
  const fd=new FormData(f);
@@ -913,6 +927,7 @@ async function action(el,e){const name=el.dataset.action;
  state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);
  if(state.screen==='inventory40')window.INV40?.load();
  if(state.screen==='quote40')window.QUOTE40?.enter();
+ if(state.screen==='audio40')window.AUDIO40?.load();
  if(state.screen==='accounts')await loadStaffAdmin();if(state.screen==='shops')await loadShopMembers();return}
  if(name==='select-shop')return switchShop(el.dataset.id);
  if(name==='shop-edit'){
@@ -923,7 +938,7 @@ async function action(el,e){const name=el.dataset.action;
  }
  if(name==='shop-cancel-edit'){state.shopEditId=null;draw();return}
  if(name==='shop-delete'){
-  if(!admin())throw new Error('Chỉ Admin 112191 được xóa SHOP');
+  if(!admin())throw new Error('Chỉ Super Admin được xóa SHOP');
   const sh=state.shops.find(x=>x.id===el.dataset.id);
   if(!sh)throw new Error('Không tìm thấy SHOP');
   if(sh.is_primary){toast('SHOP chính không thể xóa khi vẫn là mặc định hệ thống');return}
