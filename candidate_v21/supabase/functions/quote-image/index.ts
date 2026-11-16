@@ -30,7 +30,7 @@ async function getImage(url:URL){
  let target=url;
  for(let redirect=0;redirect<=2;redirect++){
   const res=await fetch(target,{redirect:'manual',signal:AbortSignal.timeout(10000),
-   headers:{'Accept':'image/avif,image/webp,image/png,image/jpeg,*/*;q=0.1',
+   headers:{'Accept':'image/jpeg,image/png,image/webp,*/*;q=0.1',
     'User-Agent':'Mozilla/5.0 (compatible; Companion-MWG/1.0)'}});
   if(res.status>=300&&res.status<400){
    const next=res.headers.get('location');
