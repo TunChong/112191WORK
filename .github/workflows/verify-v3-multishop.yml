@@ -49,6 +49,7 @@ jobs:
           node candidate_v21/test_smoke.mjs
           node candidate_v21/test_sw_push.mjs
           node candidate_v21/test_multishop_ui.mjs
+          node candidate_v21/test_workhub_group.mjs
           node candidate_v21/test_inventory40.mjs
           node candidate_v21/test_inventory40_one_scan.mjs
           node candidate_v21/test_camera_ios_fast.mjs
