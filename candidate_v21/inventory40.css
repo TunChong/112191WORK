@@ -60,3 +60,12 @@
 .inv-camera-actions .btn{min-width:min(100%,195px);font-weight:800}
 .inv-camera-actions button:disabled{opacity:.68;cursor:wait}
 .inv-reader{border:2px solid #2459d4}
+
+/* Kiểm kê 4.0: các nút quản lý kỳ luôn hiển thị bên dưới tên kỳ đang chọn. */
+.inv-session-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.inv-session-actions button{min-height:42px;font-weight:800}
+.inv-session-actions .inv-complete{background:#1761d5;color:white}
+.inv-session-actions .inv-unlock{border-color:#87b79a;color:#116537;background:#effcf2}
+.inv-session-actions .inv-delete{border-color:#ecc4c9;color:#b02936;background:#fff2f3}
+.inv-session-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:600px){.inv-session-actions button{flex:1;min-width:46%}}
