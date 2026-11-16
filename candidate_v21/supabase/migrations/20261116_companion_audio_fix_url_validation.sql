@@ -18,36 +18,7 @@ BEGIN
  IF p_action NOT IN ('verify_payment','processing','delivered','cancelled')
  THEN RAISE EXCEPTION 'Trạng thái không hợp lệ';END IF;
  v_url:=nullif(btrim(coalesce(p_delivery_url,'')),'');
- IF v_url IS NOT NULL AND (v_url !~ '^https://[^[:space:]]+ OR char_length(v_url)>1000)
- THEN RAISE EXCEPTION 'Link Audio phải bắt đầu bằng https://';END IF;
- IF char_length(coalesce(p_admin_note,''))>1200
- THEN RAISE EXCEPTION 'Ghi chú quá dài'; END IF;
- IF p_action='delivered' AND NOT v_order.payment_verified
- THEN RAISE EXCEPTION 'Admin cần xác nhận đã nhận tiền trước khi hoàn tất Audio';END IF;
- v_status:=CASE WHEN p_action='verify_payment' THEN 'processing'
-           ELSE p_action END;
- UPDATE public.companion_audio_orders
- SET status=v_status,
-     payment_verified=CASE WHEN p_action='verify_payment' THEN true ELSE payment_verified END,
-     delivery_url=coalesce(v_url,delivery_url),
-     admin_note=coalesce(p_admin_note,admin_note),
-     delivered_at=CASE WHEN p_action='delivered' THEN now() ELSE delivered_at END,
-     updated_at=now()
- WHERE id=p_order;
- IF p_action IN ('verify_payment','delivered','cancelled') THEN
-  INSERT INTO public.notifications(recipient_id,title,body,event_key,shop_id)
-  VALUES(v_order.requester_id,
-   CASE WHEN p_action='verify_payment' THEN 'Audio đã xác nhận thanh toán'
-        WHEN p_action='delivered' THEN 'Audio đã hoàn tất' ELSE 'Yêu cầu Audio đã hủy' END,
-   CASE WHEN p_action='verify_payment' THEN 'Đã xác nhận thanh toán 49.000đ. Admin đang thực hiện Audio.'
-        WHEN p_action='delivered' THEN 'Bản Audio đã được xử lý. Vui lòng kiểm tra Zalo/LINE.' 
-        ELSE 'Yêu cầu đã được cập nhật. Vui lòng liên hệ Admin để biết thêm.' END,
-   'audio:'||p_action||':'||p_order::text,NULL);
- END IF;
- RETURN jsonb_build_object('ok',true,'status',v_status,'payment_verified',
-   p_action='verify_payment' OR v_order.payment_verified);
-END $$;
- OR char_length(v_url)>1000)
+ IF v_url IS NOT NULL AND (v_url !~ '^https://[^[:space:]]+$' OR char_length(v_url)>1000)
  THEN RAISE EXCEPTION 'Link Audio phải bắt đầu bằng https://';END IF;
  IF char_length(coalesce(p_admin_note,''))>1200
  THEN RAISE EXCEPTION 'Ghi chú quá dài'; END IF;
