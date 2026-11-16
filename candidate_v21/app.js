@@ -24,7 +24,7 @@ const ROSTER = [
   {employee_code:'288315',full_name:'Thúy'}
 ];
 const TOKEN_KEY = 'work112191_session';
-const SHOP_VERSION = '3.2.1-admin-delete-fix';
+const SHOP_VERSION = '3.2.2-login-no-username-hints';
 const ICON_PATHS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   clipboard:'<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
@@ -326,7 +326,7 @@ function navEntries(){return manager()?[
 function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
 function headerTitle(){return ({quote40:'Báo giá',inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
-function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.2.1 ADMIN DELETE FIX</div></aside><main class="content">
+function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.2.2 LOGIN</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
@@ -678,7 +678,7 @@ function configRequiredView(){return `<div class="login-wrap"><div class="login-
 function loginView(){if(!CLOUD)return configRequiredView();const isManager=state.authRole==='manager',isLead=state.authRole==='shift_lead';return `<div class="login-wrap"><div class="login-box"><div class="login-head"><div class="login-logo">W</div><h1>112191 WORK</h1><p>Quản lý và triển khai công việc siêu thị<br>ĐỒNG BỘ TRỰC TUYẾN</p></div>
  <div class="tabs login-role-tabs" style="justify-content:center;margin-bottom:18px"><button class="tab ${!isManager&&!isLead?'on':''}" type="button" data-action="auth-role" data-role="staff">${ic('user')} NHÂN VIÊN</button><button class="tab ${isLead?'on':''}" type="button" data-action="auth-role" data-role="shift_lead">${ic('checkcircle')} TRƯỞNG CA</button><button class="tab ${isManager?'on':''}" type="button" data-action="auth-role" data-role="manager">${ic('shield')} QUẢN LÝ</button></div>
  <form id="authForm" class="login-form" novalidate>
- <div class="form-field"><label>${isManager?'Mã quản lý':isLead?'Mã trưởng ca':'Mã nhân viên'} *</label><input name="username" required inputmode="text" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="${isManager?'Ví dụ: 112191':'Ví dụ: 111566'}" /></div>
+ <div class="form-field"><label>${isManager?'Mã quản lý':isLead?'Mã trưởng ca':'Mã nhân viên'} *</label><input name="username" required inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="${isManager?'Mã quản lý':isLead?'Mã trưởng ca':'Mã nhân viên'}" /></div>
  <div class="form-field"><label>Mật khẩu *</label><input name="password" type="password" required autocomplete="current-password" placeholder="Nhập mật khẩu tài khoản" /></div>
  <div id="loginError" class="form-error" hidden role="alert"></div>
  <button class="btn full" type="submit">${ic('lock')} Đăng nhập</button></form><p class="fineprint" style="text-align:center;margin-top:14px">Tài khoản do quản lý cung cấp. Lần đầu đăng nhập cần đổi mật khẩu riêng. Không có chức năng tự đăng ký.</p></div></div>`}
@@ -708,7 +708,7 @@ async function loginDemo(uid){if(!state.data){state.data=migrateDemoRoster(JSON.
 function normalizeLogin(raw,role){
  const v=String(raw||'').trim().toUpperCase();
  // Chỉ chấp nhận mã số; không tự chuyển tên đăng nhập QUANLY.
- if(!/^[0-9]{4,8}$/.test(v))throw new Error('Nhập mã tài khoản gồm 4–8 chữ số, ví dụ 112191.');
+ if(!/^[0-9]{4,8}$/.test(v))throw new Error('Mã tài khoản phải có 4–8 chữ số.');
  return v;
 }
 async function signIn(username,password){
