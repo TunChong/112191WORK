@@ -24,7 +24,7 @@ const ROSTER = [
   {employee_code:'288315',full_name:'Thúy'}
 ];
 const TOKEN_KEY = 'work112191_session';
-const SHOP_VERSION = '3.1.3-direct-actions-preview';
+const SHOP_VERSION = '3.2.0-bao-gia-preview';
 const ICON_PATHS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   clipboard:'<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
@@ -32,6 +32,7 @@ const ICON_PATHS = {
   plus:'<path d="M12 5v14M5 12h14"/>',bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3-8 8-8s8 3 8 8"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M15 3a4 4 0 0 1 0 8M23 21v-2a4 4 0 0 0-3-3.9"/><circle cx="8.5" cy="7" r="4"/>',
   chart:'<path d="M3 3v18h18M8 16v-5M13 16V6M18 16v-8"/>',check:'<path d="m5 12 4 4L19 6"/>',checkcircle:'<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+  receipt:'<path d="M4 3h16v18l-4-2-4 2-4-2-4 2zM8 8h8M8 12h8M8 16h5"/>',
   camera:'<path d="M14 4H9l-2 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z"/><circle cx="12" cy="13" r="4"/>',
   repeat:'<path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',chevron:'<path d="m9 18 6-6-6-6"/>',back:'<path d="m15 18-6-6 6-6"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',
@@ -318,14 +319,14 @@ function taskCard(t,a=null){const ass=a||taskAssignments(t.id)[0]||{status:'todo
  <div class="task-symbol">${ic(STATUS_ICON[st]||'clipboard')}</div><div class="task-body"><div class="task-title">${esc(t.title)}</div>
  <div class="meta"><span>${ic('calendar')}${fmt(t.due_at)}</span><span>${ic('users')}${esc(a?personLabel(findUser(a.staff_id)):peopleLine(t.id))}</span>${t.recurring_template_id?`<span>${ic('repeat')}Hằng ngày</span>`:''}${t.priority==='high'?'<span class="task-priority-label high">🚨 ƯU TIÊN CAO</span>':'<span class="task-priority-label">BÌNH THƯỜNG</span>'}</div></div>${statusBadge(st)}${admin()?`<button type="button" class="task-delete-button" data-action="delete-task" data-id="${esc(t.id)}" title="Xóa vĩnh viễn công việc">${ic('trash')} Xóa</button>`:''}</article>`}
 function navEntries(){return manager()?[
- ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['shops','Quản lý SHOP','users'],['inventory40','Kiểm kê 4.0','camera'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
+ ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['recurring','Lặp hằng ngày','repeat'],['stats','Thống kê','chart'],['team','Nhân viên','users'],['shops','Quản lý SHOP','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
  supervisor()?[
- ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['team','Nhân viên','users'],['inventory40','Kiểm kê 4.0','camera'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
- [['home','Tổng quan','home'],['tasks','Việc của tôi','list'],['inventory40','Kiểm kê 4.0','camera'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
-function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['inventory40','Kiểm kê','camera'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
+ ['home','Tổng quan','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt việc','shield'],['team','Nhân viên','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']]:
+ [['home','Tổng quan','home'],['tasks','Việc của tôi','list'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
+function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
-function headerTitle(){return ({inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
-function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.1.3 XÓA SHOP TRỰC TIẾP</div></aside><main class="content">
+function headerTitle(){return ({quote40:'Báo giá',inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
+function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.2.0 BÁO GIÁ</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
@@ -536,8 +537,8 @@ function alertsView(){const items=myNotifications();return `<section class="pane
  <div>${items.length?items.map(n=>`<div class="notification ${n.read_at?'read':''}" data-action="read-one" data-id="${esc(n.id)}" data-task="${esc(n.task_id||'')}"><span class="bulb">${ic('bell')}</span><div style="flex:1"><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p><time>${fmt(n.created_at)}</time></div>${!n.read_at?'<span style="width:7px;height:7px;background:var(--blue);border-radius:50%"></span>':''}</div>`).join(''):empty('Không có thông báo','Khi có công việc hoặc thay đổi kết quả, thông báo sẽ hiển thị ở đây.','bell')}</div></section>`}
 function moreView(){
  const items=manager()?[
-  ['shops','Quản lý SHOP / Nhân sự','users'],['inventory40','Kiểm kê 4.0','camera'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
- ]:[['inventory40','Kiểm kê 4.0','camera'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
+  ['shops','Quản lý SHOP / Nhân sự','users'],['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],...(admin()?[['accounts','Tài khoản SHOP chính','shield']]:[]),['recurring','Việc lặp hằng ngày','repeat'],['stats','Thống kê tiến độ','chart'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']
+  ]:[['inventory40','Kiểm kê 4.0','camera'],['quote40','Báo giá','receipt'],['team','Danh sách nhân viên','users'],['alerts','Thông báo','bell'],['account','Tài khoản / Đổi mật khẩu','user']];
  return `<div class="stack"><section class="panel"><div class="panel-head"><div><h2>Tiện ích ${roleName(state.user)}</h2><div class="subtitle">Truy cập nhanh</div></div></div><div class="more-menu">${items.map(([screen,title,ico])=>`<button class="more-entry" data-action="navigate" data-screen="${screen}">${ic(ico)}<span>${title}</span>${ic('chevron')}</button>`).join('')}<button class="more-entry" type="button" data-action="logout" aria-label="Đăng xuất khỏi 112191 WORK" style="color:#b91c1c;font-weight:700">${ic('logout')}<span>Đăng xuất</span>${ic('chevron')}</button></div></section></div>`;
 }
 
@@ -656,11 +657,15 @@ function draw(){if(state.screen==='inventory40'&&window.INV40?.isCameraRunning?.
  if(!CLOUD){root.innerHTML=configRequiredView();return}if(!state.user){root.innerHTML=loginView();return}if(!state.data){root.innerHTML='<div class="splash"><span class="spinner"></span><b>Đang tải...</b></div>';return}
  if(CLOUD&&!state.user.active){root.innerHTML=appShell(pendingView());return}
  if(state.user.must_change_password || state.screen==='change-password'){root.innerHTML=changePasswordView(!!state.user.must_change_password);return}
+ if(window.QUOTE40&&state.screen==='quote40'){
+  window.QUOTE40.configure({shopId:()=>state.shopId,shopCode:()=>state.shops.find(s=>s.id===state.shopId)?.shop_code||'',
+   user:()=>state.user,resolveProduct:resolveQuoteProduct,toast,draw});
+ }
  if(window.INV40&&state.screen==='inventory40'){
   window.INV40.configure({shopId:()=>state.shopId,shopCode:()=>state.shops.find(s=>s.id===state.shopId)?.shop_code||'SHOP',
     manager:()=>manager(),api:cloudRequest,esc,toast,draw});
  }
- const views={home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,inventory40:()=>window.INV40?window.INV40.view():empty('Kiểm kê 4.0','Chưa tải module kiểm kê.','camera'),shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
+ const views={home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,quote40:()=>window.QUOTE40?window.QUOTE40.view():empty('Báo giá','Chưa tải bộ tạo báo giá','receipt'),inventory40:()=>window.INV40?window.INV40.view():empty('Kiểm kê 4.0','Chưa tải module kiểm kê.','camera'),shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
  // Điều hướng di động có thêm màn hình `more`, không xuất hiện trong navEntries của desktop.
  const allowedScreens=new Set([...navEntries(),...bottomItems()].map(([key])=>key));
  if(!allowedScreens.has(state.screen)&&state.screen!=='change-password')state.screen='home';
@@ -790,7 +795,18 @@ async function toggleRecurrence(idValue){if(!manager())return;const r=state.data
 async function toggleUser(uid){if(!manager()||!CLOUD)return;const p=state.data.profiles.find(p=>p.id===uid);if(!p||p.role==='manager')return;try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();if(state.screen==='accounts')await loadStaffAdmin();draw();toast('Đã cập nhật tài khoản.')}catch(e){toast('Không cập nhật được: '+e.message)}}
 function exportCsv(){const lines=[['Tên công việc','Nhóm','Hạn hoàn thành','Mã nhân viên','Nhân viên','Trạng thái','Thời gian gửi','Thời gian duyệt','Phản hồi quản lý']];for(const {t,a} of myRows())lines.push([t.title,t.category,fmt(t.due_at),findUser(a.staff_id).employee_code||'',findUser(a.staff_id).full_name,NAMES[assignStatus(a,t)]||a.status,fmt(a.submitted_at),fmt(a.reviewed_at),a.review_feedback||'']);const csv='\ufeff'+lines.map(line=>line.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const anchor=document.createElement('a');anchor.href=url;anchor.download=`112191-work-${dayLocal()}.csv`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 
+async function resolveQuoteProduct(url){
+ if(!CLOUD||!state.session)throw new Error('Cần đăng nhập để lấy dữ liệu sản phẩm');
+ await ensureFreshToken();
+ const response=await fetch(BASE+'/functions/v1/quote-product',{
+  method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+state.session.access_token,
+   'Content-Type':'application/json'},body:JSON.stringify({url})});
+ let data={};try{data=await response.json()}catch{}
+ if(!response.ok)throw new Error(data.error||'Không lấy được thông tin sản phẩm');
+ return data;
+}
 async function switchShop(shopId){
+ if(state.screen==='quote40')window.QUOTE40?.onShopChange();
  if(state.screen==='inventory40')await window.INV40?.onShopChange();
  if(!state.shops.some(s=>s.id===shopId))throw new Error('Bạn chưa được cấp quyền cho SHOP này');
  state.shopId=shopId;
@@ -800,6 +816,7 @@ async function switchShop(shopId){
  if(state.screen==='shops'&&supervisor())await loadShopMembers();
  draw();
  if(state.screen==='inventory40')window.INV40?.load();
+ if(state.screen==='quote40')window.QUOTE40?.enter();
 }
 async function submitShopForm(f){
  const fd=new FormData(f);
@@ -862,6 +879,7 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='navigate'){if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;if(state.screen==='inventory40'&&el.dataset.screen!=='inventory40')await window.INV40?.leave();
  state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);
  if(state.screen==='inventory40')window.INV40?.load();
+ if(state.screen==='quote40')window.QUOTE40?.enter();
  if(state.screen==='accounts')await loadStaffAdmin();if(state.screen==='shops')await loadShopMembers();return}
  if(name==='select-shop')return switchShop(el.dataset.id);
  if(name==='shop-edit'){
