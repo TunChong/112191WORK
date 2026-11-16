@@ -101,14 +101,20 @@ async function lookup(i){
  const url=p.url.trim();
  if(!/^https:\/\//i.test(url)){p.status='Link cần bắt đầu bằng https://';persist();helper.draw();return}
  const run=(activeLookups.get(i)||0)+1;activeLookups.set(i,run);
- p.status='Đang tự nhận diện tên và hình...';const status=el('qStatus'+i);if(status)status.textContent=p.status;
+ const manuallySelected=p.status==='Đã thêm ảnh từ thiết bị'||Boolean(p.fallback);
+ p.status='Đang tìm tên và ảnh sản phẩm chính...';const status=el('qStatus'+i);if(status)status.textContent=p.status;
  try{
   const result=await helper.resolveProduct(url);
   if(activeLookups.get(i)!==run||p.url.trim()!==url)return;
   if(result?.error)throw Error(result.error);
-  p.status=result.title||result.image?'Đã nhận diện tự động':'Không lấy được tên/hình, hãy nhập dự phòng';
   if(result.title)p.name=result.title;
-  if(result.image&&/^https:\/\//.test(result.image))p.image=result.image;
+  if(result.image&&/^https:\/\//.test(result.image)){
+   p.image=result.image;
+   p.status='Đã lấy ảnh sản phẩm chính';
+  }else{
+   if(!manuallySelected)p.image='';
+   p.status=result.title?'Đã lấy tên, chưa có ảnh chính rõ ràng – có thể chọn ảnh từ thiết bị':'Không nhận diện được sản phẩm – vui lòng nhập tên và ảnh';
+  }
  }catch(e){if(activeLookups.get(i)!==run)return;p.status='Không lấy được tự động: '+(e.message||e)+'. Hãy nhập dự phòng.'}
  persist();helper.draw();
 }
