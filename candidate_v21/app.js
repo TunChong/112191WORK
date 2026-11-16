@@ -24,7 +24,7 @@ const ROSTER = [
   {employee_code:'288315',full_name:'Thúy'}
 ];
 const TOKEN_KEY = 'work112191_session';
-const SHOP_VERSION = '3.2.0-bao-gia-preview';
+const SHOP_VERSION = '3.2.1-admin-delete-fix';
 const ICON_PATHS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   clipboard:'<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
@@ -58,7 +58,7 @@ const isLate = (a,t) => ['todo','rejected'].includes(a.status) && new Date(t.due
 const assignStatus = (a,t) => isLate(a,t)?'overdue':a.status;
 const NAMES={todo:'Chưa làm',submitted:'Chờ duyệt',approved:'Đã duyệt',rejected:'Làm lại',overdue:'Quá hạn'};
 const STATUS_ICON={todo:'clock',submitted:'camera',approved:'checkcircle',rejected:'refresh',overdue:'warning'};
-let state={shops:[],shopDeleting:null,shopEditId:null,shopId:null,shopRoles:{},shopReady:false,shopReadyChecked:false,shopMembers:[],shopMemberLoading:false,shopSearch:'',pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
+let state={shops:[],shopDeleting:null,staffDeleting:null,shopEditId:null,shopId:null,shopRoles:{},shopReady:false,shopReadyChecked:false,shopMembers:[],shopMemberLoading:false,shopSearch:'',pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
 const root=document.getElementById('app');
 let ticking=false;
 const toast=(message)=>{document.querySelector('.alert-toast')?.remove();const a=document.createElement('div');a.className='alert-toast';a.textContent=message;document.body.appendChild(a);setTimeout(()=>a.remove(),3400)};
@@ -326,7 +326,7 @@ function navEntries(){return manager()?[
 function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['quote40','Báo giá','receipt'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
 function headerTitle(){return ({quote40:'Báo giá',inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
-function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.2.0 BÁO GIÁ</div></aside><main class="content">
+function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.2.1 ADMIN DELETE FIX</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
@@ -395,7 +395,7 @@ function accountsView(){
  <p class="fineprint">Mật khẩu tự đặt: 10–72 ký tự, có cả chữ và số, không chứa mã nhân viên. Hệ thống không lưu mật khẩu dạng văn bản; chỉ hiển thị lại một lần khi tạo tài khoản.</p>
  <button class="btn" type="submit" ${!state.staffAccounts?'disabled':''}>${ic('plus')} Thêm tài khoản</button></form></section>
  <section class="panel"><div class="panel-head"><div><h2>Danh sách tài khoản</h2><div class="subtitle">${active} đang làm việc · ${rows.length-active} đã lưu trữ. Không xóa lịch sử công việc.</div></div><button class="btn outline sm" data-action="refresh-accounts">${ic('refresh')} Làm mới</button></div><div class="row" style="gap:8px;margin:12px 0"><button class="btn sm ${tab==='active'?'':'outline'}" data-action="account-filter" data-filter="active">Đang hoạt động (${active})</button><button class="btn sm ${tab==='archived'?'':'outline'}" data-action="account-filter" data-filter="archived">Đã xóa / lưu trữ (${rows.length-active})</button></div><div class="person-list">
- ${shownRows.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name||'Chưa đặt tên')}</strong><small>Mã tài khoản: ${esc(p.employee_code||'—')} · <b>${roleName(p)}</b> · ${p.active?'Hoạt động':'Đã khóa'} · Tạo: ${esc(p.created_at?fmt(p.created_at):'—')}</small><small>Đổi MK gần nhất: ${esc(p.password_changed_at?fmt(p.password_changed_at):'Chưa có nhật ký')} · Đăng nhập: ${esc(p.last_sign_in_at?fmt(p.last_sign_in_at):'—')}</small></div><span class="badge ${p.active?'approved':'todo'}">${p.active?'Hoạt động':'Đã khóa'}</span>${admin()?`<button class="btn sm outline" data-action="edit-staff-role" data-id="${esc(p.id)}">Đổi vị trí</button>`:''}${state.staffAccounts&&(admin()||p.role!=='manager')?`<button class="btn sm outline" data-action="edit-staff-name" data-id="${esc(p.id)}">Sửa tên</button><button class="btn sm outline" data-action="reset-staff-password" data-id="${esc(p.id)}">Đặt lại MK</button><button class="btn sm ${p.active?'danger':'outline'}" data-action="toggle-staff-account" data-id="${esc(p.id)}">${p.active?'Xóa (lưu trữ)':'Khôi phục'}</button>${!p.active&&p.role!=='manager'?`<button class="btn danger sm" data-action="delete-staff" data-id="${esc(p.id)}">Xóa vĩnh viễn</button>`:''}`:''}</div>`).join('')}</div></section>
+ ${shownRows.map(p=>`<div class="person-row"><span class="initial">${esc((p.full_name||'?')[0])}</span><div class="info"><strong>${esc(p.full_name||'Chưa đặt tên')}</strong><small>Mã tài khoản: ${esc(p.employee_code||'—')} · <b>${roleName(p)}</b> · ${p.active?'Hoạt động':'Đã khóa'} · Tạo: ${esc(p.created_at?fmt(p.created_at):'—')}</small><small>Đổi MK gần nhất: ${esc(p.password_changed_at?fmt(p.password_changed_at):'Chưa có nhật ký')} · Đăng nhập: ${esc(p.last_sign_in_at?fmt(p.last_sign_in_at):'—')}</small></div><span class="badge ${p.active?'approved':'todo'}">${p.active?'Hoạt động':'Đã khóa'}</span>${admin()?`<button class="btn sm outline" data-action="edit-staff-role" data-id="${esc(p.id)}">Đổi vị trí</button>`:''}${state.staffAccounts&&(admin()||p.role!=='manager')?`<button class="btn sm outline" data-action="edit-staff-name" data-id="${esc(p.id)}">Sửa tên</button><button class="btn sm outline" data-action="reset-staff-password" data-id="${esc(p.id)}">Đặt lại MK</button><button class="btn sm ${p.active?'danger':'outline'}" data-action="toggle-staff-account" data-id="${esc(p.id)}">${p.active?'Xóa (lưu trữ)':'Khôi phục'}</button>${admin()?`<button class="btn danger sm" data-action="delete-staff" data-id="${esc(p.id)}" ${state.staffDeleting?'disabled':''}>Xóa tài khoản</button>`:''}`:''}</div>`).join('')}</div></section>
  <section class="panel"><div class="panel-head"><div><h2>Nhật ký quản trị tài khoản</h2><div class="subtitle">Không ghi mật khẩu, chỉ ghi sự kiện thay đổi</div></div></div><div class="person-list">${events.length?events.map(x=>`<div class="person-row"><div class="info"><strong>${esc(x.action||'Cập nhật')}</strong><small>Mã NV: ${esc(x.employee_code||'—')} · ${esc(x.created_at?fmt(x.created_at):'—')}</small></div></div>`).join(''):'<div class="subtitle">Chưa có sự kiện quản trị.</div>'}</div></section>
  </div>`;
 }
@@ -466,18 +466,49 @@ async function changeStaffActive(uid){
  try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();await loadStaffAdmin();toast('Đã cập nhật trạng thái tài khoản.')}catch(e){toast(e.message)}
 }
 async function deleteStaffForever(uid){
- if(!admin()||!state.staffAccounts)return;
- const p=state.staffAccounts.accounts.find(x=>x.id===uid);
- if(!p||p.active||p.is_admin)return;
+ if(!admin()||state.staffDeleting)return;
+ const p=(state.staffAccounts?.accounts||[]).find(x=>x.id===uid);
+ if(!p||p.is_admin)return;
+ state.staffDeleting=uid;draw();
  try{
-  const {counts}=await staffAdminRequest({action:'preview_delete',user_id:uid});
-  // Direct click already expresses intent. The API still authenticates Admin.
-  const r=await staffAdminRequest({action:'delete',user_id:uid,confirm_code:p.employee_code,ack_delete_history:true,expected_counts:counts});
-  await loadCloud();
-  await loadStaffAdmin();
-  draw();
-  toast(r.audit_warning?'Tài khoản đã xóa. Có cảnh báo khi ghi nhật ký.':'Đã xóa vĩnh viễn tài khoản và dữ liệu liên quan.');
- }catch(e){toast('Không xóa được: '+e.message)}
+  // Server validates the sole Super Admin identity and performs hard deletion.
+  // No code input and no intermediate archive step needed in the UI.
+  const r=await staffAdminRequest({action:'delete',user_id:uid,
+   confirm_code:p.employee_code,ack_delete_history:true});
+  if(!r.deleted)throw new Error('Tài khoản chưa được xóa');
+  await loadCloud();await loadStaffAdmin();draw();
+  toast('Đã xóa vĩnh viễn tài khoản '+p.employee_code+' tại toàn bộ SHOP.');
+ }catch(e){toast('Không xóa được tài khoản: '+e.message)}
+ finally{state.staffDeleting=null;draw()}
+}
+async function deleteMemberFromShop(uid){
+ if(!manager()||!state.shopId||state.staffDeleting)return;
+ const m=(state.shopMembers||[]).find(x=>x.user_id===uid);
+ if(!m||m.profile?.is_admin)return;
+ state.staffDeleting=uid;draw();
+ try{
+  const r=await shopAdminRequest({action:'remove_member',shop_id:state.shopId,user_id:uid});
+  if(!r.removed)throw new Error('Chưa xóa khỏi SHOP');
+  await loadCloud();await loadShopMembers();
+  toast('Đã xóa '+(m.profile?.employee_code||'nhân sự')+' khỏi SHOP này.');
+ }catch(e){toast('Không xóa khỏi SHOP: '+e.message)}
+ finally{state.staffDeleting=null;draw()}
+}
+async function deleteMemberAccount(uid){
+ if(!admin()||state.staffDeleting)return;
+ const m=(state.shopMembers||[]).find(x=>x.user_id===uid);
+ if(!m||m.profile?.is_admin)return;
+ state.staffDeleting=uid;draw();
+ try{
+  const code=m.profile?.employee_code||'';
+  if(!code)throw new Error('Không xác định được mã nhân viên');
+  const r=await staffAdminRequest({action:'delete',user_id:uid,confirm_code:code,
+   ack_delete_history:true});
+  if(!r.deleted)throw new Error('Tài khoản chưa được xóa');
+  await loadCloud();await loadShopMembers();
+  toast('Đã xóa tài khoản '+code+' khỏi toàn bộ hệ thống.');
+ }catch(e){toast('Không xóa được tài khoản: '+e.message)}
+ finally{state.staffDeleting=null;draw()}
 }
 async function resetStaffPassword(uid){
  if(!manager()||!state.staffAccounts)return;
@@ -562,7 +593,9 @@ function shopsView(){
    </select>
    <button type="button" class="btn sm outline" data-action="shop-member-set-role" data-uid="${uid}">Lưu vai trò</button>
    <button type="button" class="btn sm outline" data-action="shop-member-reset" data-uid="${uid}">Đặt lại MK</button>
-   <button type="button" class="btn sm ${m.active?'danger':'outline'}" data-action="shop-member-active" data-uid="${uid}" data-active="${m.active?'false':'true'}">${m.active?'Lưu trữ':'Kích hoạt'}</button></div>`:''}</div>`;
+   <button type="button" class="btn sm ${m.active?'outline':'outline'}" data-action="shop-member-active" data-uid="${uid}" data-active="${m.active?'false':'true'}">${m.active?'Lưu trữ':'Kích hoạt'}</button>
+   <button type="button" class="btn sm danger" data-action="shop-member-remove" data-uid="${uid}" ${state.staffDeleting?'disabled':''}>Xóa khỏi SHOP</button>
+   ${admin()?'<button type="button" class="btn sm danger" data-action="shop-member-delete-account" data-uid="'+uid+'" '+(state.staffDeleting?'disabled':'')+'>Xóa tài khoản</button>':''}</div>`:''}</div>`;
  }).join('');
  return `<div class="stack">
   <section class="panel"><div class="panel-head"><div><h2>Quản lý nhiều SHOP</h2><div class="subtitle">Danh mục kho / SHOP · Thiết kế phục vụ 500 SHOP</div></div></div>
@@ -895,6 +928,7 @@ async function action(el,e){const name=el.dataset.action;
   if(!sh)throw new Error('Không tìm thấy SHOP');
   if(sh.is_primary){toast('SHOP chính không thể xóa khi vẫn là mặc định hệ thống');return}
   if(state.shopDeleting)return;
+  if(!window.confirm('Bạn xác nhận xóa '+shopLabel(sh)+'?'))return;
   state.shopDeleting=sh.id;
   draw();
   try{
@@ -920,6 +954,8 @@ async function action(el,e){const name=el.dataset.action;
   await loadCloud();await loadShopMembers();draw();toast('Đã khôi phục SHOP');return;
  }
  if(name==='refresh-shop-members')return loadShopMembers();
+ if(name==='shop-member-remove')return deleteMemberFromShop(el.dataset.uid);
+ if(name==='shop-member-delete-account')return deleteMemberAccount(el.dataset.uid);
  if(name==='shop-member-active'){
   const active=el.dataset.active==='true';
 
