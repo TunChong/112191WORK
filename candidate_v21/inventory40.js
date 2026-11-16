@@ -3,7 +3,7 @@
 'use strict';
 const S={shop:null,tab:'stock',sessions:[],sessionId:null,stock:[],counts:[],busy:false,loading:false,
  importing:false,progress:'',query:'',last:null,camera:null,cameraActive:false,lastCameraCode:'',lastCameraAt:0,
- scanBusy:false,scanQueue:Promise.resolve(),requestSerial:0,
+ scanBusy:false,scanQueue:Promise.resolve(),sessionBusy:false,requestSerial:0,
  cameraEpoch:0,cameraPhase:'idle',cameraStartPromise:null,cameraStopping:null,scanAccepted:false,scanResult:'',scanError:''};
 let H=null;let xlsxLoading=null;let scannerLoading=null;
 const unknown='CHƯA CÓ TRONG DANH MỤC';
@@ -218,6 +218,12 @@ function varianceTable(label,rows,type){
 function view(){
  const sh=current();const variance=compute(S.stock,S.counts);
  const canScan=sh?.state==='open',importing=S.importing;
+ const lifecycleDisabled=S.sessionBusy||S.importing||S.loading;
+ const lifecycle=manage()&&sh?'<div class="inv-session-actions" role="group" aria-label="Quản lý kỳ kiểm kê">'+
+ (sh.state==='open'?'<button type="button" class="btn inv-complete" data-inv-action="close-session" '+(lifecycleDisabled?'disabled':'')+'>✓ Hoàn tất kiểm kê</button>':'')+
+ (sh.state==='closed'?'<button type="button" class="inv-sm inv-unlock" data-inv-action="reopen-session" '+(lifecycleDisabled?'disabled':'')+'>🔓 Mở khóa kỳ kiểm kê</button>':'')+
+ '<button type="button" class="inv-sm inv-delete" data-inv-action="delete-session" '+(lifecycleDisabled?'disabled':'')+'>Xóa kỳ kiểm kê</button>'+
+ '</div>':'';
  const opts=S.sessions.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===S.sessionId?'selected':'')+'>'+esc(x.title)+(x.state==='closed'?' · Đã khóa':x.state==='importing'?' · Đang nhập':'')+'</option>').join('');
  const stats='<div class="inv-stats"><div><small>MÃ TỒN KHO</small><strong>'+format(S.stock.length)+'</strong></div><div><small>LƯỢT QUÉT</small><strong>'+format(S.counts.reduce((a,r)=>a+int(r.counted_qty),0))+'</strong></div><div><small>SL THIẾU</small><strong class="inv-red">'+format(variance.missingQty)+'</strong></div><div><small>SL DƯ</small><strong class="inv-green">'+format(variance.extraQty)+'</strong></div></div>';
  const tabs=['stock','count','variance'].map((k,i)=>'<button type="button" data-inv-action="tab" data-tab="'+k+'" class="'+(S.tab===k?'selected':'')+'">'+['TỒN KHO','NHẬP LIỆU','CHÊNH LỆCH'][i]+'</button>').join('');
@@ -250,8 +256,7 @@ function view(){
  }else{
   body='<section class="panel"><h2>BÁO CÁO THIẾU / DƯ</h2>'+
    '<div class="inv-stats"><div><small>SỐ MÃ THIẾU</small><strong class="inv-red">'+format(variance.missing.length)+'</strong></div><div><small>TỔNG SL THIẾU</small><strong class="inv-red">'+format(variance.missingQty)+'</strong></div><div><small>SỐ MÃ DƯ</small><strong class="inv-green">'+format(variance.extra.length)+'</strong></div><div><small>TỔNG SL DƯ</small><strong class="inv-green">'+format(variance.extraQty)+'</strong></div></div>'+
-   '<div class="inv-camera-actions"><button class="btn" type="button" data-inv-action="export">Xuất báo cáo Excel</button>'+
-   (manage()&&canScan?'<button class="inv-sm" data-inv-action="close-session">Khóa kỳ kiểm kê</button>':'')+'</div></section>'+
+   '<div class="inv-camera-actions"><button class="btn" type="button" data-inv-action="export">Xuất báo cáo Excel</button></div></section>'+
    '<div class="inv-sidebyside">'+varianceTable('HÀNG THIẾU • TỒN SỔ SÁCH > THỰC ĐẾM',variance.missing,'missing')+
     varianceTable('HÀNG DƯ • THỰC ĐẾM > TỒN SỔ SÁCH',variance.extra,'extra')+'</div>';
  }
@@ -259,8 +264,8 @@ function view(){
  '<div class="inv-line"><label for="invSessionSelect">KỲ KIỂM KÊ</label><select id="invSessionSelect" '+(S.sessions.length?'':'disabled')+'>'+
  (opts||'<option>Chưa có kỳ kiểm kê</option>')+'</select><button type="button" class="inv-sm" data-inv-action="refresh">Làm mới</button></div>'+
  (S.loading?'<p class="inv-hint">Đang đồng bộ dữ liệu...</p>':'')+
- (sh?'<p class="inv-hint">Kỳ: '+esc(sh.title)+' · '+(sh.state==='open'?'Đang kiểm đếm':sh.state==='closed'?'Đã khóa':'Chưa hoàn tất tải tồn kho')+'</p>':'<p class="inv-hint">Chưa có kỳ kiểm kê cho SHOP này. Admin hoặc Quản lý tạo kỳ mới bằng file Excel.</p>')+
- '</section>'+stats+'<nav class="inv-tabs">'+tabs+'</nav>'+
+ (sh?'<p class="inv-hint">Kỳ: '+esc(sh.title)+' · '+(sh.state==='open'?'Đang kiểm đếm':sh.state==='closed'?'Đã hoàn tất / đã khóa':'Chưa hoàn tất tải tồn kho')+'</p>':'<p class="inv-hint">Chưa có kỳ kiểm kê cho SHOP này. Admin hoặc Quản lý tạo kỳ mới bằng file Excel.</p>')+
+ lifecycle+'</section>'+stats+'<nav class="inv-tabs">'+tabs+'</nav>'+
  '<div class="inv-search"><input id="invSearch" placeholder="Tìm mã / tên sản phẩm..." value="'+esc(S.query)+'" autocomplete="off"></div>'+
  body+'</div>';
 }
@@ -394,9 +399,33 @@ async function performAction(btn){
  if(act==='start-camera')return startCamera();
  if(act==='stop-camera'){await stopCamera();redraw();return;}
  if(act==='export')return exportExcel();
- if(act==='close-session'){
-  // Button click directly locks the counting session, without a second confirmation.
-  await rpc('inventory_close_session',{p_session:S.sessionId});await load();notify('Đã khóa kỳ kiểm kê.');return;
+ if(['close-session','reopen-session','delete-session'].includes(act)){
+  if(!manage())throw new Error('Chỉ Quản lý SHOP hoặc Admin được thao tác kỳ kiểm kê');
+  if(S.sessionBusy||S.importing)return;
+  const session=current(),id=S.sessionId,shop=S.shop;
+  if(!session||!id||!shop||shop!==selectedShop())throw new Error('Chưa chọn đúng kỳ kiểm kê trong SHOP');
+  if(act==='close-session'&&session.state!=='open')throw new Error('Kỳ kiểm kê không ở trạng thái đang mở');
+  if(act==='reopen-session'&&session.state!=='closed')throw new Error('Chỉ mở khóa kỳ kiểm kê đã hoàn tất');
+  S.sessionBusy=true;
+  try{
+   await stopCamera();
+   if(act==='delete-session'){
+    // User chose the explicit permanent DELETE button. Do not ask for another input.
+    const done=await rpc('inventory_delete_session',{p_session:id});
+    if(!done?.deleted)throw new Error('Máy chủ chưa xác nhận xóa kỳ kiểm kê');
+    if(localStorage.getItem(keyForShop(shop))===id)localStorage.removeItem(keyForShop(shop));
+    S.sessionId=null;S.stock=[];S.counts=[];S.last=null;S.scanResult='';S.scanError='';
+    notify('Đã xóa vĩnh viễn kỳ kiểm kê "'+session.title+'".');
+   }else if(act==='reopen-session'){
+    await rpc('inventory_reopen_session',{p_session:id});
+    notify('Đã mở khóa "'+session.title+'". Nhân viên có thể quét tiếp.');
+   }else{
+    await rpc('inventory_close_session',{p_session:id});
+    notify('Đã hoàn tất kiểm kê "'+session.title+'". Số đếm đã khóa.');
+   }
+   if(S.shop===shop)await load();
+  }finally{S.sessionBusy=false;redraw();}
+  return;
  }
  }catch(e){notify('Kiểm kê 4.0: '+e.message);}
 }
