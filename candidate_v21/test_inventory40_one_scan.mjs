@@ -3,12 +3,12 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const code=readFileSync(new URL('./inventory40.js',import.meta.url),'utf8');
-const handlers={};let cameraRef=null;let rpcCalls=0;let cameraStops=0;
+const handlers={};let cameraRef=null;let rpcCalls=0;let cameraStops=0;let scanConfig=null;let constructionOptions=null;
 const windowObj={
  navigator:{vibrate:()=>{}},
  Html5Qrcode:class{
-  constructor(){cameraRef=this}
-  start(settings,opts,onSuccess){this.onSuccess=onSuccess;return Promise.resolve();}
+  constructor(id,options){cameraRef=this;constructionOptions=options}
+  start(settings,opts,onSuccess){scanConfig=opts;this.onSuccess=onSuccess;return Promise.resolve();}
   async stop(){cameraStops++;}
   clear(){}
  }
@@ -36,6 +36,10 @@ inv.configure({
 });
 await inv._test.startCamera();
 assert.equal(state.cameraPhase,'scanning');
+assert.equal(scanConfig.fps,20,'fast scanner decodes up to 20 frames/s');
+assert.equal(scanConfig.disableFlip,true,'rear camera avoids redundant horizontal flip');
+assert.ok(scanConfig.qrbox(430,300).width>=350,'scan frame enlarged for barcodes');
+assert.equal(constructionOptions.useBarCodeDetectorIfSupported,true,'prefer native decoder when available');
 for(let i=0;i<19;i++)cameraRef.onSuccess('0000001234');
 await new Promise(resolve=>setTimeout(resolve,50));
 assert.equal(rpcCalls,1,'19 rapid duplicate camera frames MUST count exactly once');
