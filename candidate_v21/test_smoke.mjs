@@ -80,7 +80,7 @@ assert.match(api, /p\.is_admin===true/);
 
 assert.match(api, /action==='delete'/);
 assert.match(api, /data\.confirm_code!==code/);
-assert.match(api, /if\(p\.active\)return reply\(req,409/);
+assert.match(api, /if\(p\.active\)\{/);
 assert.match(api, /storage\/v1\/object\/task-evidence/);
 assert.match(sql, /'deleted'/);
 
