@@ -395,7 +395,7 @@ async function performAction(btn){
  if(act==='stop-camera'){await stopCamera();redraw();return;}
  if(act==='export')return exportExcel();
  if(act==='close-session'){
-  if(!confirm('Khóa kỳ kiểm kê? Sau khi khóa sẽ không thể quét hay sửa số lượng.'))return;
+  // Button click directly locks the counting session, without a second confirmation.
   await rpc('inventory_close_session',{p_session:S.sessionId});await load();notify('Đã khóa kỳ kiểm kê.');return;
  }
  }catch(e){notify('Kiểm kê 4.0: '+e.message);}
