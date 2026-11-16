@@ -32,7 +32,7 @@
 .q-item-foot strong{font-size:15px;color:#146238}
 .q-preview-wrap{background:#e8edf5}
 #qPreview{width:100%;overflow-x:auto;border:1px solid #d8e0eb;border-radius:8px;background:#fff;margin-top:12px}
-.q-print{box-sizing:border-box;background:white;color:#161f33;max-width:1100px;margin:0 auto;padding:22px 25px 18px;font-family:Arial,sans-serif;font-size:12px;line-height:1.42}
+.q-print{box-sizing:border-box;background:white;color:#161f33;max-width:1100px;margin:0 auto;padding:22px 25px 18px;font-family:'Times New Roman',Times,serif;font-size:12px;line-height:1.42}
 .q-company{display:grid;grid-template-columns:1fr 230px;gap:15px;border-bottom:2px solid #1b5dd7;padding-bottom:12px}
 .q-company b{font-size:14px;display:block;margin-bottom:6px}
 .q-company small{display:block;font-size:10px;margin:2px 0;color:#4d5665}
@@ -88,3 +88,16 @@
  .q-document-title h2{font-size:20px}
  #qPreview{border:0!important;overflow:visible!important}
 }
+
+/* Bản 3.2.3: toàn bộ biểu mẫu và bản in Báo giá dùng Times New Roman. */
+.quote40,.quote40 :is(h1,h2,h3,h4,p,div,span,small,strong,b,label,input,select,button,table,thead,tbody,tfoot,tr,th,td,a){
+ font-family:"Times New Roman",Times,serif!important;
+}
+.quote40 .q-print,.quote40 .q-print *{
+ font-family:"Times New Roman",Times,serif!important;
+}
+@media print{
+ #quotePrint,#quotePrint *{font-family:"Times New Roman",Times,serif!important}
+}
+/* Hình thu gọn trong form, chỉ hiển thị một ảnh sản phẩm chính. */
+.q-thumb img,.q-print-table td img{object-fit:contain;object-position:center;background:white}
