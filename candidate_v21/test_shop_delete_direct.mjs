@@ -17,7 +17,7 @@ assert.match(app,/data-action="shop-member-delete-account"/);
 assert.match(app,/action:'remove_member',shop_id:state.shopId,user_id:uid/);
 assert.match(app,/action:'delete',user_id:uid,confirm_code:code/);
 assert.match(edge,/if\(action==='remove_member'\)/);
-assert.match(edge,/method:'DELETE',prefer:'return=minimal'/);
+assert.match(edge,/work_remove_member_permanently/);
 assert.match(edge,/if\(action==='delete_shop'\)/);
 assert.match(edge,/work_delete_shop_permanently/);
 assert.doesNotMatch(edge,/data\.confirm_code!==targetShop\.shop_code/);
