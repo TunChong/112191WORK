@@ -40,8 +40,8 @@ assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['more']])
 assert.equal(screenAfterDrawGuard({screen:'bogus'},()=>[['home']],()=>[['more']]),'home','Unknown screens must redirect home');
 assert.equal(screenAfterDrawGuard({screen:'account'},()=>[['account']],()=>[['home']]),'account','Account view must remain available');
 assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['account']]),'home','Users without More must not open it');
-assert.match(html, /app\.js\?v=3\.2\.1/);
-assert.match(sw, /112191-work-v3\.2\.1-admin-delete-fix/);
+assert.match(html, /app\.js\?v=3\.2\.2/);
+assert.match(sw, /112191-work-v3\.2\.2-login-no-username-hints/);
 
 assert.match(app, /name="password" type="password" autocomplete="new-password"/);
 assert.match(app, /'staffResetForm'/);
@@ -95,8 +95,8 @@ assert.match(sql, /app_private\.track_staff_password_change/);
 assert.match(sql, /app_private\.guard_profile_permissions/);
 assert.doesNotMatch(app,/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 assert.doesNotMatch(read('./config.js'),/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
-assert.match(html,/styles\.css\?v=3\.2\.1/);
-assert.match(html,/app\.js\?v=3\.2\.1/);
+assert.match(html,/styles\.css\?v=3\.2\.2/);
+assert.match(html,/app\.js\?v=3\.2\.2/);
 
 console.log('PASS: task category, manager account UI, server-side auth, archive and secret checks');
 
@@ -147,7 +147,7 @@ assert.match(app, /task-priority-label high/);
 assert.match(sw, /addEventListener\('push'/);
 assert.match(sw, /self\.registration\.showNotification/);
 assert.match(sw, /work-push-click/);
-assert.match(sw, /v3\.2\.1-admin-delete-fix/);
+assert.match(sw, /v3\.2\.2-login-no-username-hints/);
 assert.match(push, /generateVapidKeys/);
 assert.match(push, /work_push_claim_delivery/);
 assert.match(push, /work_push_subscriptions/);
