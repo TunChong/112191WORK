@@ -18,7 +18,6 @@ function setup({hung=false,missingLib=false}={}){
   }
   stop(){stops++;return Promise.resolve()}
   clear(){return Promise.resolve()}
-  scanFile(file){assert.equal(file.name,'label.jpg');return Promise.resolve('00012')}
  }
  if(!missingLib)win.Html5Qrcode=Scanner;
  const dom={addEventListener:(type,fn)=>events[type]=fn,
@@ -62,9 +61,9 @@ assert.equal(one.rpcCalls,1,'burst of 20 decoded frames increments exactly once'
 assert.equal(one.s.cameraActive,false);
 assert.equal(one.s.cameraPhase,'idle');
 assert.match(one.lastHtml,/QUÉT TIẾP/);
-await one.inv._test.scanPhoto({name:'label.jpg',size:1000});
-assert.equal(one.rpcCalls,2,'one photo capture increments exactly once');
-assert.equal(one.s.last.counted_qty,2);
+assert.equal(one.rpcCalls,1,'one tap cannot count twice');
+assert.equal(one.s.last.counted_qty,1);
+assert.doesNotMatch(one.lastHtml,/CHỤP ẢNH MÃ|invPhotoInput/,'direct scanner UI only');
 
 const loading=setup({missingLib:true});
 await loading.inv._test.startCamera();
