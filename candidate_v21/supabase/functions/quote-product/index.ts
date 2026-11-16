@@ -58,7 +58,7 @@ function readMeta(html:string){
 async function readPage(url:URL){
  let current=url;
  for(let i=0;i<4;i++){
-  const response=await fetch(current,{method:'GET',redirect:'manual',signal:AbortSignal.timeout(9000),
+  const response=await fetch(current,{method:'GET',redirect:'manual',signal:AbortSignal.timeout(5000),
    headers:{'accept':'text/html,application/xhtml+xml','accept-language':'vi-VN,vi;q=0.9,en;q=0.6',
     'user-agent':'Mozilla/5.0 (compatible; 112191WORK-QuotationBot/1.0)'}});
   if([301,302,303,307,308].includes(response.status)){
@@ -96,6 +96,107 @@ async function readPage(url:URL){
  }
  throw new Error('Trang sản phẩm chuyển hướng quá nhiều lần');
 }
+
+type ProductResult={title:string;image:string;url:string;source?:string;warning?:string;cached?:boolean};
+const cacheHeaders={apikey:SERVICE,Authorization:'Bearer '+SERVICE,'content-type':'application/json'};
+function cacheKey(u:URL):string{
+ // Remove campaign/tracking query parameters while keeping the product SKU variant.
+ const key=u.origin+u.pathname.replace(/\/+$/,'')+(u.searchParams.get('code')?'?code='+encodeURIComponent(u.searchParams.get('code')||''):'');
+ return key.slice(0,2400);
+}
+function safeImage(value:string):string{
+ try{
+  const uri=new URL(value);
+  const h=uri.hostname.toLowerCase();
+  if(uri.protocol!=='https:'||uri.username||uri.password||(!h.endsWith('.tgdd.vn')&&h!=='tgdd.vn'))return '';
+  return uri.href;
+ }catch{return ''}
+}
+async function cached(key:string):Promise<ProductResult|null>{
+ try{
+  const link=BASE+'/rest/v1/quote_product_cache?url_key=eq.'+encodeURIComponent(key)+'&select=title,image,source,expires_at&limit=1';
+  const res=await fetch(link,{headers:cacheHeaders,signal:AbortSignal.timeout(2500)});
+  if(!res.ok)return null;
+  const rows=await res.json();
+  if(!Array.isArray(rows)||!rows.length||!rows[0]?.title||!rows[0]?.image)return null;
+  if(Date.parse(rows[0].expires_at)<Date.now())return null;
+  const image=safeImage(rows[0].image);
+  return image?{title:String(rows[0].title),image,url:key,source:rows[0].source||'cache',cached:true}:null;
+ }catch{return null}
+}
+async function writeCache(key:string,item:ProductResult){
+ if(!item.title||!item.image)return;
+ try{
+  await fetch(BASE+'/rest/v1/quote_product_cache?on_conflict=url_key',{
+   method:'POST',signal:AbortSignal.timeout(3000),
+   headers:{...cacheHeaders,Prefer:'resolution=merge-duplicates,return=minimal'},
+   body:JSON.stringify({url_key:key,title:item.title,image:item.image,source:item.source||'metadata',
+     fetched_at:new Date().toISOString(),expires_at:new Date(Date.now()+14*86400000).toISOString()})
+  });
+ }catch{ /* Metadata cache is best-effort; never break quotation */ }
+}
+function parseReaderMarkdown(body:string):ProductResult{
+ const titleText=(body.match(/^Title:\s*(.+)$/m)||body.match(/^#\s+(.+)$/m)||[])[1]||'';
+ const title=decode(titleText).replace(/\s+-\s+(giá rẻ|giao ngay|mua ngay|chính hãng).*$/i,'').replace(/\s+/g,' ').trim().slice(0,250);
+ const matches=[...body.matchAll(/!\[([^\]]{0,300})\]\((https:\/\/[^)\s]{1,1200})\)/gi)];
+ let image='';
+ for(const m of matches){
+  let candidate=m[2].replace(/\\_/g,'_').replace(/\\-/g,'-');
+  const nested=candidate.lastIndexOf('https://cdn.tgdd.vn/');
+  if(nested>=0)candidate=candidate.slice(nested);
+  const url=safeImage(candidate);
+  if(!url||!(/\/Products\/Images\/|\/timerseo\//i.test(url)))continue;
+  if(/\.(?:jpg|jpeg|png|webp)(?:\?|$)/i.test(url)){image=url;break}
+ }
+ return {title,image,url:'',source:'reader-fallback'};
+}
+async function readerFallback(target:URL):Promise<ProductResult>{
+ // Reader accesses only the already validated public product page. Do not forward
+ // authentication headers or customer data to the external extraction service.
+ const source=new URL(target.href);
+ source.hash='';
+ const u='https://r.jina.ai/'+source.href;
+ const response=await fetch(u,{signal:AbortSignal.timeout(15000),
+  headers:{Accept:'text/plain','X-Return-Format':'markdown'}});
+ if(!response.ok)throw new Error('Fallback reader HTTP '+response.status);
+ const type=response.headers.get('content-type')||'';
+ if(!/text|json|markdown/i.test(type))throw new Error('Fallback reader content type unsupported');
+ const text=await response.text();
+ if(text.length>600000)throw new Error('Fallback reader too large');
+ const item=parseReaderMarkdown(text);
+ if(!item.title||!item.image)throw new Error('Fallback reader thiếu tên hoặc hình');
+ item.url=target.href;
+ return item;
+}
+async function resolveProduct(target:URL):Promise<ProductResult>{
+ const key=cacheKey(target);
+ const existing=await cached(key);
+ if(existing)return existing;
+ const partials:ProductResult[]=[];
+ const requireComplete=async(p:Promise<ProductResult>):Promise<ProductResult>=>{
+  const item=await p;
+  item.image=safeImage(item.image);
+  if(item.title&&item.image)return item;
+  if(item.title)partials.push(item);
+  throw new Error('Thiếu hình sản phẩm');
+ };
+ let item:ProductResult;
+ try{
+  item=await Promise.any([
+   requireComplete(readPage(target).then(x=>({...x,source:'official-metadata'}))),
+   requireComplete(readerFallback(target))
+  ]);
+ }catch{
+  // Return a partial title only when an actual source supplied it; do not fabricate a photo.
+  const p=partials.find(x=>x.title);
+  if(p)return {...p,image:'',warning:'Trang nguồn chưa cung cấp ảnh; hãy dán link ảnh dự phòng.'};
+  throw new Error('Không đọc được trang Điện Máy Xanh tự động. Anh thử lại hoặc dùng tên và ảnh dự phòng.');
+ }
+ // Save cache asynchronously? Await to ensure subsequent devices see this immediately.
+ await writeCache(key,item);
+ return item;
+}
+
 Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors(req.headers.get('origin')||'')});
  if(req.method!=='POST')return result(req,405,{error:'Chỉ hỗ trợ POST'});
@@ -116,10 +217,10 @@ Deno.serve(async(req:Request)=>{
    return result(req,403,{error:'Tài khoản chưa được kích hoạt'});
   const body=await req.json();
   const target=permitted(String(body?.url||'').trim());
-  const meta=await readPage(target);
+  const meta=await resolveProduct(target);
   return result(req,200,{ok:true,...meta});
  }catch(e){
   const reason=e instanceof Error?e.message:'Không nhận diện được sản phẩm';
-  return result(req,400,{error:reason.slice(0,250)});
+  return result(req,422,{error:reason.slice(0,250)});
  }
 });
