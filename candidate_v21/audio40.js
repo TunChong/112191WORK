@@ -143,9 +143,10 @@ function orderHistory(){
 }
 function adminPanel(){
  if(!H?.admin?.())return '';
- return '<section class="panel aud-admin"><div class="aud-row"><div><h2>QUẢN TRỊ · YÊU CẦU AUDIO</h2><p>Yêu cầu từ tất cả SHOP · Admin kiểm tra thanh toán và gửi Audio qua Zalo/LINE.</p></div>'+
+ const pending=orders.filter(o=>o.status==='new'||o.status==='processing');
+ return '<section class="panel aud-admin"><div class="aud-row"><div><h2>QUẢN TRỊ · YÊU CẦU AUDIO</h2><p>Chỉ hiện đơn đang chờ/đang xử lý từ tất cả SHOP. Đơn đã hủy hoặc hoàn tất tự ẩn.</p></div>'+
  '<button type="button" class="aud-secondary" data-audio-action="reload">Làm mới</button></div>'+
- (!orders.length?'<p class="aud-hint">Chưa có yêu cầu Audio.</p>':orders.slice(0,100).map(o=>{
+ (!pending.length?'<p class="aud-hint">Không có yêu cầu Audio đang chờ xử lý.</p>':pending.slice(0,100).map(o=>{
   const hasPaid=o.payment_verified,status=o.status;
   return '<article class="aud-order"><div class="aud-row"><div><strong>'+esc(o.shop_label)+'</strong>'+
    '<p>'+esc(fmtD(o.created_at))+' · '+esc(o.contact_platform)+': <b>'+esc(o.contact_value)+'</b></p>'+
@@ -179,7 +180,7 @@ async function load(){
  init();const serial=++fetchSerial;
  if(!H?.userId?.())return;
  loading=true;try{
-  const q=H.admin()?'/rest/v1/companion_audio_orders?select=*&order=created_at.desc&limit=100':
+  const q=H.admin()?'/rest/v1/companion_audio_orders?select=*&status=in.(new,processing)&order=created_at.desc&limit=100':
    '/rest/v1/companion_audio_orders?requester_id=eq.'+encodeURIComponent(userId)+'&select=*&order=created_at.desc&limit=40';
   const list=await H.api(q);
   if(serial===fetchSerial){orders=Array.isArray(list)?list:[];if(H?.current?.()==='audio40')H.draw()}
@@ -218,6 +219,9 @@ async function updateOrder(b){
  const res=await H.api('/rest/v1/rpc/companion_manage_audio',{method:'POST',
   body:{p_order:orderId,p_action:action,p_delivery_url:url,p_admin_note:note}});
  if(!res?.ok)throw Error('Chưa cập nhật đơn Audio');
+ const updated=orders.find(o=>o.id===orderId);
+ if(updated)updated.status=String(res.status||updated.status);
+ if((action==='delivered'||action==='cancelled')&&H?.current?.()==='audio40')H.draw();
  H.toast(action==='verify_payment'?'Đã xác nhận nhận 49.000đ.':action==='delivered'?'Đã đánh dấu Audio đã gửi.':'Đã cập nhật trạng thái đơn.');
  await load();H.refreshNotifications?.();
 }
