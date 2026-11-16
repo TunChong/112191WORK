@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "112191 WORK - Quản lý công việc",
-  "short_name": "112191 WORK",
+  "name": "Companion-MWG - Hỗ trợ nhân viên MWG",
+  "short_name": "Companion-MWG",
   "description": "Giao việc, báo cáo ảnh, duyệt và thống kê cho siêu thị",
   "lang": "vi",
   "start_url": "/",
