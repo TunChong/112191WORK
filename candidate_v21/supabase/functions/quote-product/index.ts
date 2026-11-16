@@ -72,15 +72,21 @@ async function readPage(url:URL){
   const reader=response.body?.getReader();
   if(!reader)throw new Error('Không tải được nội dung trang');
   const chunks:Uint8Array[]=[];let size=0;
+  const MAX_BYTES=1400000;
   while(true){
    const {done,value}=await reader.read();
    if(done)break;
-   if(value){size+=value.byteLength;if(size>1400000){await reader.cancel();break}chunks.push(value)}
+   if(value){
+    const remaining=MAX_BYTES-size;
+    if(remaining<=0){await reader.cancel();break}
+    const bounded=value.byteLength>remaining?value.slice(0,remaining):value;
+    chunks.push(bounded);size+=bounded.byteLength;
+    if(size===MAX_BYTES){await reader.cancel();break}
+   }
   }
-  let raw='';
-  const merged=new Uint8Array(size>1400000?Math.min(size,1400000):size);
+  const merged=new Uint8Array(size);
   let off=0;for(const chunk of chunks){merged.set(chunk,off);off+=chunk.byteLength;}
-  raw=new TextDecoder().decode(merged);
+  const raw=new TextDecoder().decode(merged);
   const info=readMeta(raw);
   let image='';
   if(info.image){
