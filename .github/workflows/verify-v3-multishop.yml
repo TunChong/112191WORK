@@ -24,6 +24,7 @@ jobs:
           deno check candidate_v21/supabase/functions/work-push/index.ts
           deno check candidate_v21/supabase/functions/quote-product/index.ts
           node --check candidate_v21/quote40.js
+          node --check candidate_v21/audio40.js
           node --check candidate_v21/inventory40.js
       - name: Ensure write operations cannot run before isolation
         run: |
@@ -52,15 +53,16 @@ jobs:
           node candidate_v21/test_shop_delete_direct.mjs
           node candidate_v21/test_login_no_suggestions.mjs
           node candidate_v21/test_quote40.mjs
+          node candidate_v21/test_audio40.mjs
           node candidate_v21/test_quote_inventory_323.mjs
 
       - name: Package Cloudflare PREVIEW assets only
         run: |
           mkdir -p deploy_site
-          for filename in app.js index.html styles.css config.js sw.js manifest.webmanifest robots.txt icon-192.png icon-512.png inventory40.js inventory40.css quote40.js quote40.css quote_stores.js; do
+          for filename in app.js index.html styles.css config.js sw.js manifest.webmanifest robots.txt icon-192.png icon-512.png inventory40.js inventory40.css quote40.js quote40.css quote_stores.js audio40.js audio40.css; do
             cp "candidate_v21/$filename" "deploy_site/$filename"
           done
-          test "$(find deploy_site -maxdepth 1 -type f | wc -l)" -eq 14
+          test "$(find deploy_site -maxdepth 1 -type f | wc -l)" -eq 16
       - name: Upload PREVIEW ZIP contents (not Production)
         uses: actions/upload-artifact@v4
         with:
