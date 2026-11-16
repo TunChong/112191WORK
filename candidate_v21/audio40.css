@@ -1,0 +1,75 @@
+/* Companion-MWG | AUDIO – dark form + live script + payment + Admin orders */
+.audio40{width:100%;display:flex;flex-direction:column;gap:16px;color:#e9f1ff}
+.audio40 .panel{min-width:0}
+.audio40 h2{font-size:18px;margin:0 0 7px}
+.audio40 h3{font-size:15px;margin:0 0 16px;border-bottom:1px solid #263b55;padding-bottom:13px}
+.audio40 p{line-height:1.5}
+.aud-hero{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(116deg,#113c7e,#121f41 65%,#0f5e78);border-radius:18px;padding:19px 23px}
+.aud-hero h2{color:#fff;font-weight:850;font-size:21px}
+.aud-hero p{color:#c4d8ee;margin:3px 0;font-size:13px}
+.aud-hero strong{background:#ffbc2a;color:#142134;border-radius:12px;padding:12px;font-size:14px}
+.aud-sample{color:#e9f1ff;background:#101c33!important;border:1px solid #243e61!important}
+.aud-sample p,.aud-sample .aud-hint{color:#a9bad3}
+.aud-sample audio{width:100%;margin-top:13px;height:42px}
+.aud-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.aud-row>*{min-width:0}
+.aud-chip{display:inline-block;white-space:nowrap;border:1px solid #4775af;color:#fcd574;font-size:11px;border-radius:16px;padding:7px 11px;font-weight:800}
+.aud-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start;gap:17px}
+.aud-layout>div{min-width:0;display:flex;flex-direction:column;gap:15px}
+.aud-dark{display:flex;flex-direction:column;gap:15px}
+.aud-section{border-radius:17px;padding:20px;background:#0e1a30;border:1px solid #24334b;min-width:0}
+.aud-field{display:flex;flex-direction:column;gap:7px;min-width:0;color:#c3dbf7;font-size:12px;font-weight:600;margin:0 0 13px}
+.aud-field b{color:#ffbb25}
+.aud-field input,.aud-field select,.aud-admin-fields input{font:inherit;font-size:13px;display:block;width:100%;max-width:100%;background:#050c1e;color:white;border:1px solid #25344e;border-radius:11px;min-height:44px;padding:11px 12px;outline:none;box-sizing:border-box}
+.aud-field input:focus,.aud-field select:focus,.aud-admin-fields input:focus{border-color:#55a8ff;box-shadow:0 0 0 2px #55a8ff20}
+.aud-field input::placeholder{color:#8092a8}
+.aud-hint{color:#8ba5c7;font-size:11px;margin:4px 0 14px}
+.aud-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:11px}
+.aud-full{grid-column:1/-1}
+.aud-offer{padding:14px 14px 6px;border:1px solid #273856;background:#090f20;border-radius:14px;margin-bottom:11px}
+.aud-offer>strong{display:block;color:#ffd037;font-size:11px;margin-bottom:12px}
+.aud-script-panel{background:#0e1a30!important;border:1px solid #263955!important;color:#edf4ff}
+.aud-script-panel p,.aud-admin .aud-row p{color:#a9bed7;margin:2px 0;font-size:12px}
+.aud-script{font-family:Arial,sans-serif;min-height:460px;width:100%;box-sizing:border-box;resize:vertical;background:#030b1e;border:1px solid #2c4161;border-radius:13px;color:#f0f5ff;line-height:1.65;font-size:13px;padding:16px;margin-top:12px;outline:none}
+.aud-script:focus{border-color:#519fff}
+.aud-stats{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;color:#a7bedb;font-size:11px;margin:10px 0}
+.aud-danger{color:#ff8585!important}
+.aud-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.aud-buttons .btn{flex:1;min-height:44px}
+.aud-secondary{border:1px solid #647a9d;color:#d7e8ff;background:#1a2a44;border-radius:10px;min-height:39px;padding:10px 13px;font-size:12px;font-weight:750;cursor:pointer}
+.aud-secondary:hover{background:#294065}
+.aud-secondary:disabled,.aud-buttons button:disabled{opacity:.46;cursor:not-allowed}
+.aud-payment{display:grid;grid-template-columns:minmax(0,1fr) 135px;gap:18px;color:#1d3156;align-items:center}
+.aud-payment h2{color:#175ac3;font-size:19px}
+.aud-payment p{font-size:13px;margin:9px 0}
+.aud-payment img{width:100%;max-width:145px;max-height:220px;object-fit:contain;border:1px solid #e3e8ef;border-radius:10px}
+.aud-payment .aud-hint{color:#586f93}
+.aud-admin{background:#101b30!important;color:#f5f8ff;border:1px solid #2c4766!important}
+.aud-admin h2{color:#fff}
+.aud-order{background:#ffffff;border:1px solid #e2e8f4;border-radius:14px;padding:14px 16px;margin:12px 0;color:#1b2c4d}
+.aud-order>div>p{color:#6c7a91;font-size:12px;margin:6px 0}
+.aud-order small{color:#3a6686;font-size:12px}
+.aud-order pre{font:12px/1.65 Arial,sans-serif;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;background:#edf3fc;border-radius:10px;padding:15px}
+.aud-order summary{cursor:pointer;color:#1c61b4;font-weight:700;padding:10px 0}
+.aud-admin-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.aud-admin-fields label{font-size:12px;color:#5a6681;min-width:0}
+.aud-admin-fields input{background:#fff;color:#152b4a;margin:6px 0}
+.aud-admin .aud-buttons .btn{flex:none}
+.aud-backdrop{position:fixed;z-index:9999;inset:0;background:#091529c9;display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
+.aud-modal{background:#fff;border-radius:18px;box-shadow:0 20px 80px #010a205c;width:min(100%,490px);padding:24px;color:#182944;max-height:95vh;overflow:auto}
+.aud-modal h2{font-size:21px}
+.aud-modal p{font-size:13px;color:#596c86;margin:9px 0 15px}
+.aud-modal .aud-field{color:#32486c;font-weight:700;font-size:13px}
+.aud-modal .aud-field input,.aud-modal .aud-field select{background:#fff;color:#172943;border:1px solid #cbd8ec}
+.aud-modal .aud-check{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:#344865;line-height:1.5;margin:8px 0 16px}
+.aud-modal .aud-check input{margin:3px 0 0;min-width:18px;min-height:18px}
+.aud-modal .btn{width:100%;padding:13px}
+.aud-error{color:#c12c3c!important}
+@media(max-width:1000px){.aud-layout{grid-template-columns:1fr}}
+@media(max-width:650px){
+ .aud-layout{gap:12px}.aud-section{padding:14px}
+ .aud-grid,.aud-admin-fields{grid-template-columns:1fr}
+ .aud-script{min-height:370px}.aud-payment{grid-template-columns:1fr 105px;gap:9px}
+ .aud-payment img{max-width:105px}.aud-hero{padding:14px}
+ .aud-hero h2{font-size:17px}.aud-buttons button{flex:1}
+}
