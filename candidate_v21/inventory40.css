@@ -70,10 +70,7 @@
 .inv-session-actions button:disabled{opacity:.55;cursor:wait}
 @media(max-width:600px){.inv-session-actions button{flex:1;min-width:46%}}
 
-/* v3.3.1: Keep the live iPhone camera visible and provide a native photo fallback. */
+/* Keep the live iPhone camera visible during direct QR/barcode scanning. */
 #inv-reader{position:relative;min-height:250px;contain:layout;isolation:isolate}
 #inv-reader video{display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;max-width:100%!important;object-fit:cover!important;transform:translateZ(0);-webkit-transform:translateZ(0);background:#10192a}
 #inv-reader canvas{max-width:100%}
-.inv-photo-trigger{display:inline-flex;align-items:center;justify-content:center;background:#eff5ff;border:1px solid #9bb8eb;border-radius:10px;color:#1c4eaa;padding:12px 14px;font-size:12px;font-weight:750;cursor:pointer;margin:0 0 12px}
-.inv-photo-input{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-.inv-photo-reader{position:absolute;left:-9999px;top:0;width:360px;height:280px;overflow:hidden;pointer-events:none}
