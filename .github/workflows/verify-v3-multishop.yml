@@ -50,6 +50,7 @@ jobs:
           node candidate_v21/test_multishop_ui.mjs
           node candidate_v21/test_inventory40.mjs
           node candidate_v21/test_inventory40_one_scan.mjs
+          node candidate_v21/test_camera_ios_fast.mjs
           node candidate_v21/test_shop_delete_direct.mjs
           node candidate_v21/test_login_no_suggestions.mjs
           node candidate_v21/test_quote40.mjs
