@@ -24,7 +24,7 @@ const ROSTER = [
   {employee_code:'288315',full_name:'Thúy'}
 ];
 const TOKEN_KEY = 'work112191_session';
-const SHOP_VERSION = '3.1.2-fast-scan-preview';
+const SHOP_VERSION = '3.1.3-direct-actions-preview';
 const ICON_PATHS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   clipboard:'<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
@@ -57,7 +57,7 @@ const isLate = (a,t) => ['todo','rejected'].includes(a.status) && new Date(t.due
 const assignStatus = (a,t) => isLate(a,t)?'overdue':a.status;
 const NAMES={todo:'Chưa làm',submitted:'Chờ duyệt',approved:'Đã duyệt',rejected:'Làm lại',overdue:'Quá hạn'};
 const STATUS_ICON={todo:'clock',submitted:'camera',approved:'checkcircle',rejected:'refresh',overdue:'warning'};
-let state={shops:[],shopEditId:null,shopId:null,shopRoles:{},shopReady:false,shopReadyChecked:false,shopMembers:[],shopMemberLoading:false,shopSearch:'',pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
+let state={shops:[],shopDeleting:null,shopEditId:null,shopId:null,shopRoles:{},shopReady:false,shopReadyChecked:false,shopMembers:[],shopMemberLoading:false,shopSearch:'',pushEnabled:false,staffAccounts:null,staffAccountsError:'',staffAccountsLoading:false,oneTimeCredential:null,screen:'home',modal:null,filter:'all',search:'',loading:false,data:null,user:null,session:null,photos:{},signed:{},signedUntil:{},authRole:'staff',picked:[],editMode:false};
 const root=document.getElementById('app');
 let ticking=false;
 const toast=(message)=>{document.querySelector('.alert-toast')?.remove();const a=document.createElement('div');a.className='alert-toast';a.textContent=message;document.body.appendChild(a);setTimeout(()=>a.remove(),3400)};
@@ -325,7 +325,7 @@ function navEntries(){return manager()?[
 function bottomItems(){return supervisor()?[['home','Trang chủ','home'],['tasks','Công việc','list'],['create','Giao việc','plus'],['approvals','Duyệt','shield'],['more','Thêm','more']]:[['home','Trang chủ','home'],['tasks','Công việc','list'],['inventory40','Kiểm kê','camera'],['alerts','Thông báo','bell'],['account','Tài khoản','user']];}
 const desktopNav=()=>navEntries().map(([k,label,icon])=>`<button class="${state.screen===k?'active':''}" data-action="navigate" data-screen="${k}">${ic(icon)}${esc(label)}${k==='alerts'&&myNotifications().some(x=>!x.read_at)?'<span class="badge">Mới</span>':''}</button>`).join('');
 function headerTitle(){return ({inventory40:'Kiểm kê 4.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
-function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.1.2 KIỂM KÊ 4.0 PREVIEW</div></aside><main class="content">
+function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo">W</div><div><strong>112191 WORK</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>112191 WORK · Phiên bản v3.1.3 XÓA SHOP TRỰC TIẾP</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">112191 WORK / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button class="round-btn" data-action="navigate" data-screen="alerts" title="Thông báo">${ic('bell')}${unread?'<i class="dot"></i>':''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${!CLOUD?`<div class="notice note-amber" style="margin-bottom:15px">${ic('info')}<div><b>Chế độ dùng thử:</b> dữ liệu chỉ lưu trong trình duyệt này, chưa đồng bộ giữa các iPhone. Muốn dùng chung cần kết nối Supabase theo tài liệu trong gói mã nguồn.</div></div>`:''}
  ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
@@ -426,7 +426,8 @@ async function deleteTaskForever(taskId){
    '',
    'Thao tác không thể hoàn tác. Anh xác nhận xóa?'
   ].join('\n');
-  if(!window.confirm(prompt))return;
+  // A click on Xóa is sufficient; no extra confirmation.
+
   const r=await taskAdminRequest({action:'delete',task_id:taskId,confirm:true,
    expected:{assignments:p.assignments,photos:p.photos}});
   state.modal=null;await loadCloud();draw();
@@ -460,7 +461,7 @@ async function createStaff(e){
 async function changeStaffActive(uid){
  if(!manager()||!state.staffAccounts)return;
  const p=state.staffAccounts.accounts.find(p=>p.id===uid);if(!p)return;
- if(!confirm(`${p.active?'Xóa (lưu trữ)':'Khôi phục'} tài khoản ${p.employee_code} - ${p.full_name}? Không xóa dữ liệu hay lịch sử đã giao việc.`))return;
+
  try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();await loadStaffAdmin();toast('Đã cập nhật trạng thái tài khoản.')}catch(e){toast(e.message)}
 }
 async function deleteStaffForever(uid){
@@ -469,22 +470,8 @@ async function deleteStaffForever(uid){
  if(!p||p.active||p.is_admin)return;
  try{
   const {counts}=await staffAdminRequest({action:'preview_delete',user_id:uid});
-  const summary=[
-   'XÓA VĨNH VIỄN tài khoản: '+p.employee_code+' - '+p.full_name,
-   'Lượt công việc/báo cáo của người này sẽ bị xóa: '+(counts.assignments||0),
-   'Thông báo của người này sẽ bị xóa: '+(counts.notifications||0),
-   'Lịch công việc tham gia sẽ bị xóa: '+(counts.recurring_members||0),
-   'Ảnh minh chứng sẽ bị xóa: '+(counts.photos||0),
-   'Công việc do người này tạo sẽ chuyển sang Admin: '+(counts.tasks_to_reassign||0),
-   'Lịch việc do người này tạo sẽ chuyển sang Admin: '+(counts.templates_to_reassign||0),
-   '',
-   'KHÔNG THỂ HOÀN TÁC. Gõ chính xác mã tài khoản để xác nhận:'
-  ].join('\n');
-  const entered=window.prompt(summary,'');
-  if(entered===null)return;
-  if(entered.trim()!==p.employee_code){toast('Sai mã xác nhận. Không xóa tài khoản.');return}
-  if(!window.confirm('Xóa vĩnh viễn tài khoản '+p.employee_code+' và lịch sử, ảnh minh chứng liên quan?\n\nKhông thể hoàn tác thao tác này.'))return;
-  const r=await staffAdminRequest({action:'delete',user_id:uid,confirm_code:entered.trim(),ack_delete_history:true,expected_counts:counts});
+  // Direct click already expresses intent. The API still authenticates Admin.
+  const r=await staffAdminRequest({action:'delete',user_id:uid,confirm_code:p.employee_code,ack_delete_history:true,expected_counts:counts});
   await loadCloud();
   await loadStaffAdmin();
   draw();
@@ -508,7 +495,7 @@ async function submitStaffRole(e){
  if(!['staff','shift_lead','manager'].includes(role)){toast('Vị trí không hợp lệ');return}
  const p=state.staffAccounts.accounts.find(x=>x.id===uid);
  if(!p||p.is_admin)return;
- if(!confirm('Chuyển vị trí '+p.employee_code+' từ '+roleName(p)+' sang '+({staff:'Nhân Viên',shift_lead:'Trưởng Ca',manager:'Quản Lý'}[role])+'?'))return;
+
  const btn=f.querySelector('[type=submit]');btn.disabled=true;
  try{await staffAdminRequest({action:'set_role',user_id:uid,role});state.modal=null;await loadCloud();await loadStaffAdmin();draw();toast('Đã cập nhật vị trí thành công.')}
  catch(err){toast('Không thay đổi được vị trí: '+err.message);btn.disabled=false}
@@ -596,7 +583,7 @@ function shopsView(){
     <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
       <button type="button" class="btn sm outline" data-action="shop-edit" data-id="${esc(sh.id)}">Sửa</button>
       ${sh.is_primary?'<span class="fineprint">SHOP chính</span>':`
-      <button type="button" class="btn sm danger" data-action="shop-delete" data-id="${esc(sh.id)}">Xóa</button>
+      <button type="button" class="btn sm danger" data-action="shop-delete" data-id="${esc(sh.id)}" ${state.shopDeleting?'disabled':''}>${state.shopDeleting===sh.id?'Đang xóa...':'Xóa'}</button>
       ${!sh.active&&state.shopReady?`<button type="button" class="btn sm outline" data-action="shop-restore" data-id="${esc(sh.id)}">Khôi phục</button>`:''}`}
     </div></div>`).join('')}${filtered.length>100?`<p class="fineprint">Đang hiển thị 100/${filtered.length} SHOP. Gõ mã kho để tìm chính xác.</p>`:''}${!filtered.length?'<p class="fineprint">Không có SHOP phù hợp.</p>':''}</div></section>
   ${editing?`<section class="panel" id="shopEditSection"><div class="panel-head"><div><h2>Chỉnh sửa SHOP</h2><div class="subtitle">Đang sửa: ${esc(shopLabel(editing))}</div></div></div>
@@ -800,7 +787,7 @@ async function readOne(nid,taskid=''){
 }
 async function readAll(){const items=myNotifications().filter(n=>!n.read_at);try{if(CLOUD)await Promise.all(items.map(n=>tablePatch('notifications',`id=eq.${encodeURIComponent(n.id)}`,{read_at:nowDate()})));items.forEach(n=>n.read_at=nowDate());persist();draw()}catch(e){toast(e.message)}}
 async function toggleRecurrence(idValue){if(!manager())return;const r=state.data.recurring_templates.find(r=>r.id===idValue);if(!r)return;try{if(CLOUD)await tablePatch('recurring_templates',`id=eq.${encodeURIComponent(r.id)}`,{active:!r.active});r.active=!r.active;persist();draw()}catch(e){toast(e.message)}}
-async function toggleUser(uid){if(!manager()||!CLOUD)return;const p=state.data.profiles.find(p=>p.id===uid);if(!p||p.role==='manager')return;if(!confirm(`${p.active?'Lưu trữ':'Khôi phục'} tài khoản ${p.employee_code||''} - ${p.full_name}? Lịch sử công việc được giữ nguyên.`))return;try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();if(state.screen==='accounts')await loadStaffAdmin();draw();toast('Đã cập nhật tài khoản.')}catch(e){toast('Không cập nhật được: '+e.message)}}
+async function toggleUser(uid){if(!manager()||!CLOUD)return;const p=state.data.profiles.find(p=>p.id===uid);if(!p||p.role==='manager')return;try{await staffAdminRequest({action:'set_active',user_id:uid,active:!p.active});await loadCloud();if(state.screen==='accounts')await loadStaffAdmin();draw();toast('Đã cập nhật tài khoản.')}catch(e){toast('Không cập nhật được: '+e.message)}}
 function exportCsv(){const lines=[['Tên công việc','Nhóm','Hạn hoàn thành','Mã nhân viên','Nhân viên','Trạng thái','Thời gian gửi','Thời gian duyệt','Phản hồi quản lý']];for(const {t,a} of myRows())lines.push([t.title,t.category,fmt(t.due_at),findUser(a.staff_id).employee_code||'',findUser(a.staff_id).full_name,NAMES[assignStatus(a,t)]||a.status,fmt(a.submitted_at),fmt(a.reviewed_at),a.review_feedback||'']);const csv='\ufeff'+lines.map(line=>line.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const anchor=document.createElement('a');anchor.href=url;anchor.download=`112191-work-${dayLocal()}.csv`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 
 async function switchShop(shopId){
@@ -885,18 +872,28 @@ async function action(el,e){const name=el.dataset.action;
  }
  if(name==='shop-cancel-edit'){state.shopEditId=null;draw();return}
  if(name==='shop-delete'){
-  if(!admin())throw new Error('Chỉ Admin được xóa SHOP');
+  if(!admin())throw new Error('Chỉ Admin 112191 được xóa SHOP');
   const sh=state.shops.find(x=>x.id===el.dataset.id);
   if(!sh)throw new Error('Không tìm thấy SHOP');
-  if(sh.is_primary){toast('Không thể xóa SHOP chính đang quản lý dữ liệu');return}
-  const typed=prompt('Xóa '+shopLabel(sh)+'? Nhập MÃ KHO '+sh.shop_code+' để xác nhận. SHOP có dữ liệu sẽ được lưu trữ thay vì xóa vĩnh viễn.');
-  if(typed===null)return;
-  if(typed.trim().toUpperCase()!==sh.shop_code){toast('Mã xác nhận chưa đúng, chưa xóa SHOP');return}
-  const result=await shopAdminRequest({action:'delete_shop',shop_id:sh.id,confirm_code:sh.shop_code});
-  if(state.shopEditId===sh.id)state.shopEditId=null;
-  if(state.shopId===sh.id)state.shopId=null;
-  await loadCloud();if(state.shopId)await loadShopMembers();draw();
-  toast(result.archived?'SHOP có dữ liệu đã được lưu trữ an toàn.':'Đã xóa SHOP trống.');
+  if(sh.is_primary){toast('SHOP chính không thể xóa khi vẫn là mặc định hệ thống');return}
+  if(state.shopDeleting)return;
+  state.shopDeleting=sh.id;
+  draw();
+  try{
+   const result=await shopAdminRequest({action:'delete_shop',shop_id:sh.id});
+   if(!result.deleted)throw new Error('SHOP chưa được xóa');
+   if(state.shopEditId===sh.id)state.shopEditId=null;
+   if(state.shopId===sh.id)state.shopId=null;
+   await loadCloud();
+   if(state.shopId)await loadShopMembers();
+   draw();
+   toast(result.media_cleanup_pending>0
+     ?'Đã xóa SHOP '+sh.shop_code+' và dữ liệu. Có '+result.media_cleanup_pending+' ảnh chờ dọn khỏi Storage.'
+     :'Đã xóa vĩnh viễn SHOP '+sh.shop_code+'.');
+  }finally{
+   state.shopDeleting=null;
+   draw();
+  }
   return;
  }
  if(name==='shop-restore'){
@@ -907,22 +904,22 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='refresh-shop-members')return loadShopMembers();
  if(name==='shop-member-active'){
   const active=el.dataset.active==='true';
-  if(!confirm(active?'Kích hoạt nhân sự tại SHOP này?':'Lưu trữ nhân sự tại SHOP này?'))return;
+
   return updateShopMember(el.dataset.uid,'set_membership_active',{active});
  }
  if(name==='shop-member-reset'){
-  if(!confirm('Đặt lại mật khẩu cho nhân viên này? Mật khẩu mới chỉ hiển thị một lần.'))return;
+
   return updateShopMember(el.dataset.uid,'reset_staff_password');
  }
  if(name==='shop-member-set-role'){
   const role=document.getElementById('role-'+el.dataset.uid)?.value;
   if(!['staff','shift_lead','manager'].includes(role))throw new Error('Vai trò không hợp lệ');
-  if(!confirm('Cập nhật nhân viên này thành '+({staff:'Nhân viên',shift_lead:'Trưởng ca',manager:'Quản lý'})[role]+' tại SHOP đang chọn?'))return;
+
   return updateShopMember(el.dataset.uid,'set_member_role',{shop_role:role});
  }
  if(name==='shop-member-role'){
   const role=el.dataset.role;
-  if(!confirm(role==='shift_lead'?'Cấp quyền Trưởng ca trong SHOP này?':'Chuyển về vai trò Nhân viên trong SHOP này?'))return;
+
   return updateShopMember(el.dataset.uid,'set_member_role',{shop_role:role});
  }
  if(name==='filter'){state.filter=el.dataset.status;draw();return}
@@ -934,7 +931,7 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='approve'){return review(el.dataset.aid,true)}
  if(name==='logout')return logout();
  if(name==='switch-demo')return loginDemo(el.dataset.user);
- if(name==='reset-demo'){if(!confirm('Xóa toàn bộ dữ liệu dùng thử trên thiết bị này?'))return;state.data=initDemo();persist();state.screen='home';draw();toast('Đã đặt lại dữ liệu mẫu.');return}
+ if(name==='reset-demo'){state.data=initDemo();persist();state.screen='home';draw();toast('Đã đặt lại dữ liệu mẫu.');return}
  if(name==='toggle-recurrence')return toggleRecurrence(el.dataset.id);
  if(name==='toggle-user')return toggleUser(el.dataset.id);
  if(name==='refresh-accounts')return loadStaffAdmin();
