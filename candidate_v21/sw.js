@@ -1,5 +1,5 @@
-const CACHE_NAME = 'companion-mwg-v3.3.2-quote-audio-icon';
-const PRECACHE = ['./', './index.html', './styles.css?v=3.3.2', './app.js?v=3.3.2', './config.js', './inventory40.js?v=3.3.2', './inventory40.css?v=3.3.2', './quote40.js?v=3.3.2', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.2', './audio40.css?v=3.3.2', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE_NAME = 'companion-mwg-v3.3.3-quote-image-pdf-fix';
+const PRECACHE = ['./', './index.html', './styles.css?v=3.3.2', './app.js?v=3.3.3', './config.js', './inventory40.js?v=3.3.2', './inventory40.css?v=3.3.2', './quote40.js?v=3.3.3', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.2', './audio40.css?v=3.3.2', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
