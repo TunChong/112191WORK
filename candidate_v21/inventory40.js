@@ -62,6 +62,18 @@ async function scannerLib(){
  if(!scannerLoading)scannerLoading=scriptOnce('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js',()=>!!window.Html5Qrcode).catch(e=>{scannerLoading=null;throw e});
  return scannerLoading;
 }
+// Prefer mainstream retail formats; gracefully retain all when enumeration unavailable.
+function fastScannerOptions(){
+ const f=window.Html5QrcodeSupportedFormats;
+ const names=['QR_CODE','CODE_128','CODE_39','CODE_93','EAN_13','EAN_8','UPC_A','UPC_E','ITF','DATA_MATRIX'];
+ const formats=f?names.map(n=>f[n]).filter(n=>Number.isInteger(n)):null;
+ return {verbose:false,useBarCodeDetectorIfSupported:true,
+  ...(formats&&formats.length===names.length?{formatsToSupport:formats}:{})};
+}
+function fastScanRegion(w,h){
+ // Favor enough height for QR and enough width for traditional 1D barcodes.
+ return {width:Math.max(120,Math.min(w-16,360)),height:Math.max(110,Math.min(h-16,250))};
+}
 const normalizeCode=s=>String(s==null?'':s).trim();
 function normalizeQuantity(value){
  const t=String(value==null?'':value).trim().replace(/\s/g,'');
@@ -122,6 +134,8 @@ async function load(){
  if(shop!==S.shop){await leave();S.shop=shop;S.sessions=[];S.stock=[];S.counts=[];S.sessionId=null;S.last=null;S.query='';}
  const serial=++S.requestSerial;
  S.loading=true;redraw();
+ // Preload decoder on opening Inventory without requesting camera permissions.
+ if(navigator.mediaDevices?.getUserMedia)scannerLib().catch(()=>{});
  try{
   const q='/rest/v1/inventory_sessions?shop_id=eq.'+encodeURIComponent(shop)+'&select=*&order=created_at.desc&limit=50';
   const sessions=await H.api(q);
@@ -280,6 +294,9 @@ async function acceptCameraCode(decoded,epoch){
  S.cameraPhase='processing';
  S.scanResult='';S.scanError='';
  const code=normalizeCode(decoded);
+ // Give immediate visual feedback before slow camera shutdown or database acknowledgment.
+ const receipt=document.getElementById('inv-last');
+ if(receipt)receipt.textContent='✓ ĐÃ NHẬN MÃ '+code+' · Đang lưu 1 sản phẩm...';
  const selectedSession=S.sessionId;
  // Turn camera OFF before writing to database; never leave it reading while saving.
  await stopCamera({keepProcessing:true});
@@ -309,10 +326,10 @@ async function startCamera(){
   if(epoch!==S.cameraEpoch)return;
   S.cameraActive=true;
   redraw(); // Mount reader before Html5Qrcode.start; do not redraw while video is live.
-  const camera=new window.Html5Qrcode('inv-reader',{verbose:false});
+  const camera=new window.Html5Qrcode('inv-reader',fastScannerOptions());
   S.camera=camera;
   S.cameraStartPromise=camera.start({facingMode:'environment'},
-   {fps:10,qrbox:(w,h)=>({width:Math.min(w-30,300),height:Math.min(h-30,220)})},
+   {fps:20,disableFlip:true,qrbox:fastScanRegion},
    decoded=>{if(epoch!==S.cameraEpoch)return;acceptCameraCode(decoded,epoch).catch(e=>{S.scanError=e?.message||'Lỗi khi quét';S.scanResult='error';S.cameraPhase='idle';redraw();});},
    ()=>{});
   await S.cameraStartPromise;
