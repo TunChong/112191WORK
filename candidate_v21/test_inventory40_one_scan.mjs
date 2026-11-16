@@ -36,7 +36,7 @@ inv.configure({
 });
 await inv._test.startCamera();
 assert.equal(state.cameraPhase,'scanning');
-assert.equal(scanConfig.fps,20,'fast scanner decodes up to 20 frames/s');
+assert.equal(scanConfig.fps,30,'fast scanner decodes up to 30 frames/s');
 assert.equal(scanConfig.disableFlip,true,'rear camera avoids redundant horizontal flip');
 assert.ok(scanConfig.qrbox(430,300).width>=350,'scan frame enlarged for barcodes');
 assert.equal(constructionOptions.useBarCodeDetectorIfSupported,true,'prefer native decoder when available');
