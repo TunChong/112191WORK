@@ -111,7 +111,15 @@ async function lookup(i){
   if(result.title)p.name=result.title;
   if(result.image&&/^https:\/\//.test(result.image)){
    p.image=result.image;
-   p.status='Đã lấy ảnh sản phẩm chính';
+   p.status='Đang nạp hình sản phẩm chính...';
+   try{
+    const safe=await photoForExport(result.image);
+    if(activeLookups.get(i)!==run||p.url.trim()!==url)return;
+    p.image=safe;
+    p.status='Đã lấy ảnh sản phẩm chính';
+   }catch(e){
+    p.status='Đã lấy tên, nhưng ảnh bị chặn: '+(e?.message||e)+'. Hãy thử xuất hoặc chọn ảnh từ thiết bị.';
+   }
   }else{
    if(!manuallySelected)p.image='';
    p.status=result.title?'Đã lấy tên, chưa có ảnh chính rõ ràng – có thể chọn ảnh từ thiết bị':'Không nhận diện được sản phẩm – vui lòng nhập tên và ảnh';
@@ -158,6 +166,101 @@ function onInput(target){
   persist();
  }
 }
+const quoteImageCache=new Map();
+async function compactImage(dataUri){
+ if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(dataUri))
+  throw new Error('Ảnh tải về không đúng định dạng');
+ const im=await new Promise((resolve,reject)=>{
+  const picture=new Image();
+  picture.onload=()=>resolve(picture);
+  picture.onerror=()=>reject(new Error('Không đọc được dữ liệu ảnh sản phẩm'));
+  picture.src=dataUri;
+ });
+ const canvas=document.createElement('canvas');
+ const size=480,scale=Math.min(1,size/Math.max(im.naturalWidth||im.width,im.naturalHeight||im.height));
+ canvas.width=Math.max(1,Math.round((im.naturalWidth||im.width)*scale));
+ canvas.height=Math.max(1,Math.round((im.naturalHeight||im.height)*scale));
+ const ctx=canvas.getContext('2d');
+ if(!ctx)throw new Error('Trình duyệt không hỗ trợ xử lý ảnh');
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.drawImage(im,0,0,canvas.width,canvas.height);
+ return canvas.toDataURL('image/jpeg',.88);
+}
+async function photoForExport(src){
+ if(/^data:image\/(?:jpeg|png|webp);base64,/i.test(src))return src;
+ if(!/^https:\/\//i.test(src))throw new Error('Link ảnh sản phẩm không hợp lệ');
+ if(quoteImageCache.has(src))return quoteImageCache.get(src);
+ if(typeof helper?.resolveQuoteImage!=='function')
+  throw new Error('Chưa kết nối máy chủ nhận diện ảnh báo giá');
+ const promise=(async()=>{
+  const result=await helper.resolveQuoteImage(src);
+  if(!result?.ok||!result?.data_url)throw new Error(result?.error||'Máy chủ ảnh không phản hồi');
+  return compactImage(result.data_url);
+ })();
+ quoteImageCache.set(src,promise);
+ try{return await promise}catch(e){quoteImageCache.delete(src);throw e}
+}
+async function imageLoaded(node){
+ if(node.complete&&node.naturalWidth>0)return;
+ await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>{node.onload=null;node.onerror=null;reject(new Error('Ảnh sản phẩm tải quá lâu'))},7000);
+  node.onload=()=>{clearTimeout(timer);resolve()};
+  node.onerror=()=>{clearTimeout(timer);reject(new Error('Ảnh sản phẩm không hiển thị được'))};
+ });
+}
+async function prepareImagesForExport(){
+ const rows=filled();
+ let changed=false;
+ // Remote CDN photos must become same-origin safe data URIs before canvas capture.
+ await Promise.all(rows.map(async(p,i)=>{
+  if(!p.image&&p.url){
+   try{
+    const found=await helper.resolveProduct(p.url);
+    if(found?.image)p.image=found.image;
+   }catch(e){console.warn('Quote image metadata failed',e)}
+  }
+  if(!p.image)throw new Error('Sản phẩm '+(i+1)+' chưa có ảnh. Anh chọn ảnh sản phẩm hoặc bấm Lấy tên & hình.');
+  try{
+   const safe=await photoForExport(p.image);
+   if(safe!==p.image){p.image=safe;changed=true}
+  }catch(e){
+   throw new Error('Không thể tải hình sản phẩm '+(i+1)+': '+(e?.message||e)+'. Anh có thể chọn ảnh từ điện thoại/máy tính.');
+  }
+ }));
+ if(changed){persist();updatePreview()}
+ const quote=validateExport();
+ const images=[...quote.querySelectorAll('.q-print-table tbody img')];
+ if(images.length!==rows.length)throw new Error('Bảng báo giá còn sản phẩm chưa có hình');
+ await Promise.all(images.map(imageLoaded));
+ return quote;
+}
+function checkVisibleCanvas(canvas){
+ if(!canvas||canvas.width<80||canvas.height<80)throw new Error('Không tạo được ảnh bảng báo giá');
+ const sample=document.createElement('canvas');
+ sample.width=80;sample.height=80;
+ const ctx=sample.getContext('2d');
+ if(!ctx)throw new Error('Trình duyệt không hỗ trợ xuất ảnh');
+ ctx.drawImage(canvas,0,0,80,80);
+ const pixels=ctx.getImageData(0,0,80,80).data;
+ let ink=0;
+ for(let i=0;i<pixels.length;i+=4)
+  if(Math.min(pixels[i],pixels[i+1],pixels[i+2])<190)ink++;
+ if(ink<10)throw new Error('Ảnh báo giá đang bị trắng. Đã ngừng xuất để tránh tạo file trống.');
+}
+async function renderQuoteCanvas(){
+ validateExport();
+ await requireCanvas();
+ const node=await prepareImagesForExport();
+ const targetWidth=Math.max(900,node.scrollWidth||0,node.offsetWidth||0);
+ const scale=Math.min(2,3200/targetWidth);
+ const canvas=await window.html2canvas(node,{
+  backgroundColor:'#ffffff',scale:Math.max(1,scale),
+  useCORS:true,allowTaint:false,imageTimeout:10000,logging:false,
+  scrollX:0,scrollY:-window.scrollY,windowWidth:Math.max(document.documentElement.clientWidth,targetWidth)
+ });
+ checkVisibleCanvas(canvas);
+ return canvas;
+}
 function exportFileName(ext){
  const store=(currentStore()?.label||'SHOP').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
    .replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,56);
@@ -199,9 +302,9 @@ async function requireCanvas(){
 }
 async function requirePdf(){
  await lazyScript('pdf',[
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js'
- ],()=>typeof window.html2pdf==='function');
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js'
+ ],()=>typeof (window.jspdf?.jsPDF||window.jsPDF)==='function');
 }
 function downloader(blob,filename){
  const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -210,29 +313,28 @@ function downloader(blob,filename){
  setTimeout(()=>URL.revokeObjectURL(href),60000);
 }
 async function captureQuote(){
- const node=validateExport();
- await requireCanvas();
- const canvas=await window.html2canvas(node,{
-  backgroundColor:'#ffffff',scale:Math.min(2,Math.max(1,window.devicePixelRatio||1)),
-  useCORS:true,allowTaint:false,imageTimeout:10000,logging:false,scrollX:0,scrollY:0
- });
+ const canvas=await renderQuoteCanvas();
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
- if(!blob)throw new Error('Không thể tạo ảnh bảng báo giá');
+ if(!blob||blob.size<3000)throw new Error('Ảnh bảng báo giá bị trống hoặc không hợp lệ');
  downloader(blob,exportFileName('png'));
- toast('Đã tạo ảnh PNG của bảng báo giá.');
+ toast('Đã tạo ảnh PNG đầy đủ hình và nội dung báo giá.');
 }
 async function exportPDF(){
- const node=validateExport();
+ // PDF and PNG use the SAME validated canvas, avoiding html2pdf's blank clone bug.
+ const canvas=await renderQuoteCanvas();
  await requirePdf();
- // A4 landscape, landscape-sized preview as in the existing paper quotation.
- await window.html2pdf().set({
-  margin:5,filename:exportFileName('pdf'),
-  image:{type:'jpeg',quality:0.97},
-  html2canvas:{scale:2,useCORS:true,allowTaint:false,imageTimeout:10000,backgroundColor:'#fff',logging:false},
-  jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
-  pagebreak:{mode:['css','legacy']}
- }).from(node).save();
- toast('Đã tạo file PDF báo giá.');
+ const PDF=window.jspdf?.jsPDF||window.jsPDF;
+ const pdf=new PDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+ const w=pdf.internal.pageSize.getWidth(),h=pdf.internal.pageSize.getHeight();
+ const margin=6,ratio=Math.min((w-margin*2)/canvas.width,(h-margin*2)/canvas.height);
+ const printedW=canvas.width*ratio,printedH=canvas.height*ratio;
+ const image=canvas.toDataURL('image/jpeg',.95);
+ if(!image||image.length<4000)throw new Error('Ảnh kết xuất không có nội dung');
+ pdf.addImage(image,'JPEG',(w-printedW)/2,margin,printedW,printedH,undefined,'FAST');
+ const bytes=pdf.output('arraybuffer');
+ if(!bytes||bytes.byteLength<5000)throw new Error('File PDF bị trống. Hãy thử lại.');
+ pdf.save(exportFileName('pdf'));
+ toast('Đã xuất PDF A4 ngang có đầy đủ nội dung và hình sản phẩm.');
 }
 async function runExport(action){
  if(exporting)return;
