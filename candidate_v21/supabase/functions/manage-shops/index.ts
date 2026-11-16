@@ -1,4 +1,4 @@
-// 112191 WORK v3 multi-shop privileged control plane.
+// Companion-MWG v3 multi-shop privileged control plane.
 // IMPORTANT: all write actions remain LOCKED until work_multi_shop_config.isolation_ready=true.
 // The flag may only be activated after *all* data/Storage/RPC/shop policies are tested.
 const BASE = Deno.env.get('SUPABASE_URL') || '';
@@ -10,10 +10,10 @@ const SHOP_DOMAIN = '@112191work.pages.dev';
 const validUUID = (x: unknown): x is string => typeof x === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const codeOK = (x: unknown) => typeof x === 'string' && /^[0-9]{4,8}$/.test(x);
 const shopCodeOK = (x: unknown) => typeof x === 'string' && /^[A-Za-z0-9_-]{2,32}$/.test(x);
-const originOK = (o: string) => /^https:\/\/([a-z0-9-]+\.)?112191work\.pages\.dev$/i.test(o);
+const originOK = (o: string) => /^https:\/\/([a-z0-9-]+\.)?(?:112191work|supportmwg)\.pages\.dev$/i.test(o);
 function cors(origin: string) {
  return {'content-type':'application/json','cache-control':'no-store','vary':'Origin',
- 'access-control-allow-origin':originOK(origin) ? origin : 'https://112191work.pages.dev',
+ 'access-control-allow-origin':originOK(origin) ? origin : 'https://supportmwg.pages.dev',
  'access-control-allow-headers':'authorization,apikey,content-type',
  'access-control-allow-methods':'OPTIONS,POST'};
 }
@@ -89,7 +89,7 @@ Deno.serve(async(req:Request)=>{
   // Catalog management remains available before multi-shop data isolation.
   // Only the sole Super Admin can modify shop metadata. Business operations stay gated.
   if(action==='update_shop'){
-   if(!isAdmin)return answer(req,403,{error:'Chỉ Admin 112191 được sửa SHOP'});
+   if(!isAdmin)return answer(req,403,{error:'Chỉ Super Admin được sửa SHOP'});
    const code=String(data.shop_code||'').trim().toUpperCase();
    const name=String(data.shop_name||'').trim().replace(/\s+/g,' ');
    if(!shopCodeOK(code)||name.length<3||name.length>160)
@@ -102,7 +102,7 @@ Deno.serve(async(req:Request)=>{
    return answer(req,200,{ok:true,shop:saved?.[0]||{...targetShop,shop_code:code,shop_name:name}});
   }
   if(action==='delete_shop'){
-   if(!isAdmin)return answer(req,403,{error:'Chỉ Admin 112191 được xóa SHOP'});
+   if(!isAdmin)return answer(req,403,{error:'Chỉ Super Admin được xóa SHOP'});
    // One explicit click is sufficient. Server-side transaction deletes the selected
    // SHOP plus its own linked business data. Do not disable accounts used elsewhere.
    const deleted=await api('/rest/v1/rpc/work_delete_shop_permanently',{
