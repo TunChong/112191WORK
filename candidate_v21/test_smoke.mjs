@@ -58,7 +58,7 @@ assert.match(app, /data-action="delete-staff"/);
 assert.doesNotMatch(app, /window.prompt\(summary,/);
 assert.match(app, /confirm_code:p\.employee_code/);
 assert.match(app, /ack_delete_history:true/);
-assert.match(app, /expected_counts:counts/);
+assert.doesNotMatch(app, /expected_counts:counts/);
 
 assert.match(app, /Xóa \(lưu trữ\)/);
 assert.match(app, /users\(\)\{return state\.data\?\.profiles\.filter\(x=>x\.role==='staff'&&x\.active\)/);
