@@ -56,4 +56,4 @@ assert.match(edge,/allowedHost/);
 assert.match(edge,/auth\/v1\/user/);
 assert.match(edge,/must_change_password/);
 assert.match(edge,/og:image/);
-console.log('PASS: 309 stores, 6 products, auto metadata wiring, quote print, discounts, mobile navigation');
+console.log('PASS: 309 stores, 6 products, auto metadata wiring, quote PNG/PDF, channel closing, discounts, mobile navigation');
