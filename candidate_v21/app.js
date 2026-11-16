@@ -704,7 +704,8 @@ function draw(){if(state.screen==='inventory40'&&window.INV40?.isCameraRunning?.
  }
  if(window.QUOTE40&&state.screen==='quote40'){
   window.QUOTE40.configure({shopId:()=>state.shopId,shopCode:()=>state.shops.find(s=>s.id===state.shopId)?.shop_code||'',
-   user:()=>state.user,resolveProduct:resolveQuoteProduct,toast,draw});
+   user:()=>state.user,resolveProduct:resolveQuoteProduct,
+   resolveQuoteImage:(url)=>cloudRequest('/functions/v1/quote-image',{method:'POST',body:{url}}),toast,draw});
  }
  if(window.INV40&&state.screen==='inventory40'){
   window.INV40.configure({shopId:()=>state.shopId,shopCode:()=>state.shops.find(s=>s.id===state.shopId)?.shop_code||'SHOP',
