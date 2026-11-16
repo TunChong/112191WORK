@@ -1,4 +1,4 @@
-// 112191 WORK Web Push (PWA). No service secrets in public assets.
+// Companion-MWG Web Push (PWA). No service secrets in public assets.
 // Use W3C Web Push over Supabase Edge Functions; server-side VAPID keys stay
 // in the app_private schema and can only be retrieved via service_role RPCs.
 import * as webpush from 'jsr:@negrel/webpush@0.5.0';
@@ -6,13 +6,13 @@ import * as webpush from 'jsr:@negrel/webpush@0.5.0';
 const BASE=Deno.env.get('SUPABASE_URL')||'';
 const ANON=Deno.env.get('SUPABASE_ANON_KEY')||'';
 const SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
-const ORIGINS=/^https:\/\/(?:[a-z0-9-]+\.)?(?:112191work|112191work-v21-preview)\.pages\.dev$/i;
+const ORIGINS=/^https:\/\/(?:[a-z0-9-]+\.)?(?:112191work|112191work-v21-preview|supportmwg)\.pages\.dev$/i;
 type J=Record<string,any>;
 function cors(origin:string){return {
  'content-type':'application/json;charset=utf-8',
  'cache-control':'no-store',
  'vary':'Origin',
- 'access-control-allow-origin':ORIGINS.test(origin)?origin:'https://112191work.pages.dev',
+ 'access-control-allow-origin':ORIGINS.test(origin)?origin:'https://supportmwg.pages.dev',
  'access-control-allow-headers':'authorization,apikey,content-type',
  'access-control-allow-methods':'POST,OPTIONS',
 };}
