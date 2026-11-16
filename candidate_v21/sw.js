@@ -1,5 +1,5 @@
-const CACHE_NAME = '112191-work-v3.2.3-quote-inventory-lifecycle';
-const PRECACHE = ['./', './index.html', './styles.css?v=3.2.3', './app.js?v=3.2.3', './config.js', './inventory40.js?v=3.2.3', './inventory40.css?v=3.2.3', './quote40.js?v=3.2.3', './quote40.css?v=3.2.3', './quote_stores.js?v=3.2.3', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE_NAME = 'companion-mwg-v3.3.0-audio';
+const PRECACHE = ['./', './index.html', './styles.css?v=3.3.0', './app.js?v=3.3.0', './config.js', './inventory40.js?v=3.3.0', './inventory40.css?v=3.3.0', './quote40.js?v=3.3.0', './quote40.css?v=3.3.0', './quote_stores.js?v=3.3.0', './audio40.js?v=3.3.0', './audio40.css?v=3.3.0', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
@@ -24,7 +24,7 @@ self.addEventListener('fetch', event => {
 });
 
 self.addEventListener('push', event => {
- let payload={title:'112191 WORK · Công việc mới',body:'Bạn vừa được giao một công việc.'};
+ let payload={title:'Companion-MWG · Công việc mới',body:'Bạn vừa được giao một công việc.'};
  try{if(event.data)payload={...payload,...event.data.json()}}catch{}
  const high=payload.priority==='high';
  const task=typeof payload.task_id==='string'?payload.task_id:'';
@@ -38,7 +38,7 @@ self.addEventListener('push', event => {
   timestamp:Date.now()
  };
  event.waitUntil(Promise.all([
-  self.registration.showNotification(String(payload.title||'112191 WORK').slice(0,140),options),
+  self.registration.showNotification(String(payload.title||'Companion-MWG').slice(0,140),options),
   self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients=>{
    for(const client of clients)client.postMessage({type:'work-push-arrived',task_id:task});
   })
