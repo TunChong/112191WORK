@@ -32,16 +32,16 @@ assert.match(app, /normalized!=='112191'/);
 assert.match(app, /data-action="logout" aria-label="Đăng xuất khỏi Companion-MWG"/);
 
 // Phát hiện lỗi chuyển về Trang chủ khi bấm tab "Thêm" trên điện thoại.
-const guardLine=app.match(/const allowedScreens=new Set\(\[\.\.\.navEntries\(\),\.\.\.bottomItems\(\)\]\.map\(\(\[key\]\)=>key\)\);/)?.[0];
+const guardLine=app.match(/const allowedScreens=new Set\(\[\.\.\.navEntries\(\),\.\.\.bottomItems\(\),\.\.\.workMenuItems\(\)\]\.map\(\(\[key\]\)=>key\)\);/)?.[0];
 const redirectLine=app.match(/if\(!allowedScreens\.has\(state\.screen\)&&state\.screen!=='change-password'\)state\.screen='home';/)?.[0];
 assert.ok(guardLine&&redirectLine,'Mobile more navigation guard must exist');
-const screenAfterDrawGuard=new Function('state','navEntries','bottomItems',guardLine+'\n'+redirectLine+'\nreturn state.screen;');
-assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['more']]),'more','Mobile Thêm must remain selected');
-assert.equal(screenAfterDrawGuard({screen:'bogus'},()=>[['home']],()=>[['more']]),'home','Unknown screens must redirect home');
-assert.equal(screenAfterDrawGuard({screen:'account'},()=>[['account']],()=>[['home']]),'account','Account view must remain available');
-assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['account']]),'home','Users without More must not open it');
-assert.match(html, /app\.js\?v=3\.3\.3/);
-assert.match(sw, /companion-mwg-v3\.3\.3-quote-image-pdf-fix/);
+const screenAfterDrawGuard=new Function('state','navEntries','bottomItems','workMenuItems',guardLine+'\n'+redirectLine+'\nreturn state.screen;');
+assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['more']],()=>[]),'more','Mobile Thêm must remain selected');
+assert.equal(screenAfterDrawGuard({screen:'bogus'},()=>[['home']],()=>[['more']],()=>[]),'home','Unknown screens must redirect home');
+assert.equal(screenAfterDrawGuard({screen:'account'},()=>[['account']],()=>[['home']],()=>[]),'account','Account view must remain available');
+assert.equal(screenAfterDrawGuard({screen:'more'},()=>[['home']],()=>[['account']],()=>[]),'home','Users without More must not open it');
+assert.match(html, /app\.js\?v=3\.3\.5/);
+assert.match(sw, /companion-mwg-v3\.3\.5-workhub-grouped/);
 
 assert.match(app, /name="password" type="password" autocomplete="new-password"/);
 assert.match(app, /'staffResetForm'/);
@@ -95,8 +95,8 @@ assert.match(sql, /app_private\.track_staff_password_change/);
 assert.match(sql, /app_private\.guard_profile_permissions/);
 assert.doesNotMatch(app,/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 assert.doesNotMatch(read('./config.js'),/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
-assert.match(html,/styles\.css\?v=3\.3\.2/);
-assert.match(html,/app\.js\?v=3\.3\.3/);
+assert.match(html,/styles\.css\?v=3\.3\.5/);
+assert.match(html,/app\.js\?v=3\.3\.5/);
 
 console.log('PASS: task category, manager account UI, server-side auth, archive and secret checks');
 
@@ -147,7 +147,7 @@ assert.match(app, /task-priority-label high/);
 assert.match(sw, /addEventListener\('push'/);
 assert.match(sw, /self\.registration\.showNotification/);
 assert.match(sw, /work-push-click/);
-assert.match(sw, /v3\.3\.3-quote-image-pdf-fix/);
+assert.match(sw, /v3\.3\.5-workhub-grouped/);
 assert.match(push, /generateVapidKeys/);
 assert.match(push, /work_push_claim_delivery/);
 assert.match(push, /work_push_subscriptions/);
