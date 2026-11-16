@@ -103,25 +103,51 @@ Deno.serve(async(req:Request)=>{
   }
   if(action==='delete_shop'){
    if(!isAdmin)return answer(req,403,{error:'Chỉ Admin 112191 được xóa SHOP'});
-   if(targetShop.is_primary)return answer(req,403,{error:'SHOP chính đang có tài khoản và dữ liệu. Không thể xóa SHOP này'});
-   if(data.confirm_code!==targetShop.shop_code)
-      return answer(req,400,{error:'Nhập đúng mã kho để xác nhận xóa SHOP'});
-   const children=['work_shop_memberships','tasks','recurring_templates','assignments','recurring_members','notifications'];
-   let linked=false;
-   for(const table of children){
-     const found=await api('/rest/v1/'+table+'?shop_id=eq.'+shop+'&select=shop_id&limit=1');
-     if(Array.isArray(found)&&found.length){linked=true;break}
+   // One explicit click is sufficient. Server-side transaction deletes the selected
+   // SHOP plus its own linked business data. Do not disable accounts used elsewhere.
+   const deleted=await api('/rest/v1/rpc/work_delete_shop_permanently',{
+    method:'POST',body:{p_shop:shop,p_actor:actor.id}});
+   if(!deleted?.deleted)return answer(req,500,{error:'Chưa xóa được SHOP, dữ liệu vẫn được giữ nguyên'});
+   // Storage objects must be deleted through the Storage API, not SQL.
+   // The transactional database function queued their exact paths for retries.
+   let mediaCleaned=0,mediaPending=Number(deleted.media_pending||0);
+   try{
+    for(let batch=0;batch<5 && mediaPending>0;batch++){
+     const rows=await api('/rest/v1/work_shop_deleted_media?deletion_id=eq.'+deleted.deletion_id+
+      '&deleted=eq.false&select=object_path&limit=500');
+     const paths=(rows||[]).map((r:Row)=>r.object_path).filter((x:unknown)=>typeof x==='string');
+     if(!paths.length){mediaPending=0;break}
+     const response=await fetch(BASE+'/storage/v1/object/task-evidence',{
+      method:'DELETE',
+      headers:{apikey:SERVICE,authorization:'Bearer '+SERVICE,'content-type':'application/json'},
+      body:JSON.stringify({prefixes:paths})});
+     if(!response.ok)break;
+     await api('/rest/v1/rpc/work_mark_deleted_shop_media',{method:'POST',
+      body:{p_deletion:deleted.deletion_id,p_paths:paths}});
+     mediaCleaned+=paths.length;
+     mediaPending=Math.max(0,mediaPending-paths.length);
+    }
+   }catch(e){console.warn('Shop media cleanup is queued:',e instanceof Error?e.message:'storage error')}
+   return answer(req,200,{ok:true,deleted:true,media_deleted:mediaCleaned,
+      media_cleanup_pending:mediaPending,shop_code:deleted.shop_code});
+  }
+  if(action==='cleanup_deleted_media'){
+   if(!isAdmin)return answer(req,403,{error:'Chỉ Super Admin được dọn ảnh SHOP đã xóa'});
+   const queue=await api('/rest/v1/work_shop_deleted_media?deleted=eq.false&select=deletion_id,object_path&limit=500');
+   const byJob=new Map<string,string[]>();
+   for(const row of queue||[]){const arr=byJob.get(row.deletion_id)||[];arr.push(row.object_path);byJob.set(row.deletion_id,arr)}
+   let cleaned=0;
+   for(const [job,paths] of byJob){
+    const response=await fetch(BASE+'/storage/v1/object/task-evidence',{
+     method:'DELETE',headers:{apikey:SERVICE,authorization:'Bearer '+SERVICE,'content-type':'application/json'},
+     body:JSON.stringify({prefixes:paths})});
+    if(response.ok){
+     await api('/rest/v1/rpc/work_mark_deleted_shop_media',{method:'POST',
+      body:{p_deletion:job,p_paths:paths}});
+     cleaned+=paths.length;
+    }
    }
-   if(linked){
-     await api('/rest/v1/work_shops?id=eq.'+shop,{method:'PATCH',prefer:'return=minimal',
-       body:{active:false,updated_at:new Date().toISOString()}});
-     await logAction(shop,actor.id,null,'archive_shop_has_history');
-     return answer(req,200,{ok:true,archived:true,deleted:false,
-       notice:'SHOP có nhân viên hoặc lịch sử: đã lưu trữ an toàn, không xóa dữ liệu'});
-   }
-   await logAction(shop,actor.id,null,'delete_empty_shop');
-   await api('/rest/v1/work_shops?id=eq.'+shop,{method:'DELETE',prefer:'return=minimal'});
-   return answer(req,200,{ok:true,deleted:true});
+   return answer(req,200,{ok:true,cleaned});
   }
   if(action==='restore_shop'){
    if(!isAdmin)return answer(req,403,{error:'Chỉ Admin được khôi phục SHOP'});
