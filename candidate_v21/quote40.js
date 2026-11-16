@@ -360,5 +360,5 @@ document.addEventListener('click',e=>{
   clearTimeout(timers.get(i));model.products[i]=emptyProduct();persist();helper.draw();
  }
 });
-window.QUOTE40={configure,enter,onShopChange,view,data,printPreview,lookup,_test:{options,total,formatDate,exportFileName,validateExport}};
+window.QUOTE40={configure,enter,onShopChange,view,data,printPreview,lookup,_test:{options,total,formatDate,exportFileName,validateExport,renderQuoteCanvas,captureQuote,exportPDF,photoForExport}};
 })();
