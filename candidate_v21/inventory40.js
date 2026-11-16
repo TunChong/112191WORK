@@ -1,10 +1,11 @@
-/* KIỂM KÊ 4.0 — 112191 WORK. Per-shop stock upload, atomic camera/USB scans and shortage/surplus reports. */
+/* KIỂM KÊ 4.0 — Companion-MWG. Per-shop stock upload, atomic camera/USB scans and shortage/surplus reports. */
 (function(){
 'use strict';
 const S={shop:null,tab:'stock',sessions:[],sessionId:null,stock:[],counts:[],busy:false,loading:false,
  importing:false,progress:'',query:'',last:null,camera:null,cameraActive:false,lastCameraCode:'',lastCameraAt:0,
  scanBusy:false,scanQueue:Promise.resolve(),sessionBusy:false,requestSerial:0,
- cameraEpoch:0,cameraPhase:'idle',cameraStartPromise:null,cameraStopping:null,scanAccepted:false,scanResult:'',scanError:''};
+ cameraEpoch:0,cameraPhase:'idle',cameraStartPromise:null,cameraStopping:null,scanAccepted:false,scanResult:'',scanError:'',
+ cameraMounting:false,scannerReady:false,scannerError:'',cameraObserver:null,cameraStartRaw:null};
 let H=null;let xlsxLoading=null;let scannerLoading=null;
 const unknown='CHƯA CÓ TRONG DANH MỤC';
 const esc=x=>H&&H.esc?H.esc(String(x==null?'':x)):String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -135,7 +136,10 @@ async function load(){
  const serial=++S.requestSerial;
  S.loading=true;redraw();
  // Preload decoder on opening Inventory without requesting camera permissions.
- if(navigator.mediaDevices?.getUserMedia)scannerLib().catch(()=>{});
+ if(navigator.mediaDevices?.getUserMedia){
+  scannerLib().then(()=>{S.scannerReady=true;S.scannerError='';if(S.tab==='count'&&!S.cameraActive)redraw();})
+   .catch(e=>{S.scannerReady=false;S.scannerError=e?.message||'Không tải được bộ quét';if(S.tab==='count'&&!S.cameraActive)redraw();});
+ }
  try{
   const q='/rest/v1/inventory_sessions?shop_id=eq.'+encodeURIComponent(shop)+'&select=*&order=created_at.desc&limit=50';
   const sessions=await H.api(q);
@@ -240,7 +244,7 @@ function view(){
   (!canScan?'<p class="inv-hint">Chọn kỳ kiểm kê đang mở và đã có tồn kho trước khi quét.</p>':
   '<p class="inv-hint">Mỗi lượt camera chỉ nhận <b>1 mã và cộng 1 sản phẩm</b>. Khi nhận mã, camera tự tắt và hiện kết quả. Bấm QUÉT TIẾP để quét thêm.</p>'+
   '<div class="inv-camera-actions"><button class="btn" type="button" data-inv-action="'+(S.cameraActive?'stop-camera':'start-camera')+'" '+(S.cameraPhase==='processing'||S.cameraPhase==='stopping'||S.cameraPhase==='starting'?'disabled':'')+'>'+
-   (S.cameraPhase==='processing'?'Đang ghi nhận...':S.cameraPhase==='stopping'?'Đang tắt camera...':S.cameraPhase==='starting'?'Đang mở camera...':S.cameraActive?'Tắt camera':S.scanResult==='success'?'📷 QUÉT TIẾP':'📷 MỞ CAMERA QUÉT MÃ')+'</button></div>'+
+   (S.cameraPhase==='processing'?'Đang ghi nhận...':S.cameraPhase==='stopping'?'Đang tắt camera...':S.cameraPhase==='starting'?'Đang mở camera...':S.cameraActive?'Tắt camera':!window.Html5Qrcode?'⏳ CHUẨN BỊ BỘ QUÉT · BẤM ĐỂ TẢI':S.scanResult==='success'?'📷 QUÉT TIẾP':'📷 MỞ CAMERA QUÉT MÃ')+'</button></div>'+
   (S.cameraActive?'<div id="inv-reader" class="inv-reader"></div>':'')+
   '<form id="invScanForm" class="inv-form"><label>MÃ SẢN PHẨM<input id="invScanCode" name="code" type="text" maxlength="100" autocapitalize="off" autocomplete="off" required placeholder="Quét mã hoặc nhập mã..."></label>'+
   '<label>TÊN SẢN PHẨM (nếu chưa có trong tồn kho)<input name="name" type="text" maxlength="300" placeholder="Tùy chọn – mã chưa có trong file tồn"></label>'+
@@ -250,7 +254,7 @@ function view(){
    S.scanResult==='error'?'⚠️ CHƯA GHI NHẬN · '+esc(S.scanError)+' · Bấm QUÉT TIẾP để thử lại':
    S.cameraPhase==='processing'?'Đang lưu 1 sản phẩm lên hệ thống...':
    S.cameraActive?'Đưa mã QR/barcode vào khung quét. Camera sẽ tự tắt khi nhận mã.':
-   S.last?'Lượt gần nhất: '+esc(S.last.product_code)+' · Số lượng '+format(S.last.counted_qty):'Chưa có lượt quét mới trong phiên này')+
+   S.last?'Lượt gần nhất: '+esc(S.last.product_code)+' · Số lượng '+format(S.last.counted_qty):S.scannerError?'Bộ quét chưa sẵn sàng: '+esc(S.scannerError):'Chưa có lượt quét mới trong phiên này')+
    '</div></section>'+
   '<section class="panel"><h2>DANH SÁCH ĐÃ QUÉT</h2>'+(S.counts.length?countTable():'<p class="inv-hint">Chưa quét sản phẩm nào.</p>')+'</section>';
  }else{
@@ -318,54 +322,132 @@ async function acceptCameraCode(decoded,epoch){
   S.cameraPhase='idle';redraw();
  }
 }
+function withDeadline(promise,ms,label){
+ if(typeof setTimeout!=='function')return Promise.resolve(promise);
+ let timer;
+ return Promise.race([Promise.resolve(promise),
+  new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(label)),ms)})])
+  .finally(()=>clearTimeout(timer));
+}
+function setupInlineVideo(reader){
+ // iOS PWA must see playsinline/muted BEFORE html5-qrcode invokes video.play().
+ const fix=()=>{
+  const v=reader?.querySelector?.('video');
+  if(!v)return;
+  v.setAttribute?.('playsinline','');
+  v.setAttribute?.('webkit-playsinline','');
+  v.setAttribute?.('muted','');
+  v.setAttribute?.('autoplay','');
+  v.playsInline=true;v.muted=true;v.autoplay=true;
+ };
+ fix();
+ if(typeof MutationObserver==='undefined')return null;
+ const observer=new MutationObserver(fix);
+ observer.observe(reader,{childList:true,subtree:true});
+ return observer;
+}
+function releaseVideoTracks(){
+ const container=document.getElementById('inv-reader');
+ for(const video of container?.querySelectorAll?.('video')||[]){
+  const stream=video.srcObject;
+  for(const t of stream?.getTracks?.()||[])try{t.stop()}catch(_){}
+  try{video.pause()}catch(_){}
+  try{video.srcObject=null}catch(_){}
+ }
+}
+function setLiveUi(){
+ const btn=document.querySelector?.('[data-inv-action="stop-camera"]');
+ if(btn){btn.disabled=false;btn.textContent='Tắt camera'}
+ const status=document.getElementById('inv-last');
+ if(status)status.textContent='Đã mở camera · Đưa mã QR hoặc barcode vào khung. Camera tự tắt sau 1 mã.';
+}
 async function startCamera(){
  if(!current()||current().state!=='open')throw new Error('Chưa có kỳ kiểm kê đang mở');
  if(S.cameraPhase!=='idle'||S.cameraActive)return;
- if(!navigator.mediaDevices?.getUserMedia)throw new Error('Trình duyệt không hỗ trợ camera. Hãy dùng HTTPS hoặc nhập mã thủ công.');
+ if(!navigator.mediaDevices?.getUserMedia)throw new Error('Camera không khả dụng. Mở ứng dụng bằng Safari/Chrome qua HTTPS và cấp quyền Camera.');
+ // Do not await a third-party script from a camera-button gesture on iOS.
+ // If the library is loading, let the next explicit button tap open the camera.
+ if(!window.Html5Qrcode){
+  S.scannerReady=false;
+  S.scannerError='';
+  scannerLib().then(()=>{
+   S.scannerReady=true;S.scannerError='';
+   notify('Bộ quét đã sẵn sàng. Anh bấm MỞ CAMERA QUÉT MÃ.');
+   if(!S.cameraActive)redraw();
+  }).catch(e=>{
+   S.scannerError=e?.message||'Không tải được bộ quét mã';
+   notify('Không tải được bộ quét: '+S.scannerError);
+   if(!S.cameraActive)redraw();
+  });
+  notify('Đang tải bộ quét. Anh bấm MỞ CAMERA một lần nữa khi sẵn sàng.');
+  return;
+ }
+ S.scannerReady=true;S.scannerError='';
  S.cameraPhase='starting';
  const epoch=++S.cameraEpoch;
- S.scanAccepted=false;
- S.scanResult='';S.scanError='';
+ S.scanAccepted=false;S.scanResult='';S.scanError='';
  try{
-  await scannerLib();
-  if(epoch!==S.cameraEpoch)return;
-  S.cameraActive=true;
-  redraw(); // Mount reader before Html5Qrcode.start; do not redraw while video is live.
+  // Initial mount is the only redraw allowed while scanner is active.
+  S.cameraActive=true;S.cameraMounting=true;
+  try{redraw()}finally{S.cameraMounting=false}
+  const reader=document.getElementById('inv-reader');
+  if(!reader)throw new Error('Không tạo được vùng xem camera');
+  S.cameraObserver=setupInlineVideo(reader);
   const camera=new window.Html5Qrcode('inv-reader',fastScannerOptions());
   S.camera=camera;
-  S.cameraStartPromise=camera.start({facingMode:'environment'},
-   {fps:20,disableFlip:true,qrbox:fastScanRegion},
+  // Call camera.start synchronously in the user's click handler — NO await before it.
+  const raw=camera.start({facingMode:'environment'},
+   {fps:30,disableFlip:true,qrbox:fastScanRegion},
    decoded=>{if(epoch!==S.cameraEpoch)return;acceptCameraCode(decoded,epoch).catch(e=>{S.scanError=e?.message||'Lỗi khi quét';S.scanResult='error';S.cameraPhase='idle';redraw();});},
    ()=>{});
+  S.cameraStartRaw=Promise.resolve(raw);
+  S.cameraStartRaw.then(()=>{
+   if(epoch!==S.cameraEpoch)Promise.resolve(camera.stop?.()).catch(()=>{});
+  }).catch(()=>{});
+  S.cameraStartPromise=withDeadline(S.cameraStartRaw,9000,'Camera không phản hồi sau 9 giây');
   await S.cameraStartPromise;
-  if(epoch===S.cameraEpoch&&S.cameraPhase==='starting')S.cameraPhase='scanning';
+  if(epoch!==S.cameraEpoch)return;
+  const video=reader.querySelector?.('video');
+  if(video && video.readyState<2){
+   const started=Date.now();
+   while(video.readyState<2 && Date.now()-started<2200){
+    await new Promise(r=>setTimeout(r,90));
+    if(epoch!==S.cameraEpoch)return;
+   }
+   if(video.readyState<2)throw new Error('Camera chưa phát hình. Hãy thử bằng Safari thay vì mở từ màn hình chính.');
+  }
+  if(S.cameraPhase==='starting'){
+   S.cameraPhase='scanning';
+   setLiveUi(); // Never redraw and remove a playing <video>.
+  }
  }catch(e){
   if(epoch===S.cameraEpoch){
    await stopCamera();
-   S.cameraPhase='idle';S.scanResult='error';S.scanError='Không mở được camera: '+(e?.message||e);
+   S.cameraPhase='idle';S.scanResult='error';
+   S.scanError='Không mở được camera: '+(e?.message||e)+'. Kiểm tra quyền Camera trong Cài đặt trình duyệt.';
    redraw();
+   notify(S.scanError);
   }
-  throw new Error('Không mở được camera: '+(e?.message||e)+'. Kiểm tra quyền Camera.');
  }
 }
 async function stopCamera(options={}){
- // Invalidate callbacks immediately for manual stop. For a recognized code keep
- // its generation token so the single accepted scan can finish saving.
  if(!options.keepProcessing)S.cameraEpoch++;
  S.scanAccepted=true;
  if(S.cameraStopping)return S.cameraStopping;
  const camera=S.camera;
- S.cameraActive=false;
+ S.cameraActive=false;S.cameraMounting=false;
  if(!options.keepProcessing)S.cameraPhase='stopping';
+ S.cameraObserver?.disconnect?.();S.cameraObserver=null;
  S.cameraStopping=(async()=>{
   const boot=S.cameraStartPromise;
-  if(boot){try{await boot}catch(_){}}
+  if(boot)try{await withDeadline(boot,1200,'Dừng chờ camera')}catch(_){}
   if(camera){
-   try{await camera.stop()}catch(_){}
-   try{await camera.clear()}catch(_){}
+   try{await withDeadline(camera.stop(),1800,'Hết thời gian dừng camera')}catch(_){}
+   try{await withDeadline(camera.clear(),800,'Không thể xóa camera')}catch(_){}
   }
+  releaseVideoTracks();
   if(S.camera===camera)S.camera=null;
-  S.cameraStartPromise=null;
+  S.cameraStartPromise=null;S.cameraStartRaw=null;
  })();
  try{await S.cameraStopping;}finally{
   S.cameraStopping=null;
@@ -459,5 +541,5 @@ document.addEventListener('input',function(ev){
   if(fresh){fresh.focus();fresh.setSelectionRange(n,n);}
  }
 });
-window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera,isCameraRunning:()=>S.cameraActive && !!S.cameraStartPromise,_test:{startCamera,acceptCameraCode,countCode,performAction,state:S}};
+window.INV40={configure,view,load,onShopChange,leave,compute,parseFile,stopCamera,isCameraRunning:()=>S.cameraActive && !S.cameraMounting,_test:{startCamera,acceptCameraCode,countCode,performAction,state:S}};
 })();
