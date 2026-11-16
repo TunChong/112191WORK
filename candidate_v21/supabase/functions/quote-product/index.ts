@@ -158,8 +158,16 @@ function heroImageScore(raw:string,target:URL,source:string):number{
  const productImage=/\/products\/images\//i.test(low);
  const timer=/\/timerseo\//i.test(low);
  if(!clean&&!productImage)return -1000;
+ // Do not accept editorial gallery frames as hero shots unless the product SKU
+ // or actual model is represented by their file path.
+ if(productImage&&!clean){
+   const code=target.searchParams.get('code')||'';
+   const slug=target.pathname.split('/').filter(Boolean).at(-1)||'';
+   const models=slug.toLowerCase().split('-').filter(x=>x.length>=4&&/\d/.test(x));
+   if(!(code&&low.includes(code))&&!models.some(x=>low.includes(x)))return -1000;
+ }
  if(timer&&!clean)return -1000; // SEO feature banners are not isolated product photographs.
- let score=clean?180:0;
+ let score=clean?250:0;
  if(productImage)score+=95;
  if(timer)score+=10;
  if(source==='schema-product')score+=55;
@@ -231,7 +239,7 @@ async function readerFallback(target:URL):Promise<ProductResult>{
  if(!/text|json|markdown/i.test(type))throw new Error('Fallback reader content type unsupported');
  const text=await response.text();
  if(text.length>600000)throw new Error('Fallback reader too large');
- const item=parseReaderMarkdown(text);
+ const item=parseReaderMarkdown(text,target);
  if(!item.title||!item.image)throw new Error('Fallback reader thiếu tên hoặc hình');
  item.url=target.href;
  return item;
