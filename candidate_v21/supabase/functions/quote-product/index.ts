@@ -1,4 +1,4 @@
-// 112191 WORK / BÁO GIÁ: read public product metadata from approved TGDD domains.
+// Companion-MWG / BÁO GIÁ: read public product metadata from approved TGDD domains.
 // Server-side only (browser fetch to retail sites would be blocked by CORS).
 const BASE=Deno.env.get('SUPABASE_URL')||'';
 const ANON=Deno.env.get('SUPABASE_ANON_KEY')||'';
@@ -7,7 +7,7 @@ const APPROVED=['dienmayxanh.com','thegioididong.com'];
 const allowedHost=(h:string)=>APPROVED.some(d=>h===d||h.endsWith('.'+d));
 const cors=(origin:string)=>({
  'content-type':'application/json; charset=utf-8','cache-control':'no-store','vary':'Origin',
- 'access-control-allow-origin':/^https:\/\/([a-z0-9-]+\.)?112191work\.pages\.dev$/i.test(origin)?origin:'https://112191work.pages.dev',
+ 'access-control-allow-origin':/^https:\/\/([a-z0-9-]+\.)?(?:112191work|supportmwg)\.pages\.dev$/i.test(origin)?origin:'https://supportmwg.pages.dev',
  'access-control-allow-headers':'authorization,apikey,content-type',
  'access-control-allow-methods':'POST,OPTIONS'
 });
@@ -85,7 +85,7 @@ async function readPage(url:URL){
  for(let i=0;i<4;i++){
   const response=await fetch(current,{method:'GET',redirect:'manual',signal:AbortSignal.timeout(5000),
    headers:{'accept':'text/html,application/xhtml+xml','accept-language':'vi-VN,vi;q=0.9,en;q=0.6',
-    'user-agent':'Mozilla/5.0 (compatible; 112191WORK-QuotationBot/1.0)'}});
+    'user-agent':'Mozilla/5.0 (compatible; CompanionMWG-QuotationBot/1.0)'}});
   if([301,302,303,307,308].includes(response.status)){
    const next=response.headers.get('location');
    if(!next)throw new Error('Sản phẩm chuyển hướng không hợp lệ');
