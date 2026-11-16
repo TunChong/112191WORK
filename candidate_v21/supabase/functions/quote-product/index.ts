@@ -62,7 +62,7 @@ function readMeta(html:string,target:URL){
     if(!obj||typeof obj!=='object')continue;
     const type=Array.isArray(obj['@type'])?obj['@type'].join(' '):String(obj['@type']||'');
     if(!/\bProduct\b/i.test(type))continue;
-    if(!title&&typeof obj.name==='string')title=obj.name;
+    if(typeof obj.name==='string'&&obj.name.trim())title=obj.name.trim();
     add(obj.image,'schema-product');
    }
   }catch{ /* ignore malformed JSON-LD */ }
@@ -158,6 +158,7 @@ function heroImageScore(raw:string,target:URL,source:string):number{
  const productImage=/\/products\/images\//i.test(low);
  const timer=/\/timerseo\//i.test(low);
  if(!clean&&!productImage)return -1000;
+ if(timer&&!clean)return -1000; // SEO feature banners are not isolated product photographs.
  let score=clean?180:0;
  if(productImage)score+=95;
  if(timer)score+=10;
