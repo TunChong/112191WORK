@@ -50,4 +50,23 @@ assert.match(html,/audio40\.css\?v=3\.3\.2/);
 assert.match(css,/\.aud-script/);
 assert.doesNotMatch(html,/112191 WORK/);
 assert.doesNotMatch(app,/112191 WORK/);
+
+const fakeOrders=[
+ {id:'pending',shop_label:'SHOP A',created_at:'2026-11-16T12:00:00Z',
+ contact_platform:'ZALO',contact_value:'test1',price_vnd:49000,request_script:'Nội dung A',status:'new',payment_verified:false},
+ {id:'done',shop_label:'SHOP B',created_at:'2026-11-16T12:00:00Z',
+ contact_platform:'LINE',contact_value:'test2',price_vnd:49000,request_script:'Nội dung B',status:'delivered',payment_verified:true},
+ {id:'cancel',shop_label:'SHOP C',created_at:'2026-11-16T12:00:00Z',
+ contact_platform:'ZALO',contact_value:'test3',price_vnd:49000,request_script:'Nội dung C',status:'cancelled',payment_verified:true}
+];
+let fetchedUrl='';
+m.configure({shopId:()=> 'test-shop',shopName:()=> 'ĐMX 102 LÊ VĂN KHƯƠNG',
+ userId:()=> 'test-user',admin:()=>true,
+ api:async url=>{fetchedUrl=url;return fakeOrders;},
+ toast:()=>{},current:()=> 'audio40',draw:()=>{}});
+await m.load();
+const adminHtml=m.view();
+assert.match(fetchedUrl,/status=in\.\(new,processing\)/,'query only pending audio orders');
+assert.match(adminHtml,/SHOP A/);
+assert.doesNotMatch(adminHtml,/SHOP B|SHOP C/,'completed and cancelled orders hidden from admin panel');
 console.log('PASS: Companion-MWG branding, Audio demo player, live editable script, 49K VietQR, max 3m and admin notifications');
