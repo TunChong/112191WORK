@@ -55,7 +55,7 @@ assert.match(app, /\['shops','Quản lý SHOP','users'\]/);
 
 assert.match(app, /data-action="account-filter"/);
 assert.match(app, /data-action="delete-staff"/);
-assert.match(app, /window.prompt\(summary,/);
+assert.doesNotMatch(app, /window.prompt\(summary,/);
 assert.match(app, /action:'preview_delete'/);
 assert.match(app, /ack_delete_history:true/);
 assert.match(app, /expected_counts:counts/);
