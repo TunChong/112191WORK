@@ -1,11 +1,11 @@
-// 112191 WORK: privileged staff account API. Deploy only to the matching Supabase project.
+// Companion-MWG: privileged staff account API. Deploy only to the matching Supabase project.
 // Requires SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY.
 // Verification of the caller's JWT and manager role is mandatory on every request.
 const BASE=Deno.env.get('SUPABASE_URL')||'';
 const ANON=Deno.env.get('SUPABASE_ANON_KEY')||'';
 const SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
 type Obj=Record<string,unknown>;
-function headers(origin:string){return {'content-type':'application/json','cache-control':'no-store','vary':'Origin','access-control-allow-origin':/^https:\/\/(?:[a-z0-9-]+\.)?(?:112191work|112191work-v21-preview)\.pages\.dev$/i.test(origin)?origin:'https://112191work.pages.dev','access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'authorization,apikey,content-type'};}
+function headers(origin:string){return {'content-type':'application/json','cache-control':'no-store','vary':'Origin','access-control-allow-origin':/^https:\/\/(?:[a-z0-9-]+\.)?(?:112191work|112191work-v21-preview|supportmwg)\.pages\.dev$/i.test(origin)?origin:'https://supportmwg.pages.dev','access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'authorization,apikey,content-type'};}
 function reply(req:Request,status:number,data:Obj){return new Response(JSON.stringify(data),{status,headers:headers(req.headers.get('origin')||'')});}
 async function request(path:string,o:{method?:string;body?:unknown;userToken?:string;prefer?:string}={}):Promise<any>{
  const jwt=o.userToken||SERVICE;
@@ -62,7 +62,7 @@ Deno.serve(async (req:Request)=>{
   if(action==='create'){
    const code=String(data.employee_code||'').trim(),name=String(data.full_name||'').trim().replace(/\s+/g,' '),role=String(data.role||'staff');
    if(!/^\d{4,8}$/.test(code)||name.length<2||name.length>120||!validRole(role))return reply(req,400,{error:'Mã, họ tên hoặc vị trí không hợp lệ'});
-   if(role==='manager'&&!actorAdmin)return reply(req,403,{error:'Chỉ Admin 112191 được tạo tài khoản Quản lý'});
+   if(role==='manager'&&!actorAdmin)return reply(req,403,{error:'Chỉ Super Admin được tạo tài khoản Quản lý'});
    if(code==='112191')return reply(req,403,{error:'Không thể tạo trùng tài khoản Admin'});
    const dup=await request('/rest/v1/profiles?select=id&employee_code=eq.'+encodeURIComponent(code)+'&limit=1');
    if(dup.length)return reply(req,409,{error:'Mã nhân viên đã tồn tại'});
@@ -94,7 +94,7 @@ Deno.serve(async (req:Request)=>{
    if(p.role==='manager'&&!actorAdmin)return reply(req,403,{error:'Chỉ Admin được chỉnh sửa tài khoản Quản lý'});
    const code=String(p.employee_code||'');
    if(action==='set_role'){
-    if(!actorAdmin)return reply(req,403,{error:'Chỉ Admin 112191 được thay đổi vị trí'});
+    if(!actorAdmin)return reply(req,403,{error:'Chỉ Super Admin được thay đổi vị trí'});
     const role=String(data.role||'');
     if(!validRole(role))return reply(req,400,{error:'Vị trí không hợp lệ'});
     if(role===p.role)return reply(req,200,{ok:true});
@@ -103,7 +103,7 @@ Deno.serve(async (req:Request)=>{
     return reply(req,200,{ok:true,role});
    }
    if(action==='preview_delete'||action==='delete'){
-    if(!actorAdmin)return reply(req,403,{error:'Chỉ Admin 112191 được xóa tài khoản vĩnh viễn'});
+    if(!actorAdmin)return reply(req,403,{error:'Chỉ Super Admin được xóa tài khoản vĩnh viễn'});
     if(action==='delete'&&data.confirm_code!==code)return reply(req,400,{error:'Mã xác nhận chưa chính xác'});
     if(p.active){
      if(action==='preview_delete')return reply(req,200,{ok:true,active:true,employee_code:code,counts:{}});
