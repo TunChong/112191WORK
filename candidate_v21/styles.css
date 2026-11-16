@@ -38,3 +38,7 @@
 .login-head,.login-form,.login-form .form-field{min-width:0;max-width:100%}
 .login-form input,.login-form button{max-width:100%;min-width:0}
 @media(max-width:340px){.login-role-tabs{gap:4px}.login-role-tabs .tab{font-size:10px;padding:7px 1px}.login-head h1{font-size:21px}}
+
+/* Supplied Companion-MWG app icon, consistent on login, desktop and iPhone. */
+.brand .logo.app-icon,.login-logo.app-icon,.splash .mark.app-icon{padding:0;background:transparent;overflow:hidden}
+.brand .logo.app-icon img,.login-logo.app-icon img,.splash .mark.app-icon img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
