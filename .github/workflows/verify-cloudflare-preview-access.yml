@@ -1,0 +1,47 @@
+name: Verify Cloudflare Preview access (read only)
+
+on:
+  push:
+    branches:
+      - staging/companion-mwg-v3.6.0-safety
+    paths:
+      - releases/companion-mwg-v3.6.0-preview/access-check.trigger
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify the existing Cloudflare Pages project using a read-only API call
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 2f9ff78348392c12b34451eb3ca3cf38
+        run: |
+          set -euo pipefail
+          if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
+            echo "CLOUDFLARE_API_TOKEN is not configured in repository secrets."
+            exit 1
+          fi
+          status="$(curl --connect-timeout 10 --max-time 30 --silent --show-error \
+            --output /tmp/pages-project.json \
+            --write-out '%{http_code}' \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/112191work")"
+          if [[ "$status" != "200" ]]; then
+            echo "Cloudflare read-only project lookup returned HTTP $status."
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          with open("/tmp/pages-project.json", encoding="utf-8") as f:
+              data = json.load(f)
+          project = data.get("result") or {}
+          if not data.get("success") or project.get("name") != "112191work":
+              raise SystemExit("Cloudflare did not confirm the expected Pages project.")
+          print("Cloudflare API access is valid for the existing Pages project 112191work.")
+          print("This verification performed a GET only; it did not create a deployment.")
+          PY
