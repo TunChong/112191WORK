@@ -7,8 +7,8 @@
  function money(value){return new Intl.NumberFormat('vi-VN').format(Math.round(Number(value)||0))+'đ'}
  function xml(s){return esc(String(s)).replace(/\r/g,' ')}
  function palette(kind){return {
-  tgd:['#ffdf08','#131925','#e43336'],dmx:['#115de3','#ffffff','#f72e35'],sale:['#c91926','#ffffff','#fff200'],
-  finance:['#04577d','#ffffff','#f8b122'],service:['#106b52','#ffffff','#ffcb55'],sticker:['#f5a900','#131925','#cf202d'],
+  tgd:['#ffdf08','#111827','#d71920'],dmx:['#08a6d6','#ffffff','#e62935'],sale:['#f2a900','#111827','#cf202d'],
+  finance:['#07577c','#ffffff','#f3a712'],service:['#08765b','#ffffff','#ffc247'],sticker:['#f0a800','#111827','#d71920'],
   warehouse:['#0e3765','#ffffff','#0b111b'],cash:['#135ec8','#ffffff','#15a34a'],insurance:['#145bb2','#ffffff','#d72a37']
  }[kind]||['#1456dc','#fff','#ef3340']}
  function unit(v){return Number.isFinite(v)?Math.max(0,v):0}
@@ -38,22 +38,44 @@
   return {w,h,paper:fields.paper||'A4',margin,gap,count,labelW,labelH,cols,rows,perPage,pages,kind,fields};
  }
  function markSVG(x,y,w,h,kind,f){
-  const [primary,ink,highlight]=palette(kind),pad=Math.min(7,w*0.06), title=nice(f.heading||f.title||'SẢN PHẨM'),label=nice(f.label||'GIÁ ƯU ĐÃI');
-  const price=Number(f.salePrice)||0,base=Number(f.oldPrice)||0;
-  const ratio=Math.min(1,w/155,h/95),s=(n)=>Math.max(2,n*ratio);
-  let g=rect(x,y,w,h,'white',primary,Math.min(3,w*.03));
-  g+=rect(x,y,w,Math.min(h*.22,20),primary,'none',2);
-  g+=text(x+w/2,y+Math.min(h*.16,14),s(8),label,{fill:ink,bold:true,anchor:'middle'});
-  const tx=x+pad,ty=y+Math.min(h*.39,31);
-  g+=lineParts(title, Math.round(w/(s(3.2)))).slice(0,2).map((v,i)=>text(tx,ty+i*s(6.8),s(6.2),v,{fill:'#11243d',bold:true})).join('');
-  if(base>price&&price>0)g+=`<line x1="${tx}" y1="${y+h*.66}" x2="${tx+Math.min(w*.6,52)}" y2="${y+h*.66}" stroke="#b02b2b" stroke-width=".55"/>`+text(tx,y+h*.66,s(5.8),money(base),{fill:'#6e7891'});
-  const short=kind==='sticker'&&h<45;
-  g+=text(x+w/2,y+h*(short?.69:.84),s(Math.min(15,w*.115)),money(price||base),{fill:highlight,bold:true,anchor:'middle'});
-  if(f.subtitle)g+=text(x+w/2,y+h*.94,s(4.3),nice(f.subtitle).slice(0,55),{fill:'#345',anchor:'middle'});
-  if(f.image&&/^data:image\/(?:png|jpeg|webp);base64,/i.test(f.image)){
-   let ix=x+w*.71,iy=y+h*.25,iw=w*.24,ih=h*.31;
-   g+=`<image href="${f.image}" x="${ix}" y="${iy}" width="${iw}" height="${ih}" preserveAspectRatio="xMidYMid meet"/>`;
+  const [primary,ink,highlight]=palette(kind),pad=Math.min(6,w*.065),title=nice(f.heading||f.title||'TÊN SẢN PHẨM'),label=nice(f.label||'GIÁ ƯU ĐÃI');
+  const price=Number(f.salePrice)||0,base=Number(f.oldPrice)||0,scale=Math.min(1.45,w/74,h/105),s=n=>Math.max(2.2,n*scale);
+  const brand=kind==='tgd'?'THẾ GIỚI DI ĐỘNG':kind==='dmx'?'ĐIỆN MÁY XANH':kind==='finance'?'TRẢ CHẬM 0%':kind==='service'?'DỊCH VỤ':kind==='sticker'?'STICKER ƯU ĐÃI':'ƯU ĐÃI SIÊU THỊ';
+  const landscape=w>h,headH=Math.min(h*.24,Math.max(11,s(17))),innerW=w-pad*2;
+  let g=rect(x,y,w,h,'#fff',primary,Math.min(3,w*.035));
+  g+=rect(x,y,w,headH,primary,'none',Math.min(3,w*.035));
+  g+=rect(x,y+headH-1,w,Math.max(1,s(1.3)),highlight,'none',0);
+  g+=text(x+pad,y+headH*.34,s(2.6),brand,{fill:ink,bold:true,maxWidth:innerW*.76});
+  g+=text(x+w/2,y+headH*.76,s(5.2),label,{fill:ink,bold:true,anchor:'middle',maxWidth:innerW*.9});
+  const titleY=y+headH+s(8),titleLines=lineParts(title,Math.max(12,Math.round(innerW/s(3.2)))).slice(0,2);
+  g+=titleLines.map((line,i)=>text(x+pad,titleY+i*s(5.7),s(4.5),line,{fill:'#162b46',bold:true,maxWidth:innerW})).join('');
+  const imgOk=f.image&&/^data:image\/(?:png|jpeg|webp);base64,/i.test(f.image);
+  const midY=y+h*(landscape?.43:.40),midH=h*(landscape?.2:.22);
+  if(imgOk){
+   const ix=x+pad,iy=midY,iw=innerW,ih=midH;
+   g+=rect(ix,iy,iw,ih,'#f6f8fb','#e2e8f0',1.5);
+   g+=`<image href="${f.image}" x="${ix+1}" y="${iy+1}" width="${iw-2}" height="${ih-2}" preserveAspectRatio="xMidYMid meet"/>`;
   }
+  const oldY=y+h*(landscape?.72:.69),priceBoxY=y+h*(landscape?.75:.73),priceBoxH=h*(landscape?.16:.17);
+  if(base>0){
+   const oldLabel=price>0&&price<base?'GIÁ CŨ':'GIÁ NIÊM YẾT';
+   g+=text(x+pad,oldY,s(2.8),oldLabel,{fill:'#727d8f',bold:true});
+   const oldText=money(base),oldW=Math.min(innerW*.82,Math.max(s(22),oldText.length*s(2.8)));
+   g+=text(x+pad+innerW*.42,oldY,s(3.6),oldText,{fill:'#667085',anchor:'middle',maxWidth:oldW});
+   if(price>0&&price<base)g+=`<line x1="${x+pad+innerW*.11}" y1="${oldY-s(1.2)}" x2="${x+pad+innerW*.77}" y2="${oldY-s(1.2)}" stroke="#d13c42" stroke-width=".65"/>`;
+  }
+  g+=rect(x+pad,priceBoxY,innerW,priceBoxH,'#fff7e8','none',Math.min(2,w*.025));
+  if(price>0){
+   const priceText=money(price),priceSize=Math.min(9.2,innerW/(priceText.length*.62));
+   g+=text(x+w/2,priceBoxY+priceBoxH*.68,s(priceSize),priceText,{fill:highlight,bold:true,anchor:'middle',maxWidth:innerW*.92});
+   if(base>price){const pct=Math.round((base-price)*100/base);g+=rect(x+w-pad-s(16),y+headH+s(2),s(16),s(8),'#d71920','none',2)+text(x+w-pad-s(8),y+headH+s(7.6),s(2.8),`-${pct}%`,{fill:'#fff',bold:true,anchor:'middle'});}
+  }else{
+   g+=text(x+w/2,priceBoxY+priceBoxH*.6,s(3.2),'NHẬP GIÁ BÁN',{fill:'#98a2b3',bold:true,anchor:'middle'});
+  }
+  const footY=y+h-s(3.4),sku=nice(f.sku),subtitle=nice(f.subtitle);
+  if(subtitle)g+=text(x+pad,y+h*.94,s(2.8),subtitle.slice(0,55),{fill:'#43536b',maxWidth:innerW});
+  if(sku)g+=text(x+pad,footY,s(2.35),`MÃ ${sku}`,{fill:'#738096',maxWidth:innerW*.66});
+  if(f.validDate)g+=text(x+w-pad,footY,s(2.35),`ĐẾN ${nice(f.validDate)}`,{fill:'#738096',anchor:'end',maxWidth:innerW*.52});
   return g;
  }
  function vectorPage(doc,pageIndex=0){const f=doc.fields, w=doc.w,h=doc.h;
