@@ -60,7 +60,7 @@ Chỉ chỉnh 3 file của Print Studio trong thư mục UI11 Preview:
 ## 6. Bảo toàn hệ thống và quyết định triển khai
 
 - Không thay đổi Supabase, dữ liệu, Authentication, RLS, quyền, SHOP, Nhiệm vụ, Thông báo, Kiểm kê, Audio, Báo giá hay Production.
-- Có bản phục hồi trước khi sửa cho đúng 3 file Print Studio trong restore_before_video_sync_20261118/ cùng SHA-256.
+- Có bản phục hồi trước khi sửa cho đủ 5 file đã chạm tới (3 file Print Studio và 2 file cache/load) trong restore_before_video_sync_20261118/, có SHA-256 đối chiếu.
 - Workspace hiện là mã đã giải nén từ gói UI11 Preview, không phải working tree Git sạch; nhánh/staging đang biết trong lịch sử là phiên bản cũ hơn. Do đó không ghi đè nhánh hoặc triển khai gói này như Production.
 - **Trạng thái triển khai: CHƯA SẴN SÀNG.** Còn thiếu POPUP theo ngành hàng, Bảng tên, kiểm thử trình duyệt thật, kiểm thử in thực tế và hồi quy. Production vẫn giữ nguyên.
 
@@ -72,22 +72,39 @@ Chỉ chỉnh 3 file của Print Studio trong thư mục UI11 Preview:
 4. Bảng đối chiếu có **9 tiêu chí**; cả 9 còn ít nhất một điểm khác hoặc chưa xác minh. Số sai khác pixel riêng lẻ chưa thể đếm chính xác từ video nén và thiếu bản in chuẩn.
 5. Đã cập nhật 5 nhóm/23 loại Sticker trong bản UI11 Preview cục bộ, tách dữ liệu mẫu, chỉnh gạch giá và sửa phần trang trí sticker bị tràn viền.
 6. POPUP theo danh mục, Bảng tên và độ giống chính xác từng mẫu Sticker còn thiếu/chưa xác minh.
-7. Đã thay đổi 3 file trong thư mục Preview: print_studio.js, print_engine.js, style.css. Không thay đổi working tree Git hoặc Production.
+7. Đã thay đổi 5 file trong thư mục Preview: 3 file Print Studio (`print_studio.js`, `print_engine.js`, `style.css`) và 2 file làm mới cache (`index.html`, `sw.js`). Không thay đổi Production.
 8. Đã kiểm tra cú pháp JS, sinh SVG 23 mẫu, A4 6/2/1, dữ liệu độc lập, PNG/PDF qua Inkscape. Chưa test Chrome, PNG của app, PDF Chrome, máy in vật lý hoặc hồi quy toàn app.
-9. Dữ liệu và hệ thống cũ được giữ nguyên vì không sửa Supabase, phân quyền hay các tool khác; có bản khôi phục của 3 file đã chỉnh.
+9. Dữ liệu và hệ thống cũ được giữ nguyên vì không sửa Supabase, phân quyền hay các tool khác; có bản khôi phục của cả 5 file đã chỉnh.
 10. **Chưa sẵn sàng triển khai.** Chưa thay đổi Production.
 
 ## 8. Cập nhật kiểm tra source và candidate — 18/11/2026
 
 - Đã xác định chính xác gói nguồn UI11 đang có trong workspace: `Companion-MWG-v3.6.0-UI11-KIEM-KE-BAO-CAO-MO-RONG.zip`, gồm 169 file.
-- Đã dựng lại candidate từ đúng gói UI11. So từng đường dẫn và byte với gói gốc: cùng đủ 169 file, không xóa file; chỉ 3 file thuộc Print Studio khác nội dung: `modules/mwgx/print_engine.js`, `modules/mwgx/print_studio.js`, `modules/mwgx/style.css`.
+- Đã dựng lại candidate từ đúng gói UI11. So từng đường dẫn và byte với gói gốc: cùng đủ 169 file, không xóa file; đúng 5 file khác nội dung: `index.html`, `sw.js` và 3 file `modules/mwgx/` (`print_engine.js`, `print_studio.js`, `style.css`). Hai file đầu chỉ đổi query/cache version cho đúng bundle Print Studio mới.
 - Tất cả JavaScript trong candidate qua `node --check`. ZIP candidate có 169 đường dẫn duy nhất, CRC hợp lệ và nội dung từng file trùng thư mục source đã kiểm tra.
 - Harness JavaScript kiểm tra 23/23 loại Sticker sinh SVG; 3 cách xếp A4 có lần lượt 6/2/1 mẫu; các trường dữ liệu của từng sticker và từng loại sticker được giữ riêng. Kết quả này xác nhận logic dữ liệu/vector, chưa xác nhận pixel-perfect hay in ngoài đời.
 - Đối chiếu GitHub: `main` chỉ có các snapshot khôi phục cũ; nhánh staging đang có release UI3 chứ không có đủ source UI11. `print_engine.js` UI3 là 7.996 byte, còn UI11 là 351.654 byte; bản sao lưu UI3 cũng không trùng mã UI11. Vì vậy không chép patch UI11 vào nhánh UI3.
-- Candidate UI11 đã đóng gói riêng để xem xét; chưa đẩy lên GitHub, chưa triển khai Cloudflare và chưa thay đổi Production, Supabase, Authentication hay RLS.
+- Candidate UI11 SHA-256: `1efa4389060dbbf006492688b8d86684c17e7add8f2a396ced7f73a3731fa10f`. Gói có đủ 169 file, không thêm/xóa đường dẫn; từng byte trong ZIP khớp source đã kiểm tra.
+- Có PR nháp #1 trên nhánh review để ghi nhận bản vá và báo cáo. PR chưa được merge; chưa triển khai Cloudflare và chưa thay đổi Production, Supabase, Authentication hay RLS.
 
 ### Còn cần kiểm chứng trước khi gọi là hoàn tất
 
 - Xem trước trong Chrome của đúng môi trường Companion, tải PNG của ứng dụng, hộp thoại PDF/in và in thử trên máy thật chưa kiểm tra được trong môi trường hiện tại.
 - Font dùng trong Chrome và độ giống từng chi tiết với website tham chiếu chưa được chứng minh 100%; ảnh video nén không thay cho file mẫu gốc hoặc bản in chuẩn.
 - Repository hiện chưa có source UI11 đầy đủ trên nhánh staging. Candidate hiện là gói riêng để xem, không phải bản đã tích hợp vào nhánh build của Cloudflare.
+
+## 9. Cập nhật chỉnh sticker theo khung in gốc — 18/11/2026
+
+- Rà lại khung 00:19 cho mẫu phần trăm 6 tem/tờ, 01:03 cho mẫu gạch giá lớn và khung phóng lớn của sticker gốc. Mẫu phần trăm trong video là bát giác gần vuông, viền kép đen trắng, mảng đỉnh đen có sao trắng, chữ “GIẢM SỐC”, tên sản phẩm, phần trăm lớn, thanh thời gian và ngày áp dụng.
+- Sửa `markHexSticker()` để dựng cấu trúc này bằng SVG vector; giá trị chữ trên từng tem tiếp tục lấy từ `items[index]`. Tem 6/tờ xấp xỉ 78 × 78 mm và tem 1/tờ xấp xỉ 180 × 180 mm theo tỷ lệ xem trước A4 trong video. Đây là ước lượng hình học trên màn hình, chưa xác nhận bằng bản in đo thước.
+- Mẫu gạch giá lớn thứ ba chuyển sang khung bát giác: giá cũ gạch ngang qua tâm chữ, giá mới lớn, thanh thời gian và ngày áp dụng. Các thẻ thư viện giá chữ nhật/dạng vé vẫn giữ renderer riêng.
+- Sau chỉnh sửa: `node --check` toàn bộ JavaScript trong source UI11 đạt; kiểm tra 23 loại Sticker ở ba cỡ A4 6/2/1 đều sinh SVG hợp lệ, không có `NaN`; kiểm tra sáu nội dung tem riêng biệt không bị gộp; mẫu gạch giá lớn sinh vector bát giác.
+- Đã kết xuất ảnh A4 6 tem bằng Inkscape để đối chiếu hình học. Đây là kết xuất ngoài ứng dụng, không thay cho kiểm thử Chrome hoặc xác nhận in từ Companion.
+- **Kiểm thử trình duyệt vẫn bị chặn:** Chromium kết thúc trước khi khởi chạy trang vì môi trường báo `socket() failed: Operation not permitted` và `ptrace: Operation not permitted`. Chưa xác minh nút PNG/PDF trong ứng dụng, hộp thoại in Chrome hay máy in vật lý. Candidate vẫn chưa sẵn sàng triển khai.
+
+## 10. Cập nhật cache và gói review
+
+- Đã đổi query string của riêng `modules/mwgx/style.css`, `print_engine.js`, `print_studio.js` sang `3.6.0-preview-ui12`; service worker dùng cache `companion-mwg-v3.6.0-preview-ui12` và precache đúng ba bundle này. Các bundle không liên quan giữ nguyên.
+- Bản restore gồm cả `index.html` và `sw.js` trước khi đổi cache, ngoài ba file Print Studio gốc.
+- Gói candidate đã kiểm tra lại CRC, 169 đường dẫn và byte-for-byte với thư mục source. Cú pháp JS toàn bộ source đạt; kiểm tra sinh SVG cho 23 mẫu × 3 cỡ A4 đạt.
+- PR nháp chỉ để review mã; chưa merge/deploy. Kiểm thử trực tiếp trong Chrome và in máy thật còn là cổng bắt buộc trước triển khai.
