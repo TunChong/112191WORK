@@ -9,3 +9,5 @@
 This is review-only. GitHub PR #1 is a draft and is not merged. The staging source is UI3, while this package is UI11; it also points to the current production Supabase configuration. Do not deploy this candidate. Chrome, app PNG/PDF, and physical-printer checks remain pending.
 
 The review package now includes `evidence/verify_print_modes_static.cjs` for repeatable SVG geometry, page-count, and independent-entry checks. These checks do not clear the pending Chrome/browser and real-printer verification gates.
+
+The video report was extended after decoding all 7,431 video frames: 87 significant visual-change markers are listed in `report/MIENTAY2_VIDEO_EVENT_INDEX.csv`. These markers are not a mouse/keyboard action log. The corrected report records the observed A4 layouts and the unresolved Chrome margin setting; it does not claim pixel-perfect or physical-print validation.
