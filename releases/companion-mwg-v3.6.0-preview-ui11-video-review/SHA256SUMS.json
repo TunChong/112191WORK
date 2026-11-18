@@ -1,0 +1,11 @@
+{
+  "README.md": "94d0dc2028e532703c5a8322ecc8e3de27ca4581132aee5acabb3ee218525efc",
+  "evidence/sticker_cheap_a4_vector_review.png": "e5ec2b68358b2d66286d102b2dd53ca4ab56940d4a47d56863b542057daabec2",
+  "modules/mwgx/print_engine.js": "b15e28ab06be1cc89633acd6f95d915dda75f3040108afceb8ea8a8c657d6a38",
+  "modules/mwgx/print_studio.js": "9ff52ae77b15a7ed6dc978447310c0dc435bcc2ec4158c521575edb76c2ebb70",
+  "modules/mwgx/style.css": "ff31e85b2145801fb4fe3211d7a3f858eab64d565869f6616bcdf3e4a8324d09",
+  "report/BAO_CAO_DOI_CHIEU_MIENTAY2_COMPANION_MWG_V36.md": "8d575aaf488bac9d2c171dc033dd0932632762b42b5b8c6568099502af1e832b",
+  "rollback/modules/mwgx/print_engine.js": "b292bed541b9f87bc445f569f54b5d8b670eeb5beb42da9cf62700aa050e92a3",
+  "rollback/modules/mwgx/print_studio.js": "74dd2c4b31e06219c44faa993b3568a81022195aaab37f54383dec0e0d7d87e3",
+  "rollback/modules/mwgx/style.css": "d3412ae05be1f63340ce3fdf73e8bac82d857940d8eb28b2dcc4e38e75fd4bcc"
+}
