@@ -2,12 +2,12 @@
 
 **Ngày phân tích:** 18/11/2026  
 **Video:** MIỀN TÂY 2 - Google Chrome 2026-11-18 15-49-42.mp4  
-**Thời lượng:** khoảng 4 phút 18 giây; khung hình 1920 × 1020, 60 fps.  
+**Thời lượng:** 257,634 giây (xấp xỉ 4 phút 18 giây); video 1920 × 1020. `ffprobe` báo tốc độ khung danh nghĩa 60 fps, nhưng luồng giải mã có 7.431 khung hình trong 257,634 giây, tương đương trung bình khoảng 28,84 khung/giây.  
 **Phạm vi mã đã tiếp cận:** bản UI11 Preview được giải nén tại companion_mwgx_source/, không phải working tree Git đang đồng bộ với Production.
 
 ## 1. Cách rà soát video
 
-Đã xem toàn bộ thời lượng bằng storyboard 258 ảnh lấy mỗi giây, rà contact sheet và mở riêng các khung hình thao tác in, nhóm Sticker, POPUP và Bảng tên. Đây là phân tích theo mốc 1 giây, không phải xem thủ công đủ cả 15.000+ khung nguồn ở 60 fps. Các thao tác rất nhanh nằm giữa hai mốc có thể cần xác nhận thêm.
+Đã giải mã đủ 7.431 khung hình. Sau storyboard 1 ảnh/giây, em quét khác biệt hình ảnh trên toàn bộ khung đã giải mã ở bản thu nhỏ 640 × 340; ngưỡng thay đổi là 6% điểm ảnh và gom được 87 trạng thái hình ảnh đáng kể. Em đã rà 8 contact sheet chứa đủ 87 trạng thái, rồi trích 28 khung đại diện ở độ phân giải gốc để xác nhận số tem/tờ và biểu mẫu. Đây là quét chuyển trạng thái hình ảnh, không phải nhật ký đầy đủ từng cú nhấp, phím bấm hoặc từng ký tự nhập; thao tác nhanh/không làm đổi nhiều điểm ảnh có thể không được phát hiện.
 
 ## 2. Công cụ và thao tác quan sát được
 
@@ -15,15 +15,16 @@ Trang chủ cho thấy **5 nhóm**: Sticker, Pop-up, Bán hàng, Công việc v�
 
 | Mốc video (xấp xỉ) | Chức năng / thao tác quan sát | Điều video chứng minh |
 |---|---|---|
-| 00:00–00:04 | Trang chủ | Có 5 thẻ công cụ nêu trên. |
-| 00:05–00:42 | Sticker → **ĐIỀN THÔNG TIN** | 5 mẫu: phần trăm giảm, 2 mẫu gạch giá theo mốc 1 triệu, phiếu mua hàng, “GIÁ RẺ QUÁ / VERY GOOD!”. Mỗi thẻ có ô ghi chú và chọn cỡ nhỏ 6, vừa 2, lớn 1. Mở hộp thoại in Chrome; hướng dẫn chọn A4/A5, lề Không, bật đồ họa nền. |
-| 00:43–01:33 | Sticker → **GIÁ CHÉO** | 5 thẻ: 3 mẫu gạch giá và 2 mẫu giá giảm. Có bản chữ nhật và bản viền dạng vé; sau khi chọn mẫu, xem kết quả in trên trang. |
-| 01:34–02:03 | Sticker → **TRẢ CHẬM** | 3 mẫu. Trang in hiển thị nhiều huy hiệu trên một tờ; ảnh quan sát cho thấy 6 cột trong phần đang xem, nhưng không đủ căn cứ xác định chính xác tổng số hàng/mẫu của cả trang. |
-| 02:04–02:24 | Sticker → **BẢO HIỂM** và **KHÁC** | Nhìn thấy các thẻ bảo hiểm rơi vỡ, bảo hành mở rộng, tặng bảo hành 1/2 năm, 1 đổi 1; nhóm Khác có mẫu sản phẩm đặc biệt/đặc quyền và trợ giá. Số lượng bảo hiểm nhìn thấy là 7 thẻ; nhóm Khác thấy 3 thẻ. |
-| 02:25–03:50 | **POPUP** | Có 6 danh mục: ICT, Máy Lạnh, TV & Tủ Lạnh, Lọc Nước, Máy Giặt, Gia Dụng; mỗi danh mục có nhóm Giảm giá, Trả chậm, Dịch vụ. Video duyệt nhiều mẫu theo ngành hàng; có mẫu dịch vụ máy lọc nước và nội dung “SÁNG MUA CHIỀU UP → TRẢ CHẬM 0%…”. Mẫu dịch vụ hiển thị chỉ dẫn cỡ giấy A4 / POPUP A5. Không đủ video để kiểm kê mọi biến thể và trường dữ liệu. |
-| 03:51–04:17 | **Công việc → BẢNG TÊN** | Có các tab Bảng tên và Biên bản & Khác. Hộp thoại in cho xem một trang A4 với 6 thẻ tên (2 cột × 3 hàng), mỗi thẻ có vùng logo, TÊN và BỘ PHẬN. Có thao tác in Chrome. Các mẫu khác trong tab chưa được thao tác đủ để xác nhận. |
+| Mốc video (xấp xỉ) | Công cụ / thao tác | Điều khung hình chứng minh |
+|---|---|---|
+| 00:00–00:05 | Trang chủ | Có 5 thẻ: Sticker, Pop-up, Bán hàng, Công việc, Trang trí. Hai thẻ Bán hàng và Trang trí chỉ xuất hiện ở trang chủ; chưa thấy mở. |
+| 00:05.7–01:33 | Sticker → **ĐIỀN THÔNG TIN**, **GIÁ CHÉO** | “Điền thông tin” có 5 mẫu (phần trăm giảm, hai mẫu gạch giá, phiếu mua hàng, “GIÁ RẺ QUÁ / VERY GOOD!”); thẻ có ô ghi chú và ba lựa chọn cỡ nhỏ 6, vừa 2, lớn 1. “Giá chéo” có 5 thẻ (3 gạch giá, 2 giá giảm), gồm mẫu chữ nhật và mẫu viền dạng vé. Chọn thẻ mở trang in/xem trước. |
+| 01:34–02:02 | Sticker → **TRẢ CHẬM** | Có 3 mẫu. Các hộp thoại Print cho thấy A4: Mẫu 1 xếp 6 × 5 = 30 tem/tờ (01:42.8); Mẫu 2 xếp 4 × 6 = 24 tem/tờ (01:52.5); Mẫu 2 – CE xếp 3 × 5 = 15 tem/tờ (02:00.1). Đây là số tem nhìn thấy trên đúng các trang in mẫu trong video, không khẳng định mọi loại giấy/cấu hình đều như vậy. |
+| 02:03–02:22 | Sticker → **BẢO HIỂM**, **KHÁC** | Thư viện thấy 7 mẫu bảo hiểm (rơi vỡ, bảo hành mở rộng, tặng bảo hành 1/2 năm, 1 đổi 1 và biến thể) và 3 thẻ nhóm Khác. Trang A4 của mẫu bảo hiểm đang xem thể hiện 4 × 3 = 12 tem/tờ (02:05.4); mẫu “TRỢ GIÁ 0 TRIỆU” thể hiện 2 × 3 = 6 tem/tờ (02:22.9). |
+| 02:26.5–03:44.8 | **POPUP** | Thư viện có bộ chọn tiêu đề, tìm/lọc, 6 danh mục ICT / Máy Lạnh / TV & Tủ Lạnh / Lọc Nước / Máy Giặt / Gia Dụng và 3 nhóm Giảm giá / Trả chậm / Dịch vụ. Mẫu giảm giá “GIÁ RẺ QUÁ!!” được xem trên A4 với 2 × 2 = 4 mẫu/tờ (02:31.7). Mẫu trả chậm có trang A4 3 × 2 = 6 mẫu/tờ (03:07.5); form cho thấy “TRẢ CHẬM 0%”, “TRẢ TRƯỚC CHỈ”, giá làm hồ sơ/tháng/ngày/chênh lệch. Nhóm dịch vụ có mẫu Máy lọc nước và TV & Tủ lạnh; trang in có bảng hạng mục và giá, cùng nội dung “SÁNG MUA CHIỀU UP / TRẢ CHẬM 0% – TRẢ TRƯỚC 0Đ” (03:37.7). Không đủ khung để xác nhận công thức/điều kiện nghiệp vụ hoặc mọi biến thể. |
+| 03:51.2–04:16.7 | **Công việc** → **BẢNG TÊN**, **BIÊN BẢN & KHÁC** | Bảng tên có thẻ **MẪU CŨ (LỚN)** và **MẪU MỚI (NHỎ)**. Print xem trước A4 có 6 thẻ (2 × 3), từng thẻ có logo và vùng TÊN/BỘ PHẬN (03:56.2–04:04.9). “Biên bản & Khác” hiện một mẫu biên bản và hai mẫu Sticker máy; video mở trang in Sticker máy Mẫu 1 nhưng không đủ cảnh để xác minh nhập liệu/lưu và cách dùng các mẫu này. |
 
-**Quy trình in đã thấy:** dùng Chrome/Cốc Cốc và nút in của trang để mở Print; chọn giấy A4/A5 theo mẫu, lề Không, bật đồ họa nền. Video không chứng minh đã in ra máy in vật lý hay kiểm tra sai số bằng thước.
+**Luồng in quan sát được:** nút **In Ngay** mở hộp thoại Chrome; nhiều ảnh xác nhận giấy A4, 1 trang trên mỗi tờ, bố cục dọc. Bảng **HƯỚNG DẪN IN** ghi chọn A4/A5 tùy mẫu, lề Không, bật đồ họa nền. Tuy vậy, các hộp thoại Print chụp được ở một số mẫu đang hiển thị lề **Default**; video không chứng minh người dùng đã đổi thành “Không” trước khi in. Không có bằng chứng trang giấy đã được in thật hoặc đo sai số bằng thước.
 
 ## 3. Đối chiếu với bản Companion MWG hiện có trong workspace
 
@@ -31,7 +32,7 @@ Trang chủ cho thấy **5 nhóm**: Sticker, Pop-up, Bán hàng, Công việc v�
 |---|---|---|---|---|
 | Giao diện | Thư viện thẻ theo nhóm Sticker; POPUP có danh mục hàng và nhóm Giảm giá/Trả chậm/Dịch vụ; Công việc có trang Bảng tên | Print Studio có các tab POPUP A4, POPUP A5, Giờ vàng, POPUP A7, Sticker, Phiếu bán hàng, Lịch sử | **KHÁC BIỆT**: thiếu cách điều hướng thư viện POPUP theo ngành hàng và Công việc/Bảng tên | Thiết kế, kiểm tra và tích hợp riêng các màn hình còn thiếu vào nhánh an toàn |
 | Chức năng | 5 nhóm Sticker; 6 danh mục POPUP × 3 nhóm con; Bảng tên; trang chủ còn Bán hàng/Trang trí chưa thao tác | Có POPUP theo khổ giấy, Giờ vàng, A7, Sticker, phiếu bán hàng và lịch sử | **CÒN THIẾU**: POPUP danh mục, mẫu dịch vụ/trả chậm thực tế, Bảng tên; Bán hàng/Trang trí **CHƯA XÁC MINH** | Chỉ bổ sung hành vi có thể đối chiếu bằng đủ biểu mẫu/video và mã nguồn |
-| Kích thước | Sticker Điền thông tin có cỡ 6/2/1; popup có chỉ dẫn A4/POPUP A5; Bảng tên xem trước A4; hộp thoại in có A4/A5 và lề Không | Có bố cục sticker 6/2/1, A4/A5/A7 và các mẫu riêng | **KHÁC BIỆT / CHƯA XÁC MINH**: cỡ A4/A5/A7 trong app không đồng nghĩa với kích thước các mẫu trên video; mật độ trang Trả chậm cần xác minh | Đối chiếu từng mẫu bằng ảnh in đủ trang và kích thước chuẩn, không suy ra từ ảnh màn hình |
+| Kích thước | Sticker Điền thông tin có cỡ 6/2/1; popup có hướng dẫn A4/A5; Bảng tên xem trước A4; hộp thoại Print đã thấy khổ A4 và lề Default ở một mẫu | Có bố cục sticker 6/2/1, A4/A5/A7 và các mẫu riêng | **KHÁC BIỆT / CHƯA XÁC MINH**: cỡ A4/A5/A7 trong app không đồng nghĩa với kích thước các mẫu trên video; mật độ trang Trả chậm cần xác minh | Đối chiếu từng mẫu bằng ảnh in đủ trang và kích thước chuẩn, không suy ra từ ảnh màn hình |
 | Font chữ | Chữ tiêu đề và số dùng nét đậm/hẹp; ảnh mẫu xem trước bị giới hạn bởi độ phân giải màn hình | Engine nhúng Open Sans ExtraBold và Open Sans Condensed Bold | **CHƯA XÁC MINH**: chưa xác định font gốc từ website và chưa xem render trong Chrome sau sửa | So ảnh xuất từ Chrome ở cùng kích thước; không khẳng định đã giống font 100% |
 | Màu sắc | Nhiều mẫu sticker đen trắng; thẻ thư viện xanh/đen; hướng dẫn in nằm bên phải trang in | Sticker mới đang dùng vector đen/trắng; giao diện studio theo phong cách Companion | **KHÁC BIỆT**: không cùng bố cục thư viện/trang in; không phải mọi màu/mẫu đã được kiểm chứng | Bám từng mẫu; không tự thay bố cục |
 | Hình ảnh | Có logo “GIÁ RẺ QUÁ / VERY GOOD!”, huy hiệu và nhiều hình viền | Logo GIÁ RẺ QUÁ đang được nhúng dưới dạng ảnh raster; khung/đường nét còn lại vẽ vector | **CHƯA XÁC MINH** chất lượng khi xuất bằng trình duyệt và khi in; logo không phải vector | Kiểm tra xuất Chrome 450 DPI và kích thước thực trước khi xác nhận đạt |
@@ -112,9 +113,9 @@ Phần dựng mẫu sửa 3 file Print Studio; thêm 2 thay đổi cache có ph�
 
 ## 11. Rà lại cảnh POPUP và Công việc bằng khung hình gốc
 
-> Ghi chú cập nhật sau khi mở riêng các khung hình 02:26–03:50 và 03:53–04:17 ở độ phân giải gốc của video. Các nội dung dưới đây là những gì nhìn thấy được; số lượng đầy đủ của toàn bộ thư viện không được suy ra từ phần cuộn đang hiện trên màn hình.
+> Ghi chú sau khi trích các khung đại diện 02:26.5–03:44.8 và 03:51.2–04:16.7 ở độ phân giải gốc. Các nội dung dưới đây là những gì nhìn thấy được; số lượng đầy đủ của thư viện không được suy ra từ phần cuộn hiện trên màn hình.
 
-### POPUP — 02:25–03:50
+### POPUP — 02:26.5–03:44.8
 
 - Trang thư viện có bộ chọn **TIÊU ĐỀ POPUP**, ô **Nhập từ khóa**, nút lọc, 6 chip ngành hàng **ICT / Máy Lạnh / TV & Tủ Lạnh / Lọc Nước / Máy Giặt / Gia Dụng** và 3 nhóm **GIẢM GIÁ / TRẢ CHẬM / DỊCH VỤ**.
 - Mỗi mẫu là một thẻ gồm hình minh họa sản phẩm, tên kiểu mẫu và một dòng thuộc tính chỉ rõ **GIẤY**, **POPUP** và kiểu nội dung (ví dụ GIÁ GIẢM, GẠCH GIÁ, ƯU ĐÃI, PHẦN TRĂM, TRẢ CHẬM 0%). Các ví dụ đọc được gồm “BÀN TRẢI NGHIỆM”, “LED - GIẢM GIÁ SỐC”, “PHỤ KIỆN”, “MÁY LẠNH”, “MÁY LỌC NƯỚC”.
@@ -123,7 +124,7 @@ Phần dựng mẫu sửa 3 file Print Studio; thêm 2 thay đổi cache có ph�
 - Các cảnh “POPUP TRẢ CHẬM” có mẫu ICT và TV & Tủ Lạnh; ảnh in thể hiện một tờ có nhiều ô lặp theo lưới, tiêu đề “TRẢ CHẬM 0%”, vùng “TRẢ TRƯỚC CHỈ”, số tiền và phần tính phí. Không đo được kích thước từng ô từ video nén.
 - Mẫu dịch vụ Máy lọc nước và Máy lạnh được hiện riêng; một số thẻ mang nhãn MLN/A4. Các nội dung “SÁNG MUA CHIỀU UP” và “TRẢ CHẬM 0%” có mặt trên biểu mẫu, nhưng không đủ cơ sở để khẳng định toàn bộ công thức tính/điều kiện nghiệp vụ.
 
-### Công việc — Bảng tên và Biên bản & Khác
+### Công việc — Bảng tên và Biên bản & Khác (03:51.2–04:16.7)
 
 - Trang **BẢNG TÊN NHÂN VIÊN** có hai mẫu thẻ tên: **MẪU CŨ (LỚN)** và **MẪU MỚI (NHỎ)**. Các thẻ cho thấy vùng logo, tên và bộ phận.
 - Hộp thoại Chrome ở khoảng 03:55–03:58 cho thấy **1 trang giấy**, bản xem in có **6 thẻ tên trên A4, 2 cột × 3 hàng**. Có thao tác mở hộp thoại in; không có bằng chứng về bản giấy đã in.
@@ -141,3 +142,13 @@ Phần dựng mẫu sửa 3 file Print Studio; thêm 2 thay đổi cache có ph�
 - Script sinh vector và kiểm tra tỷ lệ/đếm mẫu của POPUP A4 (2 mẫu/tờ), POPUP A5 ngang (1 mẫu/tờ), Giờ vàng A4 (1/tờ), POPUP A7 (4/tờ), phiếu bán hàng A4 (2 × 5, 10/tờ), Sticker A4 (6/2/1), cùng 69 trường hợp sticker (23 loại × 3 cỡ).
 - Kiểm tra nội dung độc lập tại POPUP A4 (2 ô), POPUP A7 (ô 1 và ô 4), Phiếu bán hàng (ô 1 và ô 10), và ô 1/6 của **cả 23 loại Sticker** đều giữ giá trị riêng sau khi đổi qua lại các mẫu. **Đạt kiểm tra tĩnh**; kết quả này không thay thế trình duyệt hoặc in thực.
 - Môi trường vẫn chặn Chromium nên trạng thái tổng thể **CHƯA SẴN SÀNG TRIỂN KHAI** không thay đổi.
+
+
+## 12. Mở rộng rà soát toàn bộ khung hình — 18/11/2026
+
+- Đã đối chiếu lại thông số video bằng `ffprobe`: thời lượng luồng hình 257,634 giây, kích thước 1920 × 1020, 7.431 khung hình; tốc độ luồng danh nghĩa được báo là 60 fps nhưng trung bình tính từ số khung/thời lượng là khoảng 28,84 fps. Con số 60 fps trong bản báo cáo trước không mô tả đúng tốc độ khung thực tế đã giải mã.
+- `video_analysis/review_full_frame_changes.py` giải mã toàn bộ khung hình, thu nhỏ để dò thay đổi điểm ảnh với ngưỡng 6%, rồi gom thành 87 mốc thay đổi hình ảnh. 87 mốc được xếp vào 8 contact sheet và rà bằng mắt; 28 khung gốc đại diện được trích để đọc số lượng bố cục in. Đây không phải bằng chứng đã ghi nhận từng lần rê chuột, từng phím bấm hoặc toàn bộ nội dung từng ô nhập.
+- Kiểm tra khung gốc bổ sung xác nhận số tem A4 của ba mẫu **Sticker Trả chậm** là 30 / 24 / 15 (lần lượt 6 × 5, 4 × 6, 3 × 5); mẫu Bảo hiểm đang xem là 12 (4 × 3), mẫu Khác “Trợ giá 0 triệu” là 6 (2 × 3). Những số này cập nhật lại chỗ trước đây báo chỉ thấy 6 cột nhưng chưa đủ căn cứ đếm hàng.
+- Cảnh POPUP xác nhận ví dụ in A4: “GIÁ RẺ QUÁ!!” 4 mẫu/tờ (2 × 2); mẫu trả chậm 6 mẫu/tờ (3 × 2); mẫu dịch vụ dùng bảng dịch vụ lớn. Cảnh in Bảng tên xác nhận 6 thẻ/tờ (2 × 3). Chỉ các cấu hình có mặt rõ trong khung hình mới được ghi số lượng.
+- Có một điểm cần giữ trạng thái **CHƯA XÁC MINH**: panel hướng dẫn bảo đặt lề “Không”, nhưng ảnh hộp thoại Print mở rộng ở mẫu Sticker hiển thị lựa chọn lề “Default”. Video chỉ xác nhận hộp thoại mở rộng ở mẫu Sticker đang hiển thị “Default”; không thấy rõ thao tác đổi lựa chọn này trước khi bấm In, nên không thể xác nhận lề đã dùng cho bản in cuối.
+- Gói review có `report/MIENTAY2_VIDEO_EVENT_INDEX.csv`, liệt kê 87 mốc hình ảnh, khoảng khung và tỷ lệ thay đổi. `events.json`, ảnh mốc và contact sheet độ phân giải cao được giữ trong workspace phân tích; chúng không phải nhật ký con trỏ/phím bấm.
