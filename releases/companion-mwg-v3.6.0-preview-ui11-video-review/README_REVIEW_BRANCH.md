@@ -7,3 +7,5 @@
 - Candidate contents: 169 files; exactly 5 files differ from base: `index.html`, `sw.js`, and the three `modules/mwgx/` Print Studio files. No paths were added or removed.
 
 This is review-only. GitHub PR #1 is a draft and is not merged. The staging source is UI3, while this package is UI11; it also points to the current production Supabase configuration. Do not deploy this candidate. Chrome, app PNG/PDF, and physical-printer checks remain pending.
+
+The review package now includes `evidence/verify_print_modes_static.cjs` for repeatable SVG geometry, page-count, and independent-entry checks. These checks do not clear the pending Chrome/browser and real-printer verification gates.
