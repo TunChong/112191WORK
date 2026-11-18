@@ -52,6 +52,13 @@ function checkMode(tab, expected) {
   return { doc, svg };
 }
 
+function setEntry(tab, index, field, value) {
+  studio.input({
+    dataset: { entryTab: tab, entryIndex: String(index), entryField: field },
+    value
+  });
+}
+
 const modeResults = [];
 for (const [tab, expected] of [
   ['popup-a4', { paper: 'A4', w: 210, h: 297, count: 2, perPage: 2 }],
@@ -85,18 +92,19 @@ for (const type of studio._test.stickerTypes) {
 }
 assert.equal(stickerCases, 69, '23 sticker types × 3 sizes');
 
-function setEntry(tab, index, field, value) {
-  studio.input({
-    dataset: { entryTab: tab, entryIndex: String(index), entryField: field },
-    value
-  });
-}
-
 studio.action('tab:popup-a4');
 setEntry('popup-a4', 0, 'title', 'POPUP A4 - A');
 setEntry('popup-a4', 1, 'title', 'POPUP A4 - B');
 let popupItems = studio._test.documentData().fields.items;
-assert.deepEqual([popupItems[0].title, popupItems[1].title], ['POPUP A4 - A', 'POPUP A4 - B']);
+assert.equal(popupItems[0].title, 'POPUP A4 - A');
+assert.equal(popupItems[1].title, 'POPUP A4 - B');
+
+studio.action('tab:popup-a7');
+setEntry('popup-a7', 0, 'title', 'POPUP A7 - A');
+setEntry('popup-a7', 3, 'title', 'POPUP A7 - D');
+const a7Items = studio._test.documentData().fields.items;
+assert.equal(a7Items[0].title, 'POPUP A7 - A');
+assert.equal(a7Items[3].title, 'POPUP A7 - D');
 
 studio.action('tab:sales-slip');
 setEntry('sales-slip', 0, 'contractOwner', 'PHIẾU A');
@@ -106,16 +114,21 @@ assert.equal(slipItems[0].contractOwner, 'PHIẾU A');
 assert.equal(slipItems[9].contractOwner, 'PHIẾU J');
 
 studio.action('tab:sticker');
-studio.action('sticker-size:percent:6');
-setEntry('sticker', 0, 'title', 'TEM A');
-setEntry('sticker', 5, 'title', 'TEM F');
-const stickerItems = studio._test.documentData().fields.items;
-assert.equal(stickerItems[0].title, 'TEM A');
-assert.equal(stickerItems[5].title, 'TEM F');
+for (const type of studio._test.stickerTypes) {
+  studio.action(`sticker-size:${type.id}:6`);
+  setEntry('sticker', 0, 'title', `${type.id}-TEM-A`);
+  setEntry('sticker', 5, 'title', `${type.id}-TEM-F`);
+}
+for (const type of studio._test.stickerTypes) {
+  studio.action(`sticker-size:${type.id}:6`);
+  const stickerItems = studio._test.documentData().fields.items;
+  assert.equal(stickerItems[0].title, `${type.id}-TEM-A`, `${type.id} row 1 isolation`);
+  assert.equal(stickerItems[5].title, `${type.id}-TEM-F`, `${type.id} row 6 isolation`);
+}
 
 console.log([
   'PASS: static Print Studio and vector checks',
   ...modeResults,
   `Sticker SVG matrix: ${stickerCases}/69`,
-  'Independent entry checks: POPUP A4, sticker positions 1 and 6, phiếu positions 1 and 10'
+  'Independent entry checks: POPUP A4, POPUP A7, all 23 sticker types, phiếu positions 1 and 10'
 ].join('\n'));
