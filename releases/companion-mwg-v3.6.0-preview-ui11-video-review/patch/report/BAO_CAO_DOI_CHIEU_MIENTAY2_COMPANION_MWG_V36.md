@@ -139,5 +139,5 @@ Phần dựng mẫu sửa 3 file Print Studio; thêm 2 thay đổi cache có ph�
 
 - Có script tái chạy kiểm tra tĩnh tại `evidence/verify_print_modes_static.cjs`. Chạy bằng `node evidence/verify_print_modes_static.cjs` từ thư mục `review_patch`.
 - Script sinh vector và kiểm tra tỷ lệ/đếm mẫu của POPUP A4 (2 mẫu/tờ), POPUP A5 ngang (1 mẫu/tờ), Giờ vàng A4 (1/tờ), POPUP A7 (4/tờ), phiếu bán hàng A4 (2 × 5, 10/tờ), Sticker A4 (6/2/1), cùng 69 trường hợp sticker (23 loại × 3 cỡ).
-- Kiểm tra nội dung độc lập tại POPUP A4 (2 ô), Sticker (ô 1 và ô 6) và Phiếu bán hàng (ô 1 và ô 10) đều giữ giá trị riêng trong dữ liệu SVG. **Đạt kiểm tra tĩnh**; kết quả này không thay thế trình duyệt hoặc in thực.
+- Kiểm tra nội dung độc lập tại POPUP A4 (2 ô), POPUP A7 (ô 1 và ô 4), Phiếu bán hàng (ô 1 và ô 10), và ô 1/6 của **cả 23 loại Sticker** đều giữ giá trị riêng sau khi đổi qua lại các mẫu. **Đạt kiểm tra tĩnh**; kết quả này không thay thế trình duyệt hoặc in thực.
 - Môi trường vẫn chặn Chromium nên trạng thái tổng thể **CHƯA SẴN SÀNG TRIỂN KHAI** không thay đổi.
