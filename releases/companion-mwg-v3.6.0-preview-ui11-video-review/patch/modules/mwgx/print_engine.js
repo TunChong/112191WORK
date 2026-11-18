@@ -353,14 +353,15 @@
   const useLogo=nice(f.bannerTitle||'GIÁ RẺ QUÁ').toLocaleUpperCase('vi-VN')==='GIÁ RẺ QUÁ';
   let g='<g stroke-linejoin="round">';
   // The supplied reference uses a thin outer contour, a heavy black band, then a clean white field.
-  g+=`<polygon points="${cheapOctagonPoints(cx,cy,hw,hh,0)}" fill="#fff" stroke="#050505" stroke-width="${Math.max(.8,1.0*scale)}"/>`;
-  g+=`<polygon points="${cheapOctagonPoints(cx,cy,hw,hh,1.9*scale)}" fill="#050505" stroke="none"/>`;
-  g+=`<polygon points="${cheapOctagonPoints(cx,cy,hw,hh,4.6*scale)}" fill="#fff" stroke="none"/>`;
+  const fieldInset=2.2,bandInset=1.2;
+  g+=`<polygon points="${cheapOctagonPoints(cx,cy,hw,hh,0)}" fill="#fff" stroke="#050505" stroke-width=".6"/>`;
+  g+=`<polygon points="${cheapOctagonPoints(cx,cy,hw,hh,bandInset)}" fill="#050505" stroke="none"/>`;
+  g+=`<polygon points="${cheapOctagonPoints(cx,cy,hw,hh,fieldInset)}" fill="#fff" stroke="none"/>`;
   const bannerTop=top+hh*.055,bannerBottom=top+hh*.245,notch=hh*.045;
   // Keep the decorative crest inside the white inset. Without this clip, its
   // broad shoulders spill over the sticker's double outline at print size.
   const capClip=`sticker-cap-${Math.round(cx*100)}-${Math.round(cy*100)}`;
-  g+=`<defs><clipPath id="${capClip}"><polygon points="${cheapOctagonPoints(cx,cy,hw,hh,4.6*scale)}"/></clipPath></defs>`;
+  g+=`<defs><clipPath id="${capClip}"><polygon points="${cheapOctagonPoints(cx,cy,hw,hh,fieldInset)}"/></clipPath></defs>`;
   g+=`<path d="M ${cx-hw*.12} ${bannerTop} L ${cx+hw*.12} ${bannerTop} L ${cx+hw*.34} ${bannerTop+hh*.055} L ${cx+hw*.29} ${bannerBottom-notch} L ${cx+hw*.065} ${bannerBottom} L ${cx} ${bannerBottom+notch} L ${cx-hw*.065} ${bannerBottom} L ${cx-hw*.29} ${bannerBottom-notch} L ${cx-hw*.34} ${bannerTop+hh*.055} Z" fill="#050505" stroke="none" clip-path="url(#${capClip})"/>`;
   g+=`<polygon points="${starPoints(cx,top+hh*.125,hh*.044)}" fill="#050505" stroke="#fff" stroke-width="${Math.max(.55,.7*scale)}"/>`;
   const logoW=hw*.64,logoH=logoW/2.597,logoY=top+hh*.255;
@@ -368,8 +369,8 @@
   else g+=studioText(cx,logoY+logoH*.63,nice(f.bannerTitle||'GIÁ RẺ QUÁ').toLocaleUpperCase('vi-VN'),{size:15*scale,maxWidth:logoW,fill:'#fff',stroke:'#050505',strokeWidth:2.1*scale});
   g+=studioText(cx,top+hh*.59,product,{size:6.4*scale,maxWidth:hw*.62,family:'condensed'});
   const lineY=top+hh*.66;
-  g+=`<polygon points="${cx-hw*.38},${lineY} ${cx-hw*.23},${lineY-hh*.014} ${cx-hw*.23},${lineY+hh*.014}" fill="#050505" stroke="none"/>`;
-  g+=`<polygon points="${cx+hw*.38},${lineY} ${cx+hw*.23},${lineY-hh*.014} ${cx+hw*.23},${lineY+hh*.014}" fill="#050505" stroke="none"/>`;
+  g+=`<polygon points="${cx-hw*.38},${lineY} ${cx-hw*.27},${lineY-hh*.014} ${cx-hw*.27},${lineY+hh*.014}" fill="#050505" stroke="none"/>`;
+  g+=`<polygon points="${cx+hw*.38},${lineY} ${cx+hw*.27},${lineY-hh*.014} ${cx+hw*.27},${lineY+hh*.014}" fill="#050505" stroke="none"/>`;
   g+=studioText(cx,lineY+hh*.025,'GIẢM CÒN',{size:11.4*scale,maxWidth:hw*.48});
   g+=studioText(cx,top+hh*.82,price,{size:12*scale,maxWidth:hw*.68,family:'condensed'});
   g+='</g>';return g;
@@ -385,16 +386,16 @@
   const note=nice(f.subtitle||f.stickerNote||'THỜI GIAN ÁP DỤNG').toLocaleUpperCase('vi-VN');
   const old=priceDigits(f.oldPrice),sale=priceDigits(f.salePrice),discount=nice(f.discountPercent||'00').replace(/[^0-9]/g,'').slice(0,3)||'00';
   if(type==='cheap')return markCheapHexSticker(x,y,w,h,f);
-  const outer=cheapOctagonPoints(cx,cy,hw,hh,0),innerInset=1.4*scale;
-  const inner=cheapOctagonPoints(cx,cy,hw,hh,innerInset),fieldInset=3.0*scale;
+  const outer=cheapOctagonPoints(cx,cy,hw,hh,0),innerInset=1.4;
+  const inner=cheapOctagonPoints(cx,cy,hw,hh,innerInset),fieldInset=3.0;
   const field=cheapOctagonPoints(cx,cy,hw,hh,fieldInset);
   const bandTop=top+hh*.065,bandBottom=top+hh*.215;
   const cap=`${cx-hw*.20},${bandTop} ${cx+hw*.20},${bandTop} ${cx+hw*.22},${top+hh*.17} ${cx+hw*.11},${top+hh*.185} ${cx},${top+hh*.205} ${cx-hw*.11},${top+hh*.185} ${cx-hw*.22},${top+hh*.17}`;
   let g='<g stroke-linejoin="round">';
   // The reference sticker uses a near-square octagon, a fine outside rule,
   // a separate heavy inner contour, and a small black crest at the top.
-  g+=`<polygon points="${outer}" fill="#fff" stroke="#050505" stroke-width="${Math.max(.55,.68*scale)}"/>`;
-  g+=`<polygon points="${inner}" fill="#fff" stroke="#050505" stroke-width="${Math.max(.85,1.45*scale)}"/>`;
+  g+=`<polygon points="${outer}" fill="#fff" stroke="#050505" stroke-width=".6"/>`;
+  g+=`<polygon points="${inner}" fill="#fff" stroke="#050505" stroke-width="1"/>`;
   g+=`<polygon points="${field}" fill="#fff" stroke="none"/>`;
   const capClip=`sticker-mark-${Math.round(cx*100)}-${Math.round(cy*100)}`;
   g+=`<defs><clipPath id="${capClip}"><polygon points="${field}"/></clipPath></defs>`;
@@ -419,7 +420,7 @@
   }else{
    const oldY=top+hh*.50,oldFont=7.8*scale,saleY=top+hh*.65;
    g+=studioText(cx,oldY,`${old}đ`,{size:oldFont,maxWidth:hw*.72,family:'condensed'});
-   g+=`<line x1="${cx-hw*.35}" y1="${oldY-oldFont*.36}" x2="${cx+hw*.35}" y2="${oldY-oldFont*.36}" stroke="#050505" stroke-width="${Math.max(.55,.8*scale)}"/>`;
+   g+=`<line x1="${cx-hw*.35}" y1="${oldY-oldFont*.36}" x2="${cx+hw*.35}" y2="${oldY-oldFont*.36}" stroke="#050505" stroke-width=".65"/>`;
    g+=studioText(cx,saleY,`${sale}đ`,{size:16.5*scale,maxWidth:hw*.76,family:'condensed'});
    g+=`<rect x="${cx-hw*.34}" y="${top+hh*.72}" width="${hw*.68}" height="${hh*.055}" fill="#050505"/>`;
    g+=studioText(cx,top+hh*.765,note,{size:3.2*scale,maxWidth:hw*.62,fill:'#fff',family:'condensed'});

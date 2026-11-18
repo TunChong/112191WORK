@@ -41,7 +41,7 @@ Trang chủ cho thấy **5 nhóm**: Sticker, Pop-up, Bán hàng, Công việc v�
 
 ## 4. Thay đổi đã thực hiện trong bản Preview cục bộ
 
-Chỉ chỉnh 3 file của Print Studio trong thư mục UI11 Preview:
+Phần dựng mẫu sửa 3 file Print Studio; thêm 2 thay đổi cache có phạm vi hẹp để tải đúng ba file đó:
 
 - modules/mwgx/print_studio.js: thêm 5 tab nhóm Sticker và 23 loại mẫu (5/5/3/7/3); giữ riêng dữ liệu theo mẫu và theo vị trí sticker; khi chuyển mẫu không lấy nhầm nội dung mẫu khác.
 - modules/mwgx/print_engine.js: thêm renderer vector cho các họ gạch giá, trả chậm, bảo hiểm và nhóm khác; căn đường gạch giá cũ theo tâm ký tự bằng đường cơ sở và cỡ chữ; cắt phần trang trí đỉnh sticker theo đường viền trong để không tràn khỏi viền kép.
@@ -53,7 +53,7 @@ Chỉ chỉnh 3 file của Print Studio trong thư mục UI11 Preview:
 
 - node --check đạt cho print_studio.js và print_engine.js.
 - Harness JavaScript kiểm tra 5 nhóm, đủ 23 loại tạo SVG, khổ A4 6/2/1 và dữ liệu riêng giữa các mẫu: **đạt**.
-- Kết xuất SVG bằng Inkscape thành PNG 3720 × 5261 px và PDF một trang A4 210 × 297 mm: **đạt ở bộ kết xuất vector ngoài ứng dụng**. Ảnh sau sửa cho thấy đường viền ngoài không còn bị phần trang trí đỉnh sticker che lấn.
+- Kết xuất SVG bằng Inkscape thành PNG 3720 × 5262 px (450 DPI) và PDF một trang A4 210 × 297 mm: **đạt ở bộ kết xuất vector ngoài ứng dụng**. Ảnh sau sửa cho thấy đường viền ngoài không còn bị phần trang trí đỉnh sticker che lấn. Đây không phải nút PNG/PDF của Companion.
 - Kiểm thử giao diện thật trong Chrome/Chromium bị môi trường chặn khởi chạy (socket(): Operation not permitted, ptrace: Operation not permitted). Vì vậy **chưa xác minh** xem trước trên trình duyệt, nút PNG của ứng dụng, hộp thoại in từ ứng dụng, font Chrome, PDF Chrome, máy in vật lý hoặc hồi quy toàn ứng dụng.
 - Inkscape cảnh báo không hỗ trợ thuộc tính font-kerning; kết quả này không thay cho việc xác nhận font trong Chrome.
 
@@ -95,16 +95,17 @@ Chỉ chỉnh 3 file của Print Studio trong thư mục UI11 Preview:
 
 ## 9. Cập nhật chỉnh sticker theo khung in gốc — 18/11/2026
 
-- Rà lại khung 00:19 cho mẫu phần trăm 6 tem/tờ, 01:03 cho mẫu gạch giá lớn và khung phóng lớn của sticker gốc. Mẫu phần trăm trong video là bát giác gần vuông, viền kép đen trắng, mảng đỉnh đen có sao trắng, chữ “GIẢM SỐC”, tên sản phẩm, phần trăm lớn, thanh thời gian và ngày áp dụng.
-- Sửa `markHexSticker()` để dựng cấu trúc này bằng SVG vector; giá trị chữ trên từng tem tiếp tục lấy từ `items[index]`. Tem 6/tờ xấp xỉ 78 × 78 mm và tem 1/tờ xấp xỉ 180 × 180 mm theo tỷ lệ xem trước A4 trong video. Đây là ước lượng hình học trên màn hình, chưa xác nhận bằng bản in đo thước.
-- Mẫu gạch giá lớn thứ ba chuyển sang khung bát giác: giá cũ gạch ngang qua tâm chữ, giá mới lớn, thanh thời gian và ngày áp dụng. Các thẻ thư viện giá chữ nhật/dạng vé vẫn giữ renderer riêng.
-- Sau chỉnh sửa: `node --check` toàn bộ JavaScript trong source UI11 đạt; kiểm tra 23 loại Sticker ở ba cỡ A4 6/2/1 đều sinh SVG hợp lệ, không có `NaN`; kiểm tra sáu nội dung tem riêng biệt không bị gộp; mẫu gạch giá lớn sinh vector bát giác.
-- Đã kết xuất ảnh A4 6 tem bằng Inkscape để đối chiếu hình học. Đây là kết xuất ngoài ứng dụng, không thay cho kiểm thử Chrome hoặc xác nhận in từ Companion.
-- **Kiểm thử trình duyệt vẫn bị chặn:** Chromium kết thúc trước khi khởi chạy trang vì môi trường báo `socket() failed: Operation not permitted` và `ptrace: Operation not permitted`. Chưa xác minh nút PNG/PDF trong ứng dụng, hộp thoại in Chrome hay máy in vật lý. Candidate vẫn chưa sẵn sàng triển khai.
+- Đối chiếu riêng hai mẫu nhìn thấy trong video: khung 00:19 là mẫu phần trăm 6 tem/tờ; khung 01:03 là “GẠCH GIÁ – LỚN”, một tem bát giác lớn có mào đen/ngôi sao, “GIẢM SỐC”, tên sản phẩm, giá cũ bị gạch giữa dòng, giá mới, thanh thời gian và ngày áp dụng. Hình “GIÁ RẺ QUÁ / VERY GOOD!” là một mẫu khác, có logo riêng, dòng “GIẢM CÒN” và một giá bán.
+- `markHexSticker()` giữ renderer riêng cho nhóm phần trăm/gạch giá lớn; biến thể gạch giá lớn thứ ba mặc định dùng tiêu đề “GIẢM SỐC” và ghi chú “THỜI GIAN ÁP DỤNG”. Đường gạch giá cũ nằm qua thân chữ với nét 0,65 mm.
+- Mẫu “GIÁ RẺ QUÁ / VERY GOOD!” tiếp tục dùng renderer/logo riêng, không thay bằng mẫu phần trăm. Cạnh trong được đặt 1 mm và nét viền ngoài 0,6 mm; ở mẫu gạch giá, viền trong cũng 1 mm. Đây là kích thước SVG theo đơn vị mm, chưa xác nhận sai số trên giấy thật.
+- Các giá trị tiếp tục lấy từ `items[index]`, nên sáu tem là sáu bộ nội dung độc lập. Cỡ hiển thị của tem 6/tờ và 1/tờ dựa trên bố cục A4 trong video, chưa đo từ bản in gốc.
+- Sau lượt chỉnh lại: toàn bộ JavaScript UI11 qua `node --check`; harness dựng **69 SVG (23 loại × 3 cỡ A4 6/2/1)**, không có `NaN`, sai số tem hoặc khung SVG hỏng. Harness xác nhận tiêu đề/ghi chú của mẫu gạch giá lớn, nét viền trong 1 mm, gạch giá cũ 0,65 mm và sáu tên tem riêng; đổi qua mẫu khác rồi quay lại vẫn giữ dữ liệu.
+- Inkscape chỉ dùng để xuất ảnh vector đối chiếu, không thay cho kiểm thử Chrome/PNG/PDF của app. **Kiểm thử trình duyệt vẫn bị môi trường chặn** (`socket() failed: Operation not permitted`, `ptrace: Operation not permitted`); chưa xác minh hộp thoại in Chrome hoặc máy in vật lý. Candidate chưa sẵn sàng triển khai.
 
 ## 10. Cập nhật cache và gói review
 
-- Đã đổi query string của riêng `modules/mwgx/style.css`, `print_engine.js`, `print_studio.js` sang `3.6.0-preview-ui12`; service worker dùng cache `companion-mwg-v3.6.0-preview-ui12` và precache đúng ba bundle này. Các bundle không liên quan giữ nguyên.
+- Đổi query string riêng cho `modules/mwgx/style.css`, `print_engine.js`, `print_studio.js` sang `3.6.0-preview-ui13`; service worker dùng cache `companion-mwg-v3.6.0-preview-ui13` và precache đúng ba bundle này. Các bundle không liên quan giữ nguyên.
 - Bản restore gồm cả `index.html` và `sw.js` trước khi đổi cache, ngoài ba file Print Studio gốc.
-- Gói candidate đã kiểm tra lại CRC, 169 đường dẫn và byte-for-byte với thư mục source. Cú pháp JS toàn bộ source đạt; kiểm tra sinh SVG cho 23 mẫu × 3 cỡ A4 đạt.
+- Sau chỉnh sửa, candidate có 169 đường dẫn và đúng 5 nội dung khác gói UI11 gốc; ZIP CRC đạt, checksum manifest đạt, các file bên trong khớp source và năm bản rollback khớp byte với đúng gói nguồn ban đầu.
+- Candidate SHA-256 sau lượt này: `90f7f4745cb32e35da0935666ac5702a968d2e2dcf00eda82e07a69dd7941507`. PNG 450 DPI được xuất bằng Inkscape; kiểm thử PNG/PDF riêng của ứng dụng vẫn chưa thể chạy vì Chromium bị chặn.
 - PR nháp chỉ để review mã; chưa merge/deploy. Kiểm thử trực tiếp trong Chrome và in máy thật còn là cổng bắt buộc trước triển khai.

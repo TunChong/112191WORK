@@ -15,7 +15,7 @@ const stickerTypes=[
  {id:'cheap',family:'info',name:'Giá rẻ quá',title:'GIÁ RẺ QUÁ',note:'VERY GOOD!'},
  {id:'cross-price-1',family:'price',name:'Gạch giá | Mẫu 1',title:'GIÁ CHÉO',note:'GẠCH GIÁ | MẪU 1'},
  {id:'cross-price-2',family:'price',name:'Gạch giá | Mẫu 2',title:'GIÁ CHÉO',note:'GẠCH GIÁ | MẪU 2'},
- {id:'cross-price-3',family:'price',name:'Gạch giá | Mẫu 3',title:'GIÁ CHÉO',note:'GẠCH GIÁ | MẪU 3'},
+ {id:'cross-price-3',family:'price',name:'Gạch giá | Mẫu 3',title:'GIẢM SỐC',note:'THỜI GIAN ÁP DỤNG'},
  {id:'discount-now-1',family:'price',name:'Giá giảm | Mẫu 1',title:'GIÁ CHÉO',note:'GIÁ GIẢM | MẪU 1'},
  {id:'discount-now-2',family:'price',name:'Giá giảm | Mẫu 2',title:'GIÁ CHÉO',note:'GIÁ GIẢM | MẪU 2'},
  {id:'finance-0-simple',family:'finance',name:'Trả chậm 0% | Mẫu 1',title:'TRẢ CHẬM',note:'DÁN SP ICT'},
