@@ -109,3 +109,35 @@ Phần dựng mẫu sửa 3 file Print Studio; thêm 2 thay đổi cache có ph�
 - Sau chỉnh sửa, candidate có 169 đường dẫn và đúng 5 nội dung khác gói UI11 gốc; ZIP CRC đạt, checksum manifest đạt, các file bên trong khớp source và năm bản rollback khớp byte với đúng gói nguồn ban đầu.
 - Candidate SHA-256 sau lượt này: `90f7f4745cb32e35da0935666ac5702a968d2e2dcf00eda82e07a69dd7941507`. PNG 450 DPI được xuất bằng Inkscape; kiểm thử PNG/PDF riêng của ứng dụng vẫn chưa thể chạy vì Chromium bị chặn.
 - PR nháp chỉ để review mã; chưa merge/deploy. Kiểm thử trực tiếp trong Chrome và in máy thật còn là cổng bắt buộc trước triển khai.
+
+## 11. Rà lại cảnh POPUP và Công việc bằng khung hình gốc
+
+> Ghi chú cập nhật sau khi mở riêng các khung hình 02:26–03:50 và 03:53–04:17 ở độ phân giải gốc của video. Các nội dung dưới đây là những gì nhìn thấy được; số lượng đầy đủ của toàn bộ thư viện không được suy ra từ phần cuộn đang hiện trên màn hình.
+
+### POPUP — 02:25–03:50
+
+- Trang thư viện có bộ chọn **TIÊU ĐỀ POPUP**, ô **Nhập từ khóa**, nút lọc, 6 chip ngành hàng **ICT / Máy Lạnh / TV & Tủ Lạnh / Lọc Nước / Máy Giặt / Gia Dụng** và 3 nhóm **GIẢM GIÁ / TRẢ CHẬM / DỊCH VỤ**.
+- Mỗi mẫu là một thẻ gồm hình minh họa sản phẩm, tên kiểu mẫu và một dòng thuộc tính chỉ rõ **GIẤY**, **POPUP** và kiểu nội dung (ví dụ GIÁ GIẢM, GẠCH GIÁ, ƯU ĐÃI, PHẦN TRĂM, TRẢ CHẬM 0%). Các ví dụ đọc được gồm “BÀN TRẢI NGHIỆM”, “LED - GIẢM GIÁ SỐC”, “PHỤ KIỆN”, “MÁY LẠNH”, “MÁY LỌC NƯỚC”.
+- Có loại dùng khổ A4/A5, A6, A7, LED và MLN; đây là nhãn xuất hiện trên từng thẻ, không đủ căn cứ khẳng định mọi tổ hợp giấy/POPUP đều có trong thư viện.
+- Nhấn thẻ mẫu dẫn tới trang biểu mẫu/xem in riêng, có nút **In Ngay** và bảng **HƯỚNG DẪN IN** bên phải. Hướng dẫn thấy rõ: mở Cài đặt khác; chọn khổ A4/A5 theo mẫu; chọn lề Không; bật Đồ họa nền. Video cho thấy vùng nhập/điều chỉnh dữ liệu trong một số mẫu, nhưng không đủ khung hình để ghi chính xác danh sách trường của từng biến thể.
+- Các cảnh “POPUP TRẢ CHẬM” có mẫu ICT và TV & Tủ Lạnh; ảnh in thể hiện một tờ có nhiều ô lặp theo lưới, tiêu đề “TRẢ CHẬM 0%”, vùng “TRẢ TRƯỚC CHỈ”, số tiền và phần tính phí. Không đo được kích thước từng ô từ video nén.
+- Mẫu dịch vụ Máy lọc nước và Máy lạnh được hiện riêng; một số thẻ mang nhãn MLN/A4. Các nội dung “SÁNG MUA CHIỀU UP” và “TRẢ CHẬM 0%” có mặt trên biểu mẫu, nhưng không đủ cơ sở để khẳng định toàn bộ công thức tính/điều kiện nghiệp vụ.
+
+### Công việc — Bảng tên và Biên bản & Khác
+
+- Trang **BẢNG TÊN NHÂN VIÊN** có hai mẫu thẻ tên: **MẪU CŨ (LỚN)** và **MẪU MỚI (NHỎ)**. Các thẻ cho thấy vùng logo, tên và bộ phận.
+- Hộp thoại Chrome ở khoảng 03:55–03:58 cho thấy **1 trang giấy**, bản xem in có **6 thẻ tên trên A4, 2 cột × 3 hàng**. Có thao tác mở hộp thoại in; không có bằng chứng về bản giấy đã in.
+- Nhóm **BIÊN BẢN & KHÁC** hiển thị ít nhất ba mẫu: **BIÊN BẢN – SỰ CỐ NHẬN HÀNG**, **STICKER MÁY – MẪU 1** và **STICKER MÁY – MẪU 2**. Video chỉ cho thấy thư viện/xem trước của nhóm này; chưa chứng minh thao tác nhập, lưu hoặc in từng mẫu.
+
+### Đối chiếu lại phạm vi UI11
+
+- UI11 có các tab **POPUP A4, POPUP A5, GIỜ VÀNG GIÁ SỐC, POPUP A7, Sticker, Phiếu bán hàng, Lịch sử**. Đây là các form theo khổ/loại chung; không có trang thư viện POPUP theo ngành hàng và không có hai bộ lọc con Giảm giá/Trả chậm/Dịch vụ như video.
+- Trong UI11 không tìm thấy trang **Bảng tên**, hai biến thể cỡ lớn/nhỏ, trang **Biên bản & Khác** hoặc các mẫu nêu trên. Các thẻ **Bán hàng** và **Trang trí** chỉ được thấy ở trang chủ của video, nên chức năng bên trong vẫn là **CHƯA XÁC MINH**.
+- Do thiếu mẫu nguồn và dữ liệu nghiệp vụ đầy đủ, phần POPUP theo ngành hàng và các mẫu Công việc vẫn được đánh dấu **CÒN THIẾU**; không tạo các nút giả chỉ dẫn về form chưa tồn tại và không gọi bản Sticker hiện tại là bản sao 100% của website.
+
+### Kiểm tra tĩnh bổ sung trên gói review
+
+- Có script tái chạy kiểm tra tĩnh tại `evidence/verify_print_modes_static.cjs`. Chạy bằng `node evidence/verify_print_modes_static.cjs` từ thư mục `review_patch`.
+- Script sinh vector và kiểm tra tỷ lệ/đếm mẫu của POPUP A4 (2 mẫu/tờ), POPUP A5 ngang (1 mẫu/tờ), Giờ vàng A4 (1/tờ), POPUP A7 (4/tờ), phiếu bán hàng A4 (2 × 5, 10/tờ), Sticker A4 (6/2/1), cùng 69 trường hợp sticker (23 loại × 3 cỡ).
+- Kiểm tra nội dung độc lập tại POPUP A4 (2 ô), Sticker (ô 1 và ô 6) và Phiếu bán hàng (ô 1 và ô 10) đều giữ giá trị riêng trong dữ liệu SVG. **Đạt kiểm tra tĩnh**; kết quả này không thay thế trình duyệt hoặc in thực.
+- Môi trường vẫn chặn Chromium nên trạng thái tổng thể **CHƯA SẴN SÀNG TRIỂN KHAI** không thay đổi.
