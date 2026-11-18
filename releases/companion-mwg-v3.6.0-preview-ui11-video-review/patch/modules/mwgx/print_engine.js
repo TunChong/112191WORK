@@ -84,8 +84,7 @@
   if(kind==='sticker-cheap'||kind==='popup-a4'||kind==='popup-a5')return markCheapSticker(x,y,w,h,f);
   if(kind==='popup-a7')return markPopupA7(x,y,w,h,f);
   if(kind==='golden-a4')return markGolden(x,y,w,h,f);
-  if(kind==='sticker'&&String(f.stickerType||'').startsWith('cross-price-'))return markPriceCrossSticker(x,y,w,h,f);
-  if(kind==='sticker'&&String(f.stickerType||'').startsWith('discount-now-'))return markPriceCrossSticker(x,y,w,h,f);
+  if(kind==='sticker'&&(String(f.stickerType||'').startsWith('cross-price-')||String(f.stickerType||'').startsWith('discount-now-')))return markPriceCrossSticker(x,y,w,h,f);
   if(kind==='sticker'&&String(f.stickerType||'').startsWith('finance-'))return markFinanceSticker(x,y,w,h,f);
   if(kind==='sticker'&&(String(f.stickerType||'').startsWith('insurance-')||String(f.stickerType||'').startsWith('warranty-')||String(f.stickerType||'').startsWith('exchange-')))return markInsuranceSticker(x,y,w,h,f);
   if(kind==='sticker'&&(String(f.stickerType||'').startsWith('exclusive-')||String(f.stickerType||'')==='subsidy'))return markOtherSticker(x,y,w,h,f);
@@ -231,6 +230,9 @@
   return `M ${left+w*.10} ${top} Q ${cx} ${top-h*.018} ${right-w*.10} ${top} L ${right} ${top+h*.57} Q ${right-w*.02} ${top+h*.84} ${cx} ${bottom} Q ${left+w*.02} ${top+h*.84} ${left} ${top+h*.57} Z`;
  }
  function markPriceCrossSticker(x,y,w,h,f){
+  // The observed large third price-cross form is the octagonal A4 version;
+  // keep the smaller library-card variants in their original label shapes.
+  if(String(f.stickerType||'').endsWith('-3')&&Number(f.sheetCount||6)===1)return markHexSticker(x,y,w,h,f);
   const s=Math.min(w/92,h/86),tx=n=>x+n*s,ty=n=>y+n*s;
   const type=String(f.stickerType||''),variant=type.endsWith('-1')?1:type.endsWith('-2')?2:3;
   const old=priceDigits(f.oldPrice),sale=priceDigits(f.salePrice),product=nice(f.title||'TÊN SẢN PHẨM').toLocaleUpperCase('vi-VN');
@@ -374,36 +376,56 @@
  }
  function markHexSticker(x,y,w,h,f){
   const size=Number(f.sheetCount||6);let hw,hh;
-  if(size===1){hw=Math.min(w-8,190);hh=Math.min(h-10,236)}
-  else if(size===2){hh=Math.min(h-4,132);hw=Math.min(w-5,hh*1.24)}
-  else{hw=Math.min(w-3,94);hh=Math.min(h-3,86)}
-  const cx=x+w/2,cy=y+h/2,left=cx-hw/2,right=cx+hw/2,top=cy-hh/2,bottom=cy+hh/2;
-  const pts=[[cx,top],[right,top+hh*.23],[right,top+hh*.77],[cx,bottom],[left,bottom-hh*.23],[left,top+hh*.23]].map(p=>p.join(',')).join(' ');
-  const inner=hw>35?Math.min(2.8,hw*.035):1.1,scale=Math.min(hw/92,hh/88),title=nice(f.bannerTitle||'GIẢM SỐC').toLocaleUpperCase('vi-VN'),product=nice(f.title||'TÊN SẢN PHẨM').toLocaleUpperCase('vi-VN'),note=nice(f.subtitle||f.stickerNote||'THỜI GIAN ÁP DỤNG').toLocaleUpperCase('vi-VN');
-  const old=priceDigits(f.oldPrice),sale=priceDigits(f.salePrice),kind=f.stickerType||'percent',discount=nice(f.discountPercent||'00').replace(/[^0-9]/g,'').slice(0,3)||'00';
-  if(kind==='cheap')return markCheapHexSticker(x,y,w,h,f);
-  let g='<g fill="#fff" stroke="#050505" stroke-linejoin="round">';
-  g+=`<polygon points="${pts}" stroke-width="${Math.max(.7,1.5*scale)}"/>`;
-  // Keep the inner contour thin, as in the supplied reference sticker.
-  g+=`<polygon points="${cx},${top+inner*2.7} ${right-inner*1.5},${top+hh*.23+inner} ${right-inner*1.5},${top+hh*.77-inner} ${cx},${bottom-inner*2.7} ${left+inner*1.5},${top+hh*.77-inner} ${left+inner*1.5},${top+hh*.23+inner}" fill="none" stroke-width="${Math.max(.65,.9*scale)}"/>`;
+  if(size===1){hw=Math.min(w-18,180);hh=Math.min(h-18,180)}
+  else if(size===2){hh=Math.min(h-10,126);hw=Math.min(w-20,145)}
+  else{hw=Math.min(w-8,78);hh=Math.min(h-8,78)}
+  const cx=x+w/2,cy=y+h/2,top=cy-hh/2,scale=Math.min(hw/90,hh/86);
+  const type=String(f.stickerType||'percent'),title=nice(f.bannerTitle||(type==='voucher'?'ƯU ĐÃI':'GIẢM SỐC')).toLocaleUpperCase('vi-VN');
+  const product=nice(f.title||'TÊN SẢN PHẨM').toLocaleUpperCase('vi-VN');
+  const note=nice(f.subtitle||f.stickerNote||'THỜI GIAN ÁP DỤNG').toLocaleUpperCase('vi-VN');
+  const old=priceDigits(f.oldPrice),sale=priceDigits(f.salePrice),discount=nice(f.discountPercent||'00').replace(/[^0-9]/g,'').slice(0,3)||'00';
+  if(type==='cheap')return markCheapHexSticker(x,y,w,h,f);
+  const outer=cheapOctagonPoints(cx,cy,hw,hh,0),innerInset=1.4*scale;
+  const inner=cheapOctagonPoints(cx,cy,hw,hh,innerInset),fieldInset=3.0*scale;
+  const field=cheapOctagonPoints(cx,cy,hw,hh,fieldInset);
+  const bandTop=top+hh*.065,bandBottom=top+hh*.215;
+  const cap=`${cx-hw*.20},${bandTop} ${cx+hw*.20},${bandTop} ${cx+hw*.22},${top+hh*.17} ${cx+hw*.11},${top+hh*.185} ${cx},${top+hh*.205} ${cx-hw*.11},${top+hh*.185} ${cx-hw*.22},${top+hh*.17}`;
+  let g='<g stroke-linejoin="round">';
+  // The reference sticker uses a near-square octagon, a fine outside rule,
+  // a separate heavy inner contour, and a small black crest at the top.
+  g+=`<polygon points="${outer}" fill="#fff" stroke="#050505" stroke-width="${Math.max(.55,.68*scale)}"/>`;
+  g+=`<polygon points="${inner}" fill="#fff" stroke="#050505" stroke-width="${Math.max(.85,1.45*scale)}"/>`;
+  g+=`<polygon points="${field}" fill="#fff" stroke="none"/>`;
+  const capClip=`sticker-mark-${Math.round(cx*100)}-${Math.round(cy*100)}`;
+  g+=`<defs><clipPath id="${capClip}"><polygon points="${field}"/></clipPath></defs>`;
+  g+=`<polygon points="${cap}" fill="#050505" stroke="none" clip-path="url(#${capClip})"/>`;
+  g+=`<polygon points="${starPoints(cx,top+hh*.135,hh*.027)}" fill="#fff" stroke="#fff" stroke-width="${Math.max(.25,.28*scale)}"/>`;
   g+='</g><g fill="#050505" stroke="none">';
-  g+=studioText(cx,cy-hh*.27,title,{size:10.5*scale,maxWidth:hw*.56});
-  g+=studioText(cx,cy-hh*.14,product,{size:5.1*scale,maxWidth:hw*.55,family:'condensed'});
-  if(kind==='percent'){
-   g+=studioText(cx,cy+hh*.16,`-${discount}%`,{size:28*scale,maxWidth:hw*.68,family:'condensed'});
-  }else if(kind==='voucher'){
-   g+=studioText(cx,cy+hh*.02,'TẶNG PHIẾU MUA HÀNG',{size:9*scale,maxWidth:hw*.56,family:'condensed'});
-   g+=studioText(cx,cy+hh*.22,`${sale}đ`,{size:16*scale,maxWidth:hw*.62,family:'condensed'});
+  g+=studioText(cx,top+hh*.32,title,{size:8.3*scale,maxWidth:hw*.70,family:'condensed'});
+  g+=studioText(cx,top+hh*.40,product,{size:4.6*scale,maxWidth:hw*.68,family:'condensed'});
+  if(type==='percent'){
+   g+=studioText(cx,top+hh*.685,`-${discount}%`,{size:26*scale,maxWidth:hw*.74,family:'condensed'});
+   const barX=cx-hw*.34,barY=top+hh*.72,barW=hw*.68,barH=hh*.065;
+   g+=`<rect x="${barX}" y="${barY}" width="${barW}" height="${barH}" fill="#fff" stroke="#606060" stroke-width="${Math.max(.45,.55*scale)}"/>`;
+   g+=`<rect x="${barX}" y="${barY}" width="${barW*.52}" height="${barH}" fill="#050505" stroke="none"/>`;
+   g+=studioText(cx,top+hh*.825,`${note}${note.endsWith(':')?'':':'}`,{size:3.7*scale,maxWidth:hw*.68,family:'condensed'});
+   g+=studioText(cx,top+hh*.89,nice(f.validDate||'00.00 - 00.00'),{size:3.5*scale,maxWidth:hw*.67,family:'condensed'});
+  }else if(type==='voucher'){
+   g+=studioText(cx,top+hh*.50,'TẶNG PHIẾU MUA HÀNG',{size:6.5*scale,maxWidth:hw*.68,family:'condensed'});
+   g+=studioText(cx,top+hh*.66,`${sale}đ`,{size:17*scale,maxWidth:hw*.74,family:'condensed'});
+   g+=`<rect x="${cx-hw*.34}" y="${top+hh*.72}" width="${hw*.68}" height="${hh*.055}" fill="#050505"/>`;
+   g+=studioText(cx,top+hh*.765,note,{size:3.2*scale,maxWidth:hw*.62,fill:'#fff',family:'condensed'});
+   g+=studioText(cx,top+hh*.885,nice(f.validDate||'00.00 - 00.00'),{size:3.5*scale,maxWidth:hw*.68,family:'condensed'});
   }else{
-   g+=studioText(cx,cy+hh*.015,`${old}đ`,{size:9.2*scale,maxWidth:hw*.60,family:'condensed'});
-   const oldTextY=cy+hh*.015,oldFontSize=9.2*scale;
-   g+=`<line x1="${cx-hw*.28}" y1="${oldTextY-oldFontSize*.36}" x2="${cx+hw*.28}" y2="${oldTextY-oldFontSize*.36}" stroke="#d71920" stroke-width="${Math.max(.4,.8*scale)}"/>`;
-   g+=studioText(cx,cy+hh*.17,`${sale}đ`,{size:16*scale,maxWidth:hw*.62,family:'condensed'});
+   const oldY=top+hh*.50,oldFont=7.8*scale,saleY=top+hh*.65;
+   g+=studioText(cx,oldY,`${old}đ`,{size:oldFont,maxWidth:hw*.72,family:'condensed'});
+   g+=`<line x1="${cx-hw*.35}" y1="${oldY-oldFont*.36}" x2="${cx+hw*.35}" y2="${oldY-oldFont*.36}" stroke="#050505" stroke-width="${Math.max(.55,.8*scale)}"/>`;
+   g+=studioText(cx,saleY,`${sale}đ`,{size:16.5*scale,maxWidth:hw*.76,family:'condensed'});
+   g+=`<rect x="${cx-hw*.34}" y="${top+hh*.72}" width="${hw*.68}" height="${hh*.055}" fill="#050505"/>`;
+   g+=studioText(cx,top+hh*.765,note,{size:3.2*scale,maxWidth:hw*.62,fill:'#fff',family:'condensed'});
+   g+=studioText(cx,top+hh*.885,nice(f.validDate||'00.00 - 00.00'),{size:3.5*scale,maxWidth:hw*.68,family:'condensed'});
   }
-  const noteY=cy+hh*.29,noteW=hw*.48,noteH=Math.max(3,hh*.06);
-  g+=`<rect x="${cx-noteW/2}" y="${noteY}" width="${noteW}" height="${noteH}" fill="#050505" rx="${Math.max(.5,scale)}"/>`;
-  g+=studioText(cx,noteY+noteH*.72,note,{size:3.3*scale,maxWidth:noteW*.86,fill:'#fff',family:'condensed'})+'</g>';
-  return g;
+  return g+'</g>';
  }
  function markSalesSlip(x,y,w,h,f){
   const s=Math.min(w/97,h/54),tx=n=>x+n*s,ty=n=>y+n*s;

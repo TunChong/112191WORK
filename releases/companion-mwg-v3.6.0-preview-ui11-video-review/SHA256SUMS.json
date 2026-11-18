@@ -1,11 +1,17 @@
 {
-  "README.md": "94d0dc2028e532703c5a8322ecc8e3de27ca4581132aee5acabb3ee218525efc",
-  "evidence/sticker_cheap_a4_vector_review.png": "e5ec2b68358b2d66286d102b2dd53ca4ab56940d4a47d56863b542057daabec2",
-  "modules/mwgx/print_engine.js": "b15e28ab06be1cc89633acd6f95d915dda75f3040108afceb8ea8a8c657d6a38",
+  "README.md": "9712928c9455dfabaaa5e911ab5e5f5351b417ccc3088dc0c225364d0a42fc7b",
+  "README_REVIEW_BRANCH.md": "ae69745c4526f4848cb6b19d31d04cb87e42c97b5d5e303cf337a77e67dfec07",
+  "evidence/sticker_cheap_a4_vector_review.png": "68665c555e0308fad714e0e404226469c45cc336b2665ef1b9d2c74e77c9a5e1",
+  "evidence/sticker_price_large_a4_vector_review.png": "af4ce3f8650ed35ca92525d399c154e06e57717defa9486a5ca5f0d2f024b954",
+  "modules/index.html": "7a1d7cd438d9e1b537e0004c6023ef1acc11d728b9b194277e81984947712371",
+  "modules/mwgx/print_engine.js": "6a249894cf13e5deb554c5ff89e01ce4144835cd7e9e5ca4ad4bec0de15d83cb",
   "modules/mwgx/print_studio.js": "9ff52ae77b15a7ed6dc978447310c0dc435bcc2ec4158c521575edb76c2ebb70",
   "modules/mwgx/style.css": "ff31e85b2145801fb4fe3211d7a3f858eab64d565869f6616bcdf3e4a8324d09",
-  "report/BAO_CAO_DOI_CHIEU_MIENTAY2_COMPANION_MWG_V36.md": "8d575aaf488bac9d2c171dc033dd0932632762b42b5b8c6568099502af1e832b",
+  "modules/sw.js": "57defd8a0785953b1926ea20fd4915f1b5f6599dfdb094a63d164abd7ea1a044",
+  "report/BAO_CAO_DOI_CHIEU_MIENTAY2_COMPANION_MWG_V36.md": "6f511f08d2e4c8200b1f957026c6dfd0f35b8a273cd7a9bae5bf2b64f7438819",
+  "rollback/index.html": "dcc3c14c3172a6e8070526ab068183b88eed78d91df9cd34f3f78613e082609a",
   "rollback/modules/mwgx/print_engine.js": "b292bed541b9f87bc445f569f54b5d8b670eeb5beb42da9cf62700aa050e92a3",
   "rollback/modules/mwgx/print_studio.js": "74dd2c4b31e06219c44faa993b3568a81022195aaab37f54383dec0e0d7d87e3",
-  "rollback/modules/mwgx/style.css": "d3412ae05be1f63340ce3fdf73e8bac82d857940d8eb28b2dcc4e38e75fd4bcc"
+  "rollback/modules/mwgx/style.css": "d3412ae05be1f63340ce3fdf73e8bac82d857940d8eb28b2dcc4e38e75fd4bcc",
+  "rollback/sw.js": "d6eb4124e002c0e88b278e5213de3544cf9a006a6fb635d1f35cd149c1d7e6c4"
 }
