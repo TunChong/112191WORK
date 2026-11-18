@@ -1,6 +1,6 @@
 {
-  "README.md": "efabc603e3744db96fe6e952419a9042e11302afb186202ed93ba8b3149872dd",
-  "README_REVIEW_BRANCH.md": "71b2188ff64d807bfac1cb1f616ba2c836b19df01431f20d5d06b4a27a7dea08",
+  "README.md": "7263dbf5787f452fcdd213411f26360ddf58ff436b3b056c6fbb2795b06a6edb",
+  "README_REVIEW_BRANCH.md": "4834df3e064231808b825df5a38f817f0e9b4b8828e61ee0ae3bad58947ad465",
   "evidence/sticker_cheap_a4_vector_review.png": "0cba2cb6ef24408f3bb83277ad758d1dbefe742584ac2b0ca3e7fa20a5e2a727",
   "evidence/sticker_percent_a4_vector_review.png": "b04bd8d606c472cb7562feefc4fa069e4cf02281a00e1bd09ac7b3e57b088895",
   "evidence/sticker_price_large_a4_vector_review.png": "9d92c3fbc0cfb3945cb80417b73ae00e98dd094e6535f1c7872bbbb035fa6db9",
@@ -10,10 +10,13 @@
   "modules/mwgx/print_studio.js": "cb2c07a5bc8d8d7bea4173e724be096d8981c91278e326f4013a98ea459a75f4",
   "modules/mwgx/style.css": "ff31e85b2145801fb4fe3211d7a3f858eab64d565869f6616bcdf3e4a8324d09",
   "modules/sw.js": "7069ee28d843739ae327f83607558924e1845802e699f03adedce87bd8eeaea2",
-  "report/BAO_CAO_DOI_CHIEU_MIENTAY2_COMPANION_MWG_V36.md": "2d7cb441a2bae0f7429e47de0da72991a54cf2b615e17b73c9e43fc7978bfb37",
+  "report/BAO_CAO_DOI_CHIEU_MIENTAY2_COMPANION_MWG_V36.md": "bb4a3a84e9a02711af4628376735776dee130d5fb5f130025c7c678823480b4b",
   "rollback/index.html": "dcc3c14c3172a6e8070526ab068183b88eed78d91df9cd34f3f78613e082609a",
   "rollback/modules/mwgx/print_engine.js": "b292bed541b9f87bc445f569f54b5d8b670eeb5beb42da9cf62700aa050e92a3",
   "rollback/modules/mwgx/print_studio.js": "74dd2c4b31e06219c44faa993b3568a81022195aaab37f54383dec0e0d7d87e3",
   "rollback/modules/mwgx/style.css": "d3412ae05be1f63340ce3fdf73e8bac82d857940d8eb28b2dcc4e38e75fd4bcc",
-  "rollback/sw.js": "d6eb4124e002c0e88b278e5213de3544cf9a006a6fb635d1f35cd149c1d7e6c4"
+  "rollback/sw.js": "d6eb4124e002c0e88b278e5213de3544cf9a006a6fb635d1f35cd149c1d7e6c4",
+  "patch/report/BAO_CAO_DOI_CHIEU_MIENTAY2_COMPANION_MWG_V36.md": "bb4a3a84e9a02711af4628376735776dee130d5fb5f130025c7c678823480b4b",
+  "report/MIENTAY2_VIDEO_EVENT_INDEX.csv": "08d9cea4b469c6780e663da4662368a01b8f8b43a365426b74383f76f73d0b45",
+  "patch/report/MIENTAY2_VIDEO_EVENT_INDEX.csv": "08d9cea4b469c6780e663da4662368a01b8f8b43a365426b74383f76f73d0b45"
 }
