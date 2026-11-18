@@ -7,7 +7,7 @@
 - `modules/mwgx/`: ba file Print Studio đã chỉnh.
 - `modules/index.html`, `modules/sw.js`: cập nhật phiên bản tải/cached đúng ba bundle Print Studio.
 - `rollback/`: bản trước chỉnh tương ứng của cả 5 file.
-- `report/`: báo cáo phân tích video, đối chiếu và giới hạn kiểm thử.
+- `report/`: báo cáo phân tích video, đối chiếu, giới hạn kiểm thử và `MIENTAY2_VIDEO_EVENT_INDEX.csv` (87 mốc thay đổi hình ảnh; không phải nhật ký cú nhấp/phím bấm).
 - `evidence/`: ảnh vector kết xuất ngoài ứng dụng và script `verify_print_modes_static.cjs` để chạy lại kiểm tra vector/dữ liệu; không thay thế ảnh Chrome hoặc bản in thật.
 
 Để chạy kiểm tra tĩnh: `node evidence/verify_print_modes_static.cjs` từ thư mục giải nén gói review. Kết quả chỉ chứng minh cách dựng SVG và dữ liệu đầu vào; không chứng minh nút tải PNG/PDF của ứng dụng hoặc bản in máy thật.
