@@ -1,0 +1,14 @@
+{
+  "quote40.js": {
+    "before": "121c9cc9f63013304154593b9584dc829dd19cc59e6111b9d89f92c68ee41a69",
+    "after": "ae90b2587167b53d9d56d4dedcd6bfb637c03cf8b6f413ed44c6236d9abcaa19"
+  },
+  "index.html": {
+    "before": "7ccba574311031aad789ab8c728aa5f500e7c4b869a69ada8ff7a386477ba280",
+    "after": "87bbed8a0a667e1e34743168106b4530b3636dae9dd221c4f1682723c3b0c384"
+  },
+  "sw.js": {
+    "before": "d9a1ff8a4b9331b100fcdbf2d099f00a0d27e8557ed501b3f35ac99047cd25d1",
+    "after": "247c585f577a8df1f88cf04c97559448d868c8d8ad1841103f5d81d846601b20"
+  }
+}

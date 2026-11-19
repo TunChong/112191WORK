@@ -1,0 +1,182 @@
+{
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+  "baselines": {
+    "stable_http_checkpoint": "0270d99cba48e0957f18a60ea75a8b5323852131",
+    "print_review": "67bc22abab6f7893cda677a263333e295d5c93dc"
+  },
+  "before": {
+    "elapsed": "2026-11-19T19:06:29.198Z",
+    "pass": 6,
+    "fail": 3,
+    "outcomes": [
+      {
+        "name": "POPUP A4/A5, Sticker 6/2/1 và lệnh In ngay",
+        "result": "PASS",
+        "evidence": "A4 dọc, A5 ngang, Sticker giữ dữ liệu riêng. Cửa sổ thử nhận SVG và lệnh print()."
+      },
+      {
+        "name": "Sticker PNG có đúng khổ và một mốc 450 DPI",
+        "result": "PASS",
+        "evidence": {
+          "width": 3720,
+          "height": 5262,
+          "ppm": [
+            [
+              17717,
+              17717,
+              1
+            ]
+          ],
+          "bytes": 2460896
+        }
+      },
+      {
+        "name": "Nháp Print Studio giữ riêng theo SHOP",
+        "result": "FAIL",
+        "evidence": "Sau đổi SHOP A → B, thấy: NHÁP RIÊNG A"
+      },
+      {
+        "name": "Báo giá PNG/PDF có hình sản phẩm",
+        "result": "FAIL",
+        "evidence": "Xuất file màn nhỏ không đầy đủ"
+      },
+      {
+        "name": "Báo giá gỡ ảnh cũ ngay khi thay link sản phẩm",
+        "result": "FAIL",
+        "evidence": "Bảng xem trước vẫn giữ tên và ảnh sản phẩm cũ trong lúc tra cứu"
+      },
+      {
+        "name": "Kiểm kê IMEI chống trùng, xuất Excel giữ số 0",
+        "result": "PASS",
+        "evidence": {
+          "imei": "001234567890123",
+          "bytes": 5798
+        }
+      },
+      {
+        "name": "Kiểm kê không IMEI tự nhận tên, gộp số lượng và xuất Excel",
+        "result": "PASS",
+        "evidence": {
+          "quantity": 5,
+          "bytes": 4244
+        }
+      },
+      {
+        "name": "Audio mẫu phát, tua và tạm dừng",
+        "result": "PASS",
+        "evidence": {
+          "seconds": 80,
+          "pausedAt": 40
+        }
+      },
+      {
+        "name": "Chuông thông báo và trạng thái đã đọc",
+        "result": "PASS",
+        "evidence": ""
+      }
+    ]
+  },
+  "retest_changed_groups": {
+    "elapsed": "2026-11-19T19:08:46.925Z",
+    "pass": 5,
+    "fail": 0,
+    "outcomes": [
+      {
+        "name": "POPUP A4/A5, Sticker 6/2/1 và lệnh In ngay",
+        "result": "PASS",
+        "evidence": "A4 dọc, A5 ngang, Sticker giữ dữ liệu riêng. Cửa sổ thử nhận SVG và lệnh print()."
+      },
+      {
+        "name": "Sticker PNG có đúng khổ và một mốc 450 DPI",
+        "result": "PASS",
+        "evidence": {
+          "width": 3720,
+          "height": 5262,
+          "ppm": [
+            [
+              17717,
+              17717,
+              1
+            ]
+          ],
+          "bytes": 2460896
+        }
+      },
+      {
+        "name": "Nháp Print Studio giữ riêng theo SHOP",
+        "result": "PASS",
+        "evidence": "SHOP B mở với form trống và SHOP A tải lại đúng nháp."
+      },
+      {
+        "name": "Báo giá PNG/PDF trên desktop và màn nhỏ",
+        "result": "PASS",
+        "evidence": {
+          "desktop": {
+            "width": 1800,
+            "height": 1088,
+            "ppm": [],
+            "bytes": 221475
+          },
+          "mobile": {
+            "width": 1840,
+            "height": 1088,
+            "ppm": [],
+            "bytes": 222172
+          },
+          "pdfDesktopBytes": 231193,
+          "pdfMobileBytes": 232038
+        }
+      },
+      {
+        "name": "Báo giá gỡ ảnh cũ ngay khi thay link sản phẩm",
+        "result": "PASS",
+        "evidence": ""
+      }
+    ]
+  },
+  "final_covered_scenarios": {
+    "pass": 9,
+    "fail": 0,
+    "basis": "5 Chrome retests of changed print and quote groups, plus 4 existing passes in the three unchanged groups."
+  },
+  "artifact_inspection": {
+    "quote_png": {
+      "desktop": {
+        "width": 1800,
+        "height": 1088,
+        "square_marker_ratio": 1.0
+      },
+      "mobile": {
+        "width": 1840,
+        "height": 1088,
+        "square_marker_ratio": 1.0
+      }
+    },
+    "quote_pdf": {
+      "pages_each": 1,
+      "page_size_points": [
+        841.89,
+        595.28
+      ],
+      "square_marker_ratio_raster_desktop": 1.0,
+      "square_marker_ratio_raster_mobile": 0.989,
+      "marker_ratio_before_png": [
+        1.208,
+        1.26
+      ]
+    },
+    "imei_xlsx": {
+      "cell_type": "inlineStr",
+      "value": "001234567890123"
+    },
+    "count_xlsx": {
+      "cell_type": "number",
+      "value": 5
+    }
+  },
+  "chrome_print_window_opened": true,
+  "physical_print_checked": false,
+  "production_404_reproduced": false,
+  "fixture_api_only": true,
+  "production_deployment": false
+}

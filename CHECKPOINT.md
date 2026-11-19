@@ -21,4 +21,8 @@ The follow-up searched only the two recorded request/trace IDs, in 30-second win
 
 The three verified HTTP/PWA candidate files still match `0270d99` byte-for-byte. The subsequent fixes are separate, reviewable diffs in `recovery/function-20261120/`.
 
-- Print Studio UI11: switching from SHOP A to B previously displayed A's unsaved draft state. The patch starts B with its own defaults and loads its saved draft, then restores A's draft when returning to A. Three Chrome scenarios passed after the fix, including vector print and Sticker PNG 450 DPI. The UI11 draft branch and production remain separate.
+- Print Studio UI11 previously displayed SHOP A's draft after switching to SHOP B. The patch starts B with its own defaults and loads its saved draft, then restores A's draft when returning to A. Three Chrome scenarios passed after the fix, including vector print and Sticker PNG 450 DPI.
+- Báo giá now clears the old product name and image immediately on link change, and creates PNG/PDF with consistent document width and natural image proportions. Both scenarios passed after the fix on Chrome. The PDF is one A4 landscape page on both viewports.
+- Nine functional scenarios passed after combining five targeted Chrome retests with four prior passes in unchanged parts of Kiểm kê, Audio and Thông báo. See [QA details and reproduce the isolated Preview](recovery/function-20261120/README.md). There were no production changes.
+
+Pending physical printer and scanner checks, live service/real-account verification, an exact production 404 reproduction, and Supabase's internal upstream evidence for 555. If continuing, start with an exact reproduction from the intended environment and reuse these verified patches. The audit branch contains separate patch overlays, not a deployable website.
