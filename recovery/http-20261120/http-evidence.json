@@ -1,0 +1,217 @@
+{
+  "checked_at_utc": "2026-11-19T18:33:03.459621+00:00",
+  "method": "GET",
+  "assets": [
+    {
+      "path": "manifest.webmanifest",
+      "request": "./manifest.webmanifest?v=3.3.4",
+      "status": "200|application/manifest+json",
+      "exit": 0,
+      "bytes": 588,
+      "sha256": "fe20d5d66068132640f56be5848f2c00c93c61058cbc1013676cb21fb76453b1"
+    },
+    {
+      "path": "icon-192.png",
+      "request": "./icon-192.png?v=3.3.5",
+      "status": "200|image/png",
+      "exit": 0,
+      "bytes": 75526,
+      "sha256": "0e15151e51beccc6b73c61476a539db5deaa34900b8afe73544a69f1a2096410"
+    },
+    {
+      "path": "styles.css",
+      "request": "./styles.css?v=3.5.4",
+      "status": "200|text/css; charset=utf-8",
+      "exit": 0,
+      "bytes": 23903,
+      "sha256": "cbb7241732ffaba6b4c74e8fd20e5fb80f66a695250a322d59fb3bc28cc91f4b"
+    },
+    {
+      "path": "inventory40.css",
+      "request": "./inventory40.css?v=3.5.0",
+      "status": "200|text/css; charset=utf-8",
+      "exit": 0,
+      "bytes": 6778,
+      "sha256": "d8fe0bde44158c44d0d59573f23f42c587d3051ce3fda0ca3ae9320b4d285bd9"
+    },
+    {
+      "path": "inventory50.css",
+      "request": "./inventory50.css?v=3.5.1",
+      "status": "200|text/css; charset=utf-8",
+      "exit": 0,
+      "bytes": 4016,
+      "sha256": "139990533baded365e185ddae1d852ccc700f7113cadfc54ad7d346ed37813f1"
+    },
+    {
+      "path": "inventory_active56.css",
+      "request": "./inventory_active56.css?v=3.5.5-active56",
+      "status": "200|text/css; charset=utf-8",
+      "exit": 0,
+      "bytes": 5257,
+      "sha256": "784bc0cbd46a93833c7ddc476081c82ab411930b137c83b8229e2c98c2c74643"
+    },
+    {
+      "path": "quote40.css",
+      "request": "./quote40.css?v=3.3.2",
+      "status": "200|text/css; charset=utf-8",
+      "exit": 0,
+      "bytes": 7447,
+      "sha256": "0e340bafed7d514763b2531ab40bd94a28428132dfaabbd3a10ae1837977298e"
+    },
+    {
+      "path": "audio40.css",
+      "request": "./audio40.css?v=3.3.7",
+      "status": "200|text/css; charset=utf-8",
+      "exit": 0,
+      "bytes": 9649,
+      "sha256": "65278cd699c20f5d89ee4de3d27dd9900624b3677f3a0d35631bb3b59e50a326"
+    },
+    {
+      "path": "config.js",
+      "request": "./config.js",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 159,
+      "sha256": "e9bfe3e423cc65282de667c821fb78ac9611d3caca6caa3a4c8291b1d8afaa2b"
+    },
+    {
+      "path": "inventory40.js",
+      "request": "./inventory40.js?v=3.5.1",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 40086,
+      "sha256": "97693f69bf786b64d058a7f0f2c4f324b817ff036638cfac81cab1673b0332c2"
+    },
+    {
+      "path": "imei_file51.js",
+      "request": "./imei_file51.js?v=3.5.1",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 8062,
+      "sha256": "252a0ed82ccb8ef364219326dddaae914ab6c417350758033d8a8f3342f217df"
+    },
+    {
+      "path": "inventory_imei50.js",
+      "request": "./inventory_imei50.js?v=3.5.2",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 31165,
+      "sha256": "6b1728b4f6cbc0fe2d35f950b91c662b3fa63428d1d65dc8be6e00566d935d7d"
+    },
+    {
+      "path": "lookup_camera51.js",
+      "request": "./lookup_camera51.js?v=3.5.1",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 10057,
+      "sha256": "ab54baff88ba993f70962485101e0a6ca318f7ea1de362f629862a969da1f303"
+    },
+    {
+      "path": "inventory_active56.js",
+      "request": "./inventory_active56.js?v=3.5.6",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 24008,
+      "sha256": "36e45a1f4f705ffd78697d9ee55f2e33e38f0519abcdf9cc6dfd3274fdf714df"
+    },
+    {
+      "path": "inventory50.js",
+      "request": "./inventory50.js?v=3.5.5-active56",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 4206,
+      "sha256": "ffe8b34846a410a5aa739d83ac303aee54a79289db5970db8113ee626745b75d"
+    },
+    {
+      "path": "quote_stores.js",
+      "request": "./quote_stores.js?v=3.3.2",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 42315,
+      "sha256": "3e73cfb86b0e69a92b1f684b800a3e31d6ef9f0d43f44398845eff88893f5a81"
+    },
+    {
+      "path": "quote40.js",
+      "request": "./quote40.js?v=3.5.5",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 29311,
+      "sha256": "121c9cc9f63013304154593b9584dc829dd19cc59e6111b9d89f92c68ee41a69"
+    },
+    {
+      "path": "audio40.js",
+      "request": "./audio40.js?v=3.3.7",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 22964,
+      "sha256": "3c32afbbe8e53d244862a440dd71bfba42f5e081f901404db69bd4fcfcc6c0c5"
+    },
+    {
+      "path": "app.js",
+      "request": "./app.js?v=3.5.5-active56",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 119525,
+      "sha256": "3baebca2e81d297e1c13b6bfa4f503fd5ea965888b1c707458c0c12962f0a32a"
+    },
+    {
+      "path": "sw.js",
+      "request": "./sw.js",
+      "status": "200|application/javascript",
+      "exit": 0,
+      "bytes": 4717,
+      "sha256": "ed7bbcf827401b00fade14de9ba0e2ee5011b4d5ac079bf353c4be991740fa3f"
+    }
+  ],
+  "additional_checks": [
+    {
+      "path": "icon-512.png?v=3.3.5",
+      "method": "HEAD",
+      "status": 200,
+      "content_type": "image/png"
+    },
+    {
+      "path": "audio-demo.mp3",
+      "method": "HEAD",
+      "status": 200,
+      "content_type": "audio/mpeg"
+    },
+    {
+      "path": "MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx",
+      "method": "HEAD",
+      "status": 200
+    },
+    {
+      "path": "catalog/00.json?v=350",
+      "method": "GET",
+      "status": 200,
+      "content_type": "application/json"
+    },
+    {
+      "path": "catalog/7f.json?v=350",
+      "method": "GET",
+      "status": 200,
+      "content_type": "application/json"
+    }
+  ],
+  "supabase_health": "ACTIVE_HEALTHY",
+  "supabase_24h_error_summary": [
+    {
+      "path": "/rest/v1/profiles",
+      "status": 555,
+      "count": 1
+    },
+    {
+      "path": "/rest/v1/work_shop_memberships",
+      "status": 555,
+      "count": 1
+    },
+    {
+      "source": "function_edge_logs",
+      "status": 503,
+      "count": 1
+    }
+  ],
+  "http404_reproduced": false,
+  "notes": "Catalog manifest is not requested by the app. Arbitrary missing Pages paths can return index.html with HTTP 200; status alone does not validate a resource."
+}

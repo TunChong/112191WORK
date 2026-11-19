@@ -1,0 +1,25 @@
+{
+  "status": "REVIEW_ONLY_NOT_DEPLOYED",
+  "captured_at_utc": "2026-11-19T18:33:03.459621+00:00",
+  "production_url": "https://112191work.pages.dev/",
+  "production_version": "3.5.5-active56",
+  "git_base": "550cc5e89f33e25e0f0d9744e60ee048d4c93d28",
+  "branch": "audit/20261119-production-recovery",
+  "baseline_sha256": {
+    "app.js": "3baebca2e81d297e1c13b6bfa4f503fd5ea965888b1c707458c0c12962f0a32a",
+    "index.html": "2f3e492dfb037c4068414524ca0bac538c13d24d727e017b8e8452970596b748",
+    "sw.js": "ed7bbcf827401b00fade14de9ba0e2ee5011b4d5ac079bf353c4be991740fa3f"
+  },
+  "candidate_sha256": {
+    "app.js": "cd271b46c782577f95cfee1df2d52fa209eb3ded9013e57656be0b37f3b8c34c",
+    "index.html": "7ccba574311031aad789ab8c728aa5f500e7c4b869a69ada8ff7a386477ba280",
+    "sw.js": "ef6592dc5091b3498a7a6c8c43ccfee40967b548fd5b0be69dbc0614d8955e7e"
+  },
+  "complete_site": false,
+  "tests": {
+    "http_regression": 25,
+    "pass": 25
+  },
+  "supabase_changes": false,
+  "production_deployed": false
+}

@@ -1,0 +1,107 @@
+--- a/app.js
++++ b/app.js
+@@ -111,0 +112,25 @@
++const TEMPORARY_HTTP_STATUS=new Set([500,502,503,504,555]);
++function apiError(path,status,data){
++ const message=TEMPORARY_HTTP_STATUS.has(status)
++  ?`Máy chủ tạm thời chưa phản hồi (HTTP ${status}). Vui lòng thử kết nối lại.`
++  :status===404?'Không tìm thấy dịch vụ hoặc tài nguyên (HTTP 404). Vui lòng báo quản lý để kiểm tra phiên bản ứng dụng.'
++  :data?.message||data?.msg||data?.error_description||data?.error||`Lỗi máy chủ ${status}`;
++ const error=new Error(message);error.status=status;error.code=data?.code||data?.error_code;error.path=path;return error;
++}
++async function responseData(response){
++ if(response.status===204)return null;
++ const raw=await response.text();try{return raw?JSON.parse(raw):null}catch{return raw}
++}
++function invalidSession(error){
++ return error instanceof SyntaxError || isAuthExpired(error.status,{message:error.message}) ||
++  (error.status===400&&['refresh_token_not_found','refresh_token_already_used','invalid_grant'].includes(error.code));
++}
++function sessionLoadFailed(error){
++ state.user=null;state.data=null;
++ if(invalidSession(error)){
++  localStorage.removeItem(TOKEN_KEY);state.session=null;state.pendingLogin=null;state.connectionError='';
++  toast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
++ }else if(state.session){
++  state.connectionError=error.message||'Chưa kết nối được máy chủ. Vui lòng thử lại.';
++ }else toast(error.message||'Không tải được dữ liệu.');
++}
+@@ -116,4 +141,13 @@
+-  const r=await fetch(`${BASE}${path}`,{method,headers:{...sessionHeaders(),...(body!==undefined?{'Content-Type':'application/json'}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body)});
+-  if(r.status===204)return {r,data:null};
+-  const raw=await r.text();let data;try{data=raw?JSON.parse(raw):null}catch{data=raw}
+-  return {r,data};
++  // Retry one failed read only. Never replay writes or RPC/Edge Function POSTs.
++  const retryable=/^(GET|HEAD)$/i.test(method);
++  for(let attempt=0;;attempt++){
++   let result;
++   try{
++    const r=await fetch(`${BASE}${path}`,{method,headers:{...sessionHeaders(),...(body!==undefined?{'Content-Type':'application/json'}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body)});
++    result={r,data:await responseData(r)};
++   }catch(error){
++    if(!retryable||attempt||error.name==='AbortError')throw error;
++   }
++   if(result&&(!retryable||attempt||!TEMPORARY_HTTP_STATUS.has(result.r.status)))return result;
++   await new Promise(resolve=>setTimeout(resolve,500));
++  }
+@@ -125 +159 @@
+-  try{if(state.session?.access_token===requestToken)await ensureFreshToken(true)}catch(e){throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.')}
++  if(state.session?.access_token===requestToken)await ensureFreshToken(true);
+@@ -129,2 +163 @@
+-  const err=new Error(data?.message||data?.msg||data?.error_description||data?.error||`Lỗi máy chủ ${r.status}`);
+-  err.status=r.status;throw err;
++  throw apiError(path,r.status,data);
+@@ -136 +169 @@
+- const j=await r.json();if(!r.ok)throw new Error(j.msg||j.error_description||j.message||'Đăng nhập không thành công');return j;
++ const j=await responseData(r);if(!r.ok)throw apiError('/auth/v1/'+endpoint,r.status,j);return j;
+@@ -738,0 +772,3 @@
++ if(CLOUD&&state.connectionError&&state.session){
++  root.innerHTML=`<div class="login-wrap"><div class="login-box"><div class="login-head"><h1>Chưa kết nối được máy chủ</h1><p>Phiên đăng nhập của anh vẫn được giữ.</p></div><p role="alert">${esc(state.connectionError)}</p><div class="stack"><button type="button" class="btn full" data-action="retry-session" ${state.loading?'disabled':''}>${state.loading?'Đang kết nối...':'Kết nối lại'}</button><button type="button" class="btn outline full" data-action="logout" ${state.loading?'disabled':''}>Đăng xuất</button></div></div></div>`;return;
++ }
+@@ -782 +818 @@
+-  if(role!=='manager'||normalized!=='112191')throw e;
++  if(role!=='manager'||normalized!=='112191'||e.status!==400||(e.code&&e.code!=='invalid_credentials'))throw e;
+@@ -786,0 +823 @@
++ state.pendingLogin={role,normalized};
+@@ -788,0 +826,4 @@
++  await finishSignIn(role,normalized);
++ }catch(e){sessionLoadFailed(e);draw();throw e}
++}
++async function finishSignIn(role,normalized){
+@@ -791,0 +833 @@
++  state.pendingLogin=null;state.connectionError='';
+@@ -796 +838,12 @@
+- }catch(e){if(state.user)await logout();throw e}
++}
++async function retrySession(){
++ if(state.loading||!state.session)return;
++ state.loading=true;draw();
++ try{
++  await loadCloud();
++  if(state.pendingLogin)await finishSignIn(state.pendingLogin.role,state.pendingLogin.normalized);
++  else{
++   state.connectionError='';draw();resumeDevicePush().catch(console.warn);
++   const taskId=new URLSearchParams(location.search).get('task');if(taskId)openPushedTask(taskId).catch(console.warn);
++  }
++ }catch(e){sessionLoadFailed(e)}finally{state.loading=false;draw()}
+@@ -808 +861 @@
+-  localStorage.removeItem(TOKEN_KEY);state.session=null;state.pushEnabled=false;lastPendingPushCheck=0;
++  localStorage.removeItem(TOKEN_KEY);state.session=null;state.pendingLogin=null;state.connectionError='';state.pushEnabled=false;lastPendingPushCheck=0;
+@@ -966,0 +1020 @@
++ if(name==='retry-session')return retrySession();
+@@ -1124,2 +1178 @@
+-  if(CLOUD){localStorage.removeItem(TOKEN_KEY);state.user=null;state.session=null;
+-   toast('Phiên đăng nhập đã hết hạn hoặc chưa kết nối được máy chủ.')}
++  if(CLOUD)sessionLoadFailed(e);
+--- a/index.html
++++ b/index.html
+@@ -43 +43 @@
+-  <script type="module" src="./app.js?v=3.5.5-active56"></script>
++  <script type="module" src="./app.js?v=3.5.5-active56-http1"></script>
+--- a/sw.js
++++ b/sw.js
+@@ -1,2 +1,2 @@
+-const CACHE_NAME = 'companion-mwg-v3.5.5-active-inventory';
+-const PRECACHE = ['./', './index.html', './styles.css?v=3.5.4', './app.js?v=3.5.5-active56', './config.js', './inventory40.js?v=3.5.1', './imei_file51.js?v=3.5.1', './inventory40.css?v=3.5.0', './inventory_imei50.js?v=3.5.2', './lookup_camera51.js?v=3.5.1', './inventory50.js?v=3.5.5-active56', './inventory50.css?v=3.5.1', './inventory_active56.js?v=3.5.6', './inventory_active56.css?v=3.5.5-active56', './quote40.js?v=3.5.5', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.7', './audio40.css?v=3.3.7', './manifest.webmanifest?v=3.3.4', './icon-192.png?v=3.3.5', './icon-512.png?v=3.3.5', './audio-demo.mp3', './MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx'];
++const CACHE_NAME = 'companion-mwg-v3.5.5-active-inventory-http1';
++const PRECACHE = ['./', './index.html', './styles.css?v=3.5.4', './app.js?v=3.5.5-active56-http1', './config.js', './inventory40.js?v=3.5.1', './imei_file51.js?v=3.5.1', './inventory40.css?v=3.5.0', './inventory_imei50.js?v=3.5.2', './lookup_camera51.js?v=3.5.1', './inventory50.js?v=3.5.5-active56', './inventory50.css?v=3.5.1', './inventory_active56.js?v=3.5.6', './inventory_active56.css?v=3.5.5-active56', './quote40.js?v=3.5.5', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.7', './audio40.css?v=3.3.7', './manifest.webmanifest?v=3.3.4', './icon-192.png?v=3.3.5', './icon-512.png?v=3.3.5', './audio-demo.mp3', './MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx'];
