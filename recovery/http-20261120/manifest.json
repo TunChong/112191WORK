@@ -13,13 +13,17 @@
   "candidate_sha256": {
     "app.js": "cd271b46c782577f95cfee1df2d52fa209eb3ded9013e57656be0b37f3b8c34c",
     "index.html": "7ccba574311031aad789ab8c728aa5f500e7c4b869a69ada8ff7a386477ba280",
-    "sw.js": "ef6592dc5091b3498a7a6c8c43ccfee40967b548fd5b0be69dbc0614d8955e7e"
+    "sw.js": "d9a1ff8a4b9331b100fcdbf2d099f00a0d27e8557ed501b3f35ac99047cd25d1"
   },
   "complete_site": false,
   "tests": {
     "http_regression": 25,
-    "pass": 25
+    "pwa_regression": 12,
+    "artifact_hash_and_rollback": 2,
+    "total": 39,
+    "pass": 39
   },
   "supabase_changes": false,
-  "production_deployed": false
+  "production_deployed": false,
+  "first_fix_commit": "5cda0e99bfb5216dc6d7cb384a8674f0b92d3239"
 }

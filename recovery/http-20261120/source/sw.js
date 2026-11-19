@@ -1,4 +1,4 @@
-const CACHE_NAME = 'companion-mwg-v3.5.5-active-inventory-http1';
+const CACHE_NAME = 'companion-mwg-v3.5.5-active-inventory-http2';
 const PRECACHE = ['./', './index.html', './styles.css?v=3.5.4', './app.js?v=3.5.5-active56-http1', './config.js', './inventory40.js?v=3.5.1', './imei_file51.js?v=3.5.1', './inventory40.css?v=3.5.0', './inventory_imei50.js?v=3.5.2', './lookup_camera51.js?v=3.5.1', './inventory50.js?v=3.5.5-active56', './inventory50.css?v=3.5.1', './inventory_active56.js?v=3.5.6', './inventory_active56.css?v=3.5.5-active56', './quote40.js?v=3.5.5', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.7', './audio40.css?v=3.3.7', './manifest.webmanifest?v=3.3.4', './icon-192.png?v=3.3.5', './icon-512.png?v=3.3.5', './audio-demo.mp3', './MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx'];
 self.addEventListener('install', event => {
  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -7,6 +7,22 @@ self.addEventListener('activate', event => {
  event.waitUntil(caches.keys().then(keys =>
   Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
+// Keep a working app shell/config when the network returns an HTTP error.
+// fetch() resolves for 404/555; only successful responses of the right type belong in cache.
+async function networkFirst(request,key,contentType){
+ const cache=await caches.open(CACHE_NAME);
+ try{
+  const response=await fetch(request);
+  const valid=response.ok&&contentType.test(response.headers.get('content-type')||'');
+  if(valid){
+   try{await cache.put(key,response.clone())}catch{} // Storage pressure must not discard a good network response.
+   return response;
+  }
+  return (await cache.match(key))||response;
+ }catch(error){
+  const cached=await cache.match(key);if(cached)return cached;throw error;
+ }
+}
 self.addEventListener('fetch', event => {
  const url = new URL(event.request.url);
  if(event.request.method !== 'GET' || url.origin !== self.location.origin)return;
@@ -36,13 +52,11 @@ self.addEventListener('fetch', event => {
   return;
  }
  if(url.pathname.endsWith('/config.js')){
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+  event.respondWith(networkFirst(event.request,'./config.js',/javascript|ecmascript/i));
   return;
  }
  if(event.request.mode === 'navigate'){
-  event.respondWith(fetch(event.request).then(res => {
-   const clone=res.clone();caches.open(CACHE_NAME).then(c=>c.put('./index.html',clone));return res;
-  }).catch(() => caches.match('./index.html')));
+  event.respondWith(networkFirst(event.request,'./index.html',/text\/html/i));
   return;
  }
  event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request)));

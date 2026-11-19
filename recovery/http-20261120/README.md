@@ -24,6 +24,7 @@ The audit branch and main both started at `550cc5e`. The latest print review is 
 - Keep the selected login identity/role check when reconnecting an interrupted login. Avoid the legacy admin password fallback on service failures.
 - Parse Auth HTML errors without losing HTTP status. Report a missing API resource as HTTP 404 without calling it an expired login.
 - Increment only the app query version and PWA cache name needed to load this patch.
+- PWA navigation/config now falls back to its working cached file on HTTP 404/5xx as well as network failure. Only successful HTML/JavaScript of the expected content type can replace those cached files. The original navigation handler cached error responses and could leave the app broken offline.
 
 No schema, RLS, Auth configuration, Edge Function, production record or live deployment was modified.
 
@@ -37,6 +38,6 @@ node --test recovery/http-20261120/tests/*.test.cjs
 
 The HTTP tests use the actual application in a Node VM with simulated responses. They make no production requests. They cover session recovery, invalid-token removal, roles, bounded retries and writes not replayed on HTTP 555. Browser/device regression and authenticated end-to-end checks are pending.
 
-`manifest.json` records the original three production hashes and candidate hashes. `http-recovery.patch` is a unified diff against those exact original files. Before applying it, verify the baseline hashes on a **complete isolated copy** of the matching website. Use `git apply --check` then `git apply` there. The reverse patch restores the exact original three files; all other website files must remain present. Do not deploy `source/`, main or the older recovered snapshots.
+`manifest.json` records the original three production hashes and candidate hashes. `http-recovery.patch` is a zero-context unified diff against those exact original files. Before applying it, verify the baseline hashes on a **complete isolated copy** of the matching website. Use `git apply --unidiff-zero --check` then `git apply --unidiff-zero` there. The reverse patch (`git apply --unidiff-zero -R`) restores the exact original three files; all other website files must remain present. Do not deploy `source/`, main or the older recovered snapshots.
 
 Next: investigate an exact reproducible 404 request if one appears, validate the candidate on a complete isolated website copy, then continue remaining functional bugs. Production release remains a separate user decision.
