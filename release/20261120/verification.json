@@ -1,0 +1,147 @@
+{
+  "result": "RELEASE CANDIDATE",
+  "production_baseline": {
+    "version": "3.5.5-active56",
+    "origin": "https://112191work.pages.dev/",
+    "utc": "2026-11-19T19:42:44.119895+00:00",
+    "exact_files": 154,
+    "source_archive_sha256": "d628ef44144159e17e42cc65ca98096432383b43179dd6af023b1ef732e010a6"
+  },
+  "supabase_auth_health_http": 200,
+  "static": {
+    "release_files": 159,
+    "backup_files": 154,
+    "references": 31,
+    "precache": 28,
+    "js_syntax": 15,
+    "result": "PASS"
+  },
+  "chrome": {
+    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "pass": 11,
+    "fail": 0,
+    "fixture_same_origin": true,
+    "cases": [
+      {
+        "name": "In A7, Giờ Vàng và 10 phiếu, giữ nháp khi tải lại",
+        "result": "PASS",
+        "detail": {
+          "a7PerPage": 4,
+          "salesSlipPerPage": 10,
+          "goldenDraftRestored": true
+        }
+      },
+      {
+        "name": "Báo giá 6 sản phẩm PNG/PDF, ảnh chính lỗi và ảnh dự phòng",
+        "result": "PASS",
+        "detail": {
+          "rows": 6,
+          "png": [
+            1840,
+            1778
+          ],
+          "pdfBytes": 342244,
+          "mainImage404Recovered": true
+        }
+      },
+      {
+        "name": "Báo giá tách SHOP kể cả lúc đang đọc ảnh",
+        "result": "PASS",
+        "detail": {
+          "shopRoundTrip": true,
+          "lateUploadIsolated": true
+        }
+      },
+      {
+        "name": "Kiểm kê 5.0 không IMEI, Excel dư/thiếu và khóa kỳ",
+        "result": "PASS",
+        "detail": {
+          "missingQuantity": 2,
+          "extraQuantity": 1,
+          "closeAndReopen": true
+        }
+      },
+      {
+        "name": "Kiểm kê 5.0 IMEI, Excel dư/thiếu và chống trùng",
+        "result": "PASS",
+        "detail": {
+          "uniqueScanned": 2,
+          "missing": "000123456789013",
+          "extra": "000123456789090"
+        }
+      },
+      {
+        "name": "Kiểm kê Chủ Động, hoàn tác và lưu theo SHOP",
+        "result": "PASS",
+        "detail": {
+          "undoQuantity": 2,
+          "otherShopEmpty": true,
+          "reloadRestored": true
+        }
+      },
+      {
+        "name": "Audio, kiểm tra điều kiện và gửi yêu cầu giả",
+        "result": "PASS",
+        "detail": {
+          "simulatedRequests": 1,
+          "realPayment": false
+        }
+      },
+      {
+        "name": "Thông báo ưu tiên cao mở đúng công việc",
+        "result": "PASS",
+        "detail": {
+          "priority": "high",
+          "visibleTask": "qa-priority",
+          "webPushTransport": "simulated browser message"
+        }
+      },
+      {
+        "name": "POPUP A4/A5, Sticker 6/2/1 và PNG 450 DPI",
+        "result": "PASS",
+        "detail": {
+          "formats": [
+            "POPUP A4",
+            "POPUP A5",
+            "Sticker 6/2/1"
+          ],
+          "png": [
+            3720,
+            5262
+          ]
+        }
+      },
+      {
+        "name": "Service worker RC1, cache tài nguyên và Audio Range 206",
+        "result": "PASS",
+        "detail": {
+          "cache": "companion-mwg-v3.5.5-active56-rc1",
+          "entries": 56,
+          "audioRange": 206
+        }
+      },
+      {
+        "name": "Đăng nhập, SHOP theo quyền, đăng xuất và mục In ấn trên mobile",
+        "result": "PASS",
+        "detail": {
+          "roles": [
+            "manager",
+            "staff"
+          ],
+          "mobileMenu": true,
+          "assignmentViews": true
+        }
+      }
+    ],
+    "retest": "Staff fixture was returning both SHOPs before role filtering. Only the fixture was corrected."
+  },
+  "untested": [
+    "Live Auth and SHOP/RLS behavior",
+    "Actual product images/CDN",
+    "Physical printer",
+    "Barcode/QR/IMEI hardware",
+    "iPhone Safari/PWA background push",
+    "Real Audio fulfillment/payment"
+  ],
+  "upstream_555": "Unverified. Prior requests took about 10 seconds. No new upstream log."
+}
