@@ -1,0 +1,38 @@
+--- a/modules/mwgx/print_studio.js
++++ b/modules/mwgx/print_studio.js
+@@ -143 +143,19 @@
+-function enter(){try{const d=JSON.parse(localStorage.getItem(draftKey())||'null');if(d?.values)Object.assign(S.values,d.values);if(d?.stickerNotes)S.stickerNotes={...S.stickerNotes,...d.stickerNotes};if(d?.items)S.items={...S.items,...d.items};if(d?.items?.sticker&&!d.items[`sticker:${S.values.stickerType||'percent'}`])S.items[`sticker:${S.values.stickerType||'percent'}`]=d.items.sticker;if(d?.titlePreset)S.titlePreset=d.titlePreset;if(d?.goldenPreset)S.goldenPreset=d.goldenPreset;if(stickerFamilyList().includes(d?.stickerFamily))S.stickerFamily=d.stickerFamily;if(tabList.some(([id])=>id===d?.tab))S.tab=d.tab}catch{}loadHistory()}
++function loadDraft(){
++ let restored=false;
++ try{
++  const d=JSON.parse(localStorage.getItem(draftKey())||'null');
++  if(d?.values)Object.assign(S.values,d.values);
++  if(d?.stickerNotes)S.stickerNotes={...S.stickerNotes,...d.stickerNotes};
++  if(d?.items)S.items={...S.items,...d.items};
++  const stickerKey=`sticker:${S.values.stickerType||'percent'}`;
++  if(d?.items?.sticker&&!d.items[stickerKey])S.items[stickerKey]=d.items.sticker;
++  if(d?.titlePreset)S.titlePreset=d.titlePreset;
++  if(d?.goldenPreset)S.goldenPreset=d.goldenPreset;
++  if(stickerFamilyList().includes(d?.stickerFamily))S.stickerFamily=d.stickerFamily;
++  if(tabList.some(([id])=>id===d?.tab))S.tab=d.tab;
++  restored=!!d;
++ }catch{}
++ loadHistory();
++ return restored;
++}
++function enter(){if(loadDraft())X.draw()}
+@@ -147 +165 @@
+- enter();
++ loadDraft();
+--- a/index.html
++++ b/index.html
+@@ -50 +50 @@
+-  <script src="./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13-draft1" defer></script>
++  <script src="./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13-draft1-qa2" defer></script>
+--- a/sw.js
++++ b/sw.js
+@@ -1,2 +1,2 @@
+-const CACHE_NAME = 'companion-mwg-v3.6.0-preview-ui13-draft1';
+-const PRECACHE = ['./', './index.html', './styles.css?v=3.6.0-preview-ui10', './app.js?v=3.6.0-preview-ui10', './config.js', './scanner_fast57.js?v=3.5.7', './inventory40.js?v=3.6.0-preview-ui11', './imei_file51.js?v=3.5.1', './inventory40.css?v=3.6.0-preview-ui11', './inventory_imei50.js?v=3.6.0-preview-ui11', './lookup_camera51.js?v=3.5.7', './inventory50.js?v=3.6.0-preview-ui11', './inventory50.css?v=3.5.7', './inventory_active56.js?v=3.5.6', './inventory_active56.css?v=3.5.6', './quote40.js?v=3.5.5', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.7', './audio40.css?v=3.3.7', './manifest.webmanifest?v=3.3.4', './icon-192.png?v=3.3.5', './icon-512.png?v=3.3.5', './audio-demo.mp3', './MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx','./modules/mwgx/style.css?v=3.6.0-preview-ui13','./modules/mwgx/core.js?v=3.6.0-preview-ui11','./modules/mwgx/qr_vendor.js?v=3.6.0-preview','./modules/mwgx/code128.js?v=3.6.0-preview','./modules/mwgx/excel.js?v=3.6.0-preview','./modules/mwgx/print_engine.js?v=3.6.0-preview-ui13','./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13-draft1','./modules/mwgx/cash.js?v=3.6.0-preview','./modules/mwgx/warehouse.js?v=3.6.0-preview','./modules/mwgx/sales.js?v=3.6.0-preview','./modules/mwgx/inventory_extension.js?v=3.6.0-preview-ui11'];
++const CACHE_NAME = 'companion-mwg-v3.6.0-preview-ui13-draft1-qa2';
++const PRECACHE = ['./', './index.html', './styles.css?v=3.6.0-preview-ui10', './app.js?v=3.6.0-preview-ui10', './config.js', './scanner_fast57.js?v=3.5.7', './inventory40.js?v=3.6.0-preview-ui11', './imei_file51.js?v=3.5.1', './inventory40.css?v=3.6.0-preview-ui11', './inventory_imei50.js?v=3.6.0-preview-ui11', './lookup_camera51.js?v=3.5.7', './inventory50.js?v=3.6.0-preview-ui11', './inventory50.css?v=3.5.7', './inventory_active56.js?v=3.5.6', './inventory_active56.css?v=3.5.6', './quote40.js?v=3.5.5', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.7', './audio40.css?v=3.3.7', './manifest.webmanifest?v=3.3.4', './icon-192.png?v=3.3.5', './icon-512.png?v=3.3.5', './audio-demo.mp3', './MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx','./modules/mwgx/style.css?v=3.6.0-preview-ui13','./modules/mwgx/core.js?v=3.6.0-preview-ui11','./modules/mwgx/qr_vendor.js?v=3.6.0-preview','./modules/mwgx/code128.js?v=3.6.0-preview','./modules/mwgx/excel.js?v=3.6.0-preview','./modules/mwgx/print_engine.js?v=3.6.0-preview-ui13','./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13-draft1-qa2','./modules/mwgx/cash.js?v=3.6.0-preview','./modules/mwgx/warehouse.js?v=3.6.0-preview','./modules/mwgx/sales.js?v=3.6.0-preview','./modules/mwgx/inventory_extension.js?v=3.6.0-preview-ui11'];
