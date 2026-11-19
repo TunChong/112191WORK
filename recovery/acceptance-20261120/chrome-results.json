@@ -1,0 +1,166 @@
+{
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+  "runAt": "2026-11-19T19:30:43.626Z",
+  "group": "all",
+  "pass": 8,
+  "fail": 0,
+  "results": [
+    {
+      "name": "In A7, Giờ Vàng và 10 phiếu, giữ nháp khi tải lại",
+      "result": "PASS",
+      "detail": {
+        "a7PerPage": 4,
+        "salesSlipPerPage": 10,
+        "goldenDraftRestored": true
+      }
+    },
+    {
+      "name": "Báo giá 6 sản phẩm PNG/PDF, ảnh chính lỗi và ảnh dự phòng",
+      "result": "PASS",
+      "detail": {
+        "rows": 6,
+        "png": [
+          1840,
+          1778
+        ],
+        "pdfBytes": 342244,
+        "mainImage404Recovered": true
+      }
+    },
+    {
+      "name": "Báo giá tách SHOP kể cả lúc đang đọc ảnh",
+      "result": "PASS",
+      "detail": {
+        "shopRoundTrip": true,
+        "lateUploadIsolated": true
+      }
+    },
+    {
+      "name": "Kiểm kê 5.0 không IMEI, Excel dư/thiếu và khóa kỳ",
+      "result": "PASS",
+      "detail": {
+        "missingQuantity": 2,
+        "extraQuantity": 1,
+        "closeAndReopen": true
+      }
+    },
+    {
+      "name": "Kiểm kê 5.0 IMEI, Excel dư/thiếu và chống trùng",
+      "result": "PASS",
+      "detail": {
+        "uniqueScanned": 2,
+        "missing": "000123456789013",
+        "extra": "000123456789090"
+      }
+    },
+    {
+      "name": "Kiểm kê Chủ Động, hoàn tác và lưu theo SHOP",
+      "result": "PASS",
+      "detail": {
+        "undoQuantity": 2,
+        "otherShopEmpty": true,
+        "reloadRestored": true
+      }
+    },
+    {
+      "name": "Audio, kiểm tra điều kiện và gửi yêu cầu giả",
+      "result": "PASS",
+      "detail": {
+        "simulatedRequests": 1,
+        "realPayment": false
+      }
+    },
+    {
+      "name": "Thông báo ưu tiên cao mở đúng công việc",
+      "result": "PASS",
+      "detail": {
+        "priority": "high",
+        "visibleTask": "qa-priority",
+        "webPushTransport": "simulated browser message"
+      }
+    }
+  ],
+  "base": "00a935b71a475077040df3df796efdc72f03eb80",
+  "http_pwa_checkpoint": "0270d99cba48e0957f18a60ea75a8b5323852131",
+  "verified_before_fix": [
+    {
+      "name": "In A7, Giờ Vàng và 10 phiếu, giữ nháp khi tải lại",
+      "result": "FAIL",
+      "error": "Giữ nháp sau tải lại"
+    },
+    {
+      "name": "Báo giá tách SHOP kể cả lúc đang đọc ảnh",
+      "result": "FAIL",
+      "error": "Ảnh đính kèm của SHOP B xuất hiện ở SHOP A",
+      "sessionSummary": []
+    },
+    {
+      "name": "Kiểm kê 5.0 không IMEI, Excel dư/thiếu và khóa kỳ",
+      "result": "FAIL",
+      "error": "Mất tên kỳ và/hoặc file Excel đã chọn khi app làm mới dữ liệu",
+      "sessionSummary": []
+    },
+    {
+      "name": "Kiểm kê 5.0 IMEI, Excel dư/thiếu và chống trùng",
+      "result": "FAIL",
+      "error": "Mất tên kỳ và/hoặc file Excel đã chọn khi app làm mới dữ liệu",
+      "sessionSummary": []
+    }
+  ],
+  "artifacts": {
+    "quote": {
+      "pdf_pages": 1,
+      "pdf_size": "A4 landscape",
+      "outputs": [
+        {
+          "kind": "png",
+          "size": [
+            1840,
+            1778
+          ],
+          "rows_in_order": 6,
+          "marker_aspect_ratios": [
+            2.32,
+            0.44,
+            1.0,
+            2.34,
+            0.44,
+            1.0
+          ]
+        },
+        {
+          "kind": "pdf_image",
+          "size": [
+            1840,
+            1778
+          ],
+          "rows_in_order": 6,
+          "marker_aspect_ratios": [
+            2.34,
+            0.43,
+            0.99,
+            2.34,
+            0.43,
+            1.0
+          ]
+        }
+      ]
+    },
+    "excel": {
+      "quantity_missing": 2,
+      "quantity_extra": 1,
+      "imei_serials_saved_as_text": true
+    }
+  },
+  "not_tested": [
+    "physical printing",
+    "USB scanner",
+    "phone camera",
+    "iOS PWA/Safari downloads",
+    "background Web Push delivery",
+    "live quote upstream",
+    "live Audio order or payment"
+  ],
+  "test_api": "local fictional data",
+  "production_deployment": false
+}

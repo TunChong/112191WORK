@@ -26,3 +26,9 @@ The three verified HTTP/PWA candidate files still match `0270d99` byte-for-byte.
 - Nine functional scenarios passed after combining five targeted Chrome retests with four prior passes in unchanged parts of Kiểm kê, Audio and Thông báo. See [QA details and reproduce the isolated Preview](recovery/function-20261120/README.md). There were no production changes.
 
 Pending physical printer and scanner checks, live service/real-account verification, an exact production 404 reproduction, and Supabase's internal upstream evidence for 555. If continuing, start with an exact reproduction from the intended environment and reuse these verified patches. The audit branch contains separate patch overlays, not a deployable website.
+
+## Acceptance follow-up
+
+The baseline audit head was `00a935b71a475077040df3df796efdc72f03eb80`. The tracked HTTP/PWA and prior function patches were verified byte-for-byte against it. Chrome on the final isolated builds passed **8/8, 0 FAIL** across extended print/quotation, inventory, Audio and notification scenarios. Three new overlays fix draft rendering after Print Studio reload, late quote attachment crossing SHOP boundaries, and loss of the chosen file/title when either inventory import form redraws. The latest combined package and checks are in [the acceptance notes](recovery/acceptance-20261120/README.md).
+
+The local Work Preview provides a rerunnable test panel and manual entry points for both builds. The remaining checks need a physical printer/scanner or a phone with a dedicated HTTPS Preview, real-device permissions and Web Push infrastructure. No production service or Supabase data was used for acceptance. Reopen HTTP 555 only when new upstream evidence is available.
