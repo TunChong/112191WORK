@@ -15,4 +15,10 @@ Continue on `audit/20261119-production-recovery`. Start by reading `recovery/htt
 
 Read-only logs confirm two gateway-version-1 HTTP 555 events at `2026-11-18T22:02:03.238Z` and `22:23:02.369Z`, each with origin duration **10,003 ms**. They are text responses without the upstream-service-time header. No corresponding Postgres/PostgREST error was returned in the inspected window; health advisors were empty. The timeout interpretation is an inference, **not a verified root cause**. The official status-code reference defines gateway timeout as 544 and does not define 555. Sanitized request/trace IDs are in `browser/server-555-evidence.json`.
 
-Next: obtain internal Supabase gateway/upstream diagnostics for those recorded request/trace IDs, or investigate an exact production 404 URL if one appears. Generic polling, DB/RLS changes and repeated local tests will not resolve that evidence gap. Real-account/device regression and release approval remain separate gates. No app patch changes were needed after the Chrome run; all three candidate hashes remain unchanged. The local QA Preview is stopped after testing; browser JSON/screenshot are saved in GitHub. Keep ECO MODE.
+The follow-up searched only the two recorded request/trace IDs, in 30-second windows around each error. The connected log stream returned edge records only. The membership trace grouped one 555 and two nearby 200 responses, and the profile trace had one 555. No upstream source or SQLSTATE was available. Server root cause remains unverified. Resume this investigation only if internal Supabase gateway diagnostics or a new failing trace becomes available.
+
+## Functional follow-up
+
+The three verified HTTP/PWA candidate files still match `0270d99` byte-for-byte. The subsequent fixes are separate, reviewable diffs in `recovery/function-20261120/`.
+
+- Print Studio UI11: switching from SHOP A to B previously displayed A's unsaved draft state. The patch starts B with its own defaults and loads its saved draft, then restores A's draft when returning to A. Three Chrome scenarios passed after the fix, including vector print and Sticker PNG 450 DPI. The UI11 draft branch and production remain separate.

@@ -1,0 +1,35 @@
+--- a/modules/mwgx/print_studio.js
++++ b/modules/mwgx/print_studio.js
+@@ -35 +35,12 @@
+-const S={tab:'popup-a4',stickerFamily:'info',titlePreset:'GIÁ RẺ QUÁ',goldenPreset:'GIÁ SỐC',values:{bannerTitle:'GIÁ RẺ QUÁ',goldenTitle:'GIÁ SỐC',productCategory:'MÁY LỌC NƯỚC',title:'',oldPrice:'',salePrice:'',discountPercent:'',installmentText:'+ TRẢ GÓP 0% LÃI SUẤT',subtitle:'',validDate:'',stickerType:'percent',stickerNote:'THỜI GIAN ÁP DỤNG',sheetCount:'6',slipTitle:'THẺ THANH TOÁN'},stickerNotes:{},items:{},history:[]};
++function blankDraft(){
++ return {
++  tab:'popup-a4',stickerFamily:'info',titlePreset:'GIÁ RẺ QUÁ',goldenPreset:'GIÁ SỐC',
++  values:{
++   bannerTitle:'GIÁ RẺ QUÁ',goldenTitle:'GIÁ SỐC',productCategory:'MÁY LỌC NƯỚC',
++   title:'',oldPrice:'',salePrice:'',discountPercent:'',installmentText:'+ TRẢ GÓP 0% LÃI SUẤT',
++   subtitle:'',validDate:'',stickerType:'percent',stickerNote:'THỜI GIAN ÁP DỤNG',sheetCount:'6',slipTitle:'THẺ THANH TOÁN'
++  },
++  stickerNotes:{},items:{}
++ };
++}
++const S={...blankDraft(),history:[]};
+@@ -133 +144,5 @@
+-function onShopChange(){loadHistory()}
++function onShopChange(){
++ // The core has already supplied the new SHOP/user. Never merge its saved draft into the previous one.
++ Object.assign(S,blankDraft());
++ enter();
++}
+--- a/index.html
++++ b/index.html
+@@ -50 +50 @@
+-  <script src="./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13" defer></script>
++  <script src="./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13-draft1" defer></script>
+--- a/sw.js
++++ b/sw.js
+@@ -1,2 +1,2 @@
+-const CACHE_NAME = 'companion-mwg-v3.6.0-preview-ui13';
+-const PRECACHE = ['./', './index.html', './styles.css?v=3.6.0-preview-ui10', './app.js?v=3.6.0-preview-ui10', './config.js', './scanner_fast57.js?v=3.5.7', './inventory40.js?v=3.6.0-preview-ui11', './imei_file51.js?v=3.5.1', './inventory40.css?v=3.6.0-preview-ui11', './inventory_imei50.js?v=3.6.0-preview-ui11', './lookup_camera51.js?v=3.5.7', './inventory50.js?v=3.6.0-preview-ui11', './inventory50.css?v=3.5.7', './inventory_active56.js?v=3.5.6', './inventory_active56.css?v=3.5.6', './quote40.js?v=3.5.5', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.7', './audio40.css?v=3.3.7', './manifest.webmanifest?v=3.3.4', './icon-192.png?v=3.3.5', './icon-512.png?v=3.3.5', './audio-demo.mp3', './MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx','./modules/mwgx/style.css?v=3.6.0-preview-ui13','./modules/mwgx/core.js?v=3.6.0-preview-ui11','./modules/mwgx/qr_vendor.js?v=3.6.0-preview','./modules/mwgx/code128.js?v=3.6.0-preview','./modules/mwgx/excel.js?v=3.6.0-preview','./modules/mwgx/print_engine.js?v=3.6.0-preview-ui13','./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13','./modules/mwgx/cash.js?v=3.6.0-preview','./modules/mwgx/warehouse.js?v=3.6.0-preview','./modules/mwgx/sales.js?v=3.6.0-preview','./modules/mwgx/inventory_extension.js?v=3.6.0-preview-ui11'];
++const CACHE_NAME = 'companion-mwg-v3.6.0-preview-ui13-draft1';
++const PRECACHE = ['./', './index.html', './styles.css?v=3.6.0-preview-ui10', './app.js?v=3.6.0-preview-ui10', './config.js', './scanner_fast57.js?v=3.5.7', './inventory40.js?v=3.6.0-preview-ui11', './imei_file51.js?v=3.5.1', './inventory40.css?v=3.6.0-preview-ui11', './inventory_imei50.js?v=3.6.0-preview-ui11', './lookup_camera51.js?v=3.5.7', './inventory50.js?v=3.6.0-preview-ui11', './inventory50.css?v=3.5.7', './inventory_active56.js?v=3.5.6', './inventory_active56.css?v=3.5.6', './quote40.js?v=3.5.5', './quote40.css?v=3.3.2', './quote_stores.js?v=3.3.2', './audio40.js?v=3.3.7', './audio40.css?v=3.3.7', './manifest.webmanifest?v=3.3.4', './icon-192.png?v=3.3.5', './icon-512.png?v=3.3.5', './audio-demo.mp3', './MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx','./modules/mwgx/style.css?v=3.6.0-preview-ui13','./modules/mwgx/core.js?v=3.6.0-preview-ui11','./modules/mwgx/qr_vendor.js?v=3.6.0-preview','./modules/mwgx/code128.js?v=3.6.0-preview','./modules/mwgx/excel.js?v=3.6.0-preview','./modules/mwgx/print_engine.js?v=3.6.0-preview-ui13','./modules/mwgx/print_studio.js?v=3.6.0-preview-ui13-draft1','./modules/mwgx/cash.js?v=3.6.0-preview','./modules/mwgx/warehouse.js?v=3.6.0-preview','./modules/mwgx/sales.js?v=3.6.0-preview','./modules/mwgx/inventory_extension.js?v=3.6.0-preview-ui11'];

@@ -1,0 +1,14 @@
+{
+  "modules/mwgx/print_studio.js": {
+    "before": "cb2c07a5bc8d8d7bea4173e724be096d8981c91278e326f4013a98ea459a75f4",
+    "after": "926e1753b887ffdeafa72b4a1f6e14209e4ab617ff1950d401ed7f9239af2043"
+  },
+  "index.html": {
+    "before": "976ce46f6724e89b71b6ce1ddd8778bf2cd64ae8652897a223dbabaa3c7a8b5b",
+    "after": "59295abb3273e759f84fe8fe16504228b26d8c660f3ae9dfb707405821f99e0b"
+  },
+  "sw.js": {
+    "before": "7069ee28d843739ae327f83607558924e1845802e699f03adedce87bd8eeaea2",
+    "after": "45b2711d74f300b5fc3b7cf6c9a1c5ebdc04047773759a082bf652595189d413"
+  }
+}
