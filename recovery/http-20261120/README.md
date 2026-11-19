@@ -36,8 +36,8 @@ node --check recovery/http-20261120/source/sw.js
 node --test recovery/http-20261120/tests/*.test.cjs
 ```
 
-The HTTP tests use the actual application in a Node VM with simulated responses. They make no production requests. They cover session recovery, invalid-token removal, roles, bounded retries and writes not replayed on HTTP 555. Browser/device regression and authenticated end-to-end checks are pending.
+The HTTP tests use the actual application in a Node VM with simulated responses. They make no production requests. They cover session recovery, invalid-token removal, roles, bounded retries and writes not replayed on HTTP 555. Follow-up actual Chrome testing passed **10/10 HTTP/PWA scenarios**, using real local HTTP errors and native service-worker/cache behavior; see `browser/README.md`. Real-account/device regression remains pending. The upstream cause of production 555 is still inconclusive; preserved server request/trace IDs identify the next evidence needed.
 
 `manifest.json` records the original three production hashes and candidate hashes. `http-recovery.patch` is a zero-context unified diff against those exact original files. Before applying it, verify the baseline hashes on a **complete isolated copy** of the matching website. Use `git apply --unidiff-zero --check` then `git apply --unidiff-zero` there. The reverse patch (`git apply --unidiff-zero -R`) restores the exact original three files; all other website files must remain present. Do not deploy `source/`, main or the older recovered snapshots.
 
-Next: investigate an exact reproducible 404 request if one appears, validate the candidate on a complete isolated website copy, then continue remaining functional bugs. Production release remains a separate user decision.
+Next: obtain Supabase internal upstream diagnostics for the recorded 555 IDs, investigate an exact reproducible production 404 if one appears, then continue remaining functional bugs. Production release remains a separate user decision.

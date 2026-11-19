@@ -1,0 +1,60 @@
+{
+  "status": "ROOT_CAUSE_INCONCLUSIVE",
+  "project": "112191-WORK",
+  "project_ref": "oyjrgbpjrazwvmiomquw",
+  "window_utc": {
+    "start": "2026-11-18T21:55:00Z",
+    "end": "2026-11-18T22:30:00Z"
+  },
+  "confirmed_events": [
+    {
+      "gateway_version": "1",
+      "origin_ms": "10003",
+      "path": "/rest/v1/work_shop_memberships",
+      "request_id": "01a1f0ae-6466-7e0d-b3ce-b150ecac5402",
+      "server_message": "",
+      "source": "edge_logs",
+      "sqlstate": "",
+      "status": "555",
+      "timestamp": "2026-11-18T22:02:03.238000",
+      "trace_id": "01a1f0ae624d733a892a0f49733423fe"
+    },
+    {
+      "gateway_version": "1",
+      "origin_ms": "10003",
+      "path": "/rest/v1/profiles",
+      "request_id": "01a1f0c1-9ae1-71b3-b0b7-a47795893089",
+      "server_message": "",
+      "source": "edge_logs",
+      "sqlstate": "",
+      "status": "555",
+      "timestamp": "2026-11-18T22:23:02.369000",
+      "trace_id": "01a1f0c19ae171b3b0b7a47795893089"
+    }
+  ],
+  "additional_observations": {
+    "content_type": "text/plain;charset=UTF-8",
+    "upstream_service_time_header": "absent on both 555 events",
+    "health_advisors": [],
+    "nearby_successes": [
+      {
+        "timestamp_utc": "2026-11-18T22:02:02.744000",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "origin_ms": 303
+      },
+      {
+        "timestamp_utc": "2026-11-18T22:02:03.060000",
+        "path": "/rest/v1/profiles",
+        "status": 200,
+        "origin_ms": 165
+      }
+    ],
+    "matching_postgres_or_postgrest_error_logs_in_window": 0
+  },
+  "inference": "The identical 10003 ms duration suggests a server/upstream timeout. The available logs do not identify which upstream component failed or why; this is not a verified root cause.",
+  "official_reference": "https://supabase.com/kb/troubleshooting/http-status-codes",
+  "reference_limit": "The official status-code page documents gateway timeout as 544 and does not define 555. Do not assert that 555 universally means gateway timeout.",
+  "next_evidence_needed": "Supabase internal gateway/upstream diagnostics for the recorded request_id and trace_id. No infrastructure or database change is justified by current evidence.",
+  "production_changes": false
+}

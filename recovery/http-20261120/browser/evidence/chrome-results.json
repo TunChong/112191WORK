@@ -1,0 +1,823 @@
+{
+  "tested_commit": "eb2496303532fa26a3077d873d5e72ae96160d54",
+  "finished_at": "2026-11-19T18:50:36.211Z",
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+  "secure_context": true,
+  "preview_origin": "http://127.0.0.1:4173",
+  "api": "fictional local fixtures only",
+  "pass": 10,
+  "fail": 0,
+  "results": [
+    {
+      "name": "Cài PWA và tải đúng bản vá",
+      "status": "PASS",
+      "detail": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/styles.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory40.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory50.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory_active56.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/app.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/quote40.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/audio40.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/icon-192.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory40.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory_active56.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/imei_file51.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/lookup_camera51.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory_imei50.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory50.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/quote_stores.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/audio40.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/quote40.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/sw.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/styles.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/app.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory40.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/imei_file51.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory_imei50.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory40.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory50.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/lookup_camera51.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory50.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory_active56.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/inventory_active56.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/quote40.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/quote_stores.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/audio40.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/quote40.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/audio40.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/icon-192.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/manifest.webmanifest",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/icon-512.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/audio-demo.mp3",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "name": "GET 555 → 200: đúng một lần thử lại",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 555
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "name": "555 kéo dài: giữ phiên và Kết nối lại thành công",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 555
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 555
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "name": "404 API: không thử lặp và không xóa phiên",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "Auth trả HTML 555: giữ HTTP status và phiên",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/auth/v1/token",
+          "status": 555
+        }
+      ]
+    },
+    {
+      "name": "Giao việc gặp 555: chỉ một POST, không tạo phân công",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 555
+        }
+      ]
+    },
+    {
+      "name": "PWA điều hướng HTTP 555: giữ trang tốt trong cache",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 555
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "name": "PWA điều hướng HTTP 404: giữ trang tốt trong cache",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "name": "PWA config HTTP 555: dùng JavaScript đã lưu",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 555
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "name": "PWA config HTTP 200 nhưng là HTML: không làm hỏng cache",
+      "status": "PASS",
+      "detail": "",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/app/index.html",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/app/config.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/profiles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/qa-api/functions/v1/manage-shops",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/work_shop_memberships",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/tasks",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/assignments",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_members",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/recurring_templates",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/qa-api/rest/v1/notifications",
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "production_api_base_replaced": true
+}

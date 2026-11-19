@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Companion MWG · Kiểm thử HTTP/PWA cô lập</title>
+<style>
+body{margin:0;font:16px system-ui;background:#eef3fa;color:#10254b}header{padding:20px 28px;background:#12376e;color:white}h1{margin:0;font-size:24px}p{line-height:1.5}main{padding:20px 28px;display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:20px}section{background:white;border-radius:12px;padding:20px}button{padding:12px 18px;border:0;border-radius:8px;background:#1456dc;color:white;font-size:16px;cursor:pointer}button:disabled{opacity:.6}li{margin:10px 0;line-height:1.4}.pass{color:#087443}.fail{color:#bd1d25}iframe{width:100%;height:820px;border:1px solid #cdd8e8;border-radius:10px;background:white}#status{font-weight:700}small{color:#425675}@media(max-width:900px){main{grid-template-columns:1fr}iframe{height:650px}}
+</style>
+<header><h1>Companion MWG · HTTP 555 / 404 / PWA</h1><p>Preview kiểm thử cô lập · API giả · Không kết nối Supabase production</p></header>
+<main><section><button id="run">Chạy 10 tình huống trình duyệt</button><p id="status" role="status">Sẵn sàng kiểm thử</p><ol id="results"></ol><small>Ứng dụng và service worker dùng đúng file bản vá. Chỉ config.js trỏ tới API giả trên cùng Preview. Không kiểm thử toàn bộ chức năng.</small></section><section><h2>Ứng dụng thật trong iframe</h2><iframe id="app" title="Companion MWG Preview" src="about:blank"></iframe></section></main>
+<script src="/qa/suite.js" defer></script></html>
