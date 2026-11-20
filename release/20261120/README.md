@@ -1,10 +1,30 @@
-# Companion MWG · v3.5.5-active56 RC2
+# Companion MWG · Checklist Công việc QLST
 
-Trạng thái **Release Candidate**. Cây này lưu mã nguồn của các tệp mới và sửa, danh sách hash cùng trình đóng gói. Dùng `BACKUP-COMPANION-MWG.zip` được bàn giao cùng bản phát hành để dựng đủ 159 tệp. Cloudflare Pages phục vụ trực tiếp nội dung ZIP đã giải nén.
+Nền RC2 tại `c848a17`. Xem [hướng dẫn Checklist](CHECKLIST-QLST.md) và [kết quả](verification.json). Migration mới nằm trong `supabase/migrations/20261120083850_qlst_checklist.sql`. Preview dùng dữ liệu thử. Supabase và Cloudflare thật chờ phê duyệt.
+
+Dựng gói web với bản sao lưu đã bàn giao.
 
 ```sh
-python3 release/20261120/build.py /path/to/BACKUP-COMPANION-MWG.zip --output COMPANION-MWG-PRODUCTION-RC2.zip
+python3 release/20261120/build.py /path/to/BACKUP-COMPANION-MWG.zip --output COMPANION-MWG-CHECKLIST-QLST.zip
 ```
+
+Để chạy lại Preview cục bộ từ gốc repository.
+
+```sh
+cd release/20261120/checklist-preview
+npm ci
+npm test
+unzip /path/to/COMPANION-MWG-CHECKLIST-QLST.zip -x config.js -d site
+npm run dev
+```
+
+Mở `http://127.0.0.1:4173/` và bấm **Chạy kiểm thử hai tài khoản**. Preview tạo cấu hình thử riêng. Mã SDK Realtime được ghim trong `checklist-preview/package-lock.json`.
+
+## Nguồn RC2
+
+### Companion MWG · v3.5.5-active56 RC2
+
+Trạng thái **Release Candidate**. Cây này lưu mã nguồn của các tệp mới và sửa, danh sách hash cùng trình đóng gói. Gói RC2 nguyên gốc có 159 tệp. Cloudflare Pages phục vụ trực tiếp nội dung ZIP đã giải nén.
 
 RC2 sửa bố cục “GIẢM CÒN” ở mẫu Giá rẻ quá, đồng thời tăng cỡ chữ và giá ở hai mẫu Gạch giá và Phiếu mua hàng. Chrome đạt 41/41 cho thẻ mẫu, bản A4 6/2/1 tem và PNG 450 DPI. Có 62 đối chiếu SVG trùng RC1 cho các mẫu ngoài phạm vi. Kiểm thử máy in thật còn thiếu.
 

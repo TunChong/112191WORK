@@ -417,5 +417,109 @@
     },
     "unaffected_svg_comparisons": 62,
     "physical_print": "Not tested"
+  },
+  "checklist_qlst": {
+    "base_commit": "c848a17ed3b3de1192b8ede86e643809d5c2780a",
+    "postgres": {
+      "migration": "20261120083850_qlst_checklist.sql",
+      "engine": "PostgreSQL 18.7 (PGlite 0.5.17) on wasm32-unknown-emscripten, compiled by emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.13 (e13ee988ce3d87a738dd8f3661d02223308c412a), 32-bit",
+      "pass": 13,
+      "fail": 0,
+      "results": [
+        {
+          "name": "QLST và TC cùng mở chỉ sinh 8 mẫu một lần cho mỗi SHOP/ngày",
+          "result": "PASS"
+        },
+        {
+          "name": "Nhân viên thường không thấy dòng nào và không gọi được RPC checklist",
+          "result": "PASS"
+        },
+        {
+          "name": "Ngoài SHOP, admin thiếu membership, tài khoản ngưng hoặc đổi mật khẩu bị chặn",
+          "result": "PASS"
+        },
+        {
+          "name": "Chưa đăng nhập không đọc bảng hoặc trực tiếp gọi các RPC",
+          "result": "PASS"
+        },
+        {
+          "name": "Người được cấp hai SHOP chỉ thấy dữ liệu trong phạm vi cả hai SHOP hợp lệ",
+          "result": "PASS"
+        },
+        {
+          "name": "QLST tạo, TC hoàn tất và cả hai xem đúng người, giờ và vai trò trong lịch sử",
+          "result": "PASS"
+        },
+        {
+          "name": "Hai lần cùng hoàn tất chỉ ghi người thắng, giữ nguyên dấu thời gian",
+          "result": "PASS"
+        },
+        {
+          "name": "Hai lần cùng sửa: chỉ một lần thắng; hoàn tất dùng phiên bản cũ báo xung đột",
+          "result": "PASS"
+        },
+        {
+          "name": "Không thể gán người thuộc SHOP khác, spoof người hoàn tất hoặc ghi thẳng vào bảng",
+          "result": "PASS"
+        },
+        {
+          "name": "Quá hạn chuyển sang Hoàn tất trễ và còn bản ghi trước đó",
+          "result": "PASS"
+        },
+        {
+          "name": "Nhắc 60 phút theo SHOP, mỗi người nhận một lần; đã xong và tắt nhắc bị bỏ qua",
+          "result": "PASS"
+        },
+        {
+          "name": "Ngày mới giữ lịch sử và quá hạn, sinh đủ ngày bỏ lỡ và áp dụng giờ của SHOP",
+          "result": "PASS"
+        },
+        {
+          "name": "Publication và RLS của checklist được bật, không nới quyền trực tiếp",
+          "result": "PASS"
+        }
+      ]
+    },
+    "browser": {
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "pass": 7,
+      "fail": 0,
+      "results": [
+        {
+          "name": "Menu dưới Tổng quan và chặn nhân viên mở đường dẫn trực tiếp",
+          "result": "PASS"
+        },
+        {
+          "name": "Cùng SHOP có 8 công việc mặc định, kết nối trực tiếp đến hai tài khoản",
+          "result": "PASS"
+        },
+        {
+          "name": "QLST tạo, TC thấy ngay và chỉnh ưu tiên",
+          "detail": {
+            "syncCreateMs": 157
+          },
+          "result": "PASS"
+        },
+        {
+          "name": "TC hoàn tất, QLST nhận thay đổi và lọc lịch sử theo TC/ngày/tuần/tháng",
+          "result": "PASS"
+        },
+        {
+          "name": "Quá hạn chuyển sang Hoàn tất trễ ở cả hai tài khoản",
+          "result": "PASS"
+        },
+        {
+          "name": "Popup chỉ báo cùng SHOP, không lặp và biến mất khi TC hoàn tất",
+          "result": "PASS"
+        },
+        {
+          "name": "Tài khoản được cấp nhiều SHOP chuyển cửa hàng và thấy đúng danh sách",
+          "result": "PASS"
+        }
+      ]
+    },
+    "browser_backend": "isolated PostgreSQL/PGlite and a local Supabase Realtime protocol fixture",
+    "hosted_realtime": "Pending staging acceptance and migration approval",
+    "archive": "COMPANION-MWG-CHECKLIST-QLST.zip"
   }
 }

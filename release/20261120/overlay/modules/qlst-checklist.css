@@ -1,0 +1,56 @@
+.qlst-checklist { display: grid; gap: 14px; }
+.qlst-head, .qlst-item-top, .qlst-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.qlst-head, .qlst-item-top { justify-content: space-between; }
+.qlst-head h2, .qlst-item h3, .qlst-editor h3 { margin: 0; }
+.qlst-head p { margin: 5px 0 0; color: #526380; }
+.qlst-connection { margin: 0; color: #405571; font-size: .85rem; }
+.qlst-tabs { display: flex; gap: 7px; padding: 4px; border-radius: 12px; background: #eaf0f8; }
+.qlst-tabs button {
+  flex: 1; min-width: 0; border: 0; border-radius: 9px; background: transparent;
+  min-height: 40px; padding: 7px 5px; color: #344b67; font: inherit; font-weight: 700;
+}
+.qlst-tabs button[aria-pressed="true"] { background: white; color: #184da5; box-shadow: 0 1px 4px #162b4820; }
+.qlst-tabs button span { margin-left: 3px; }
+.qlst-editor, .qlst-item {
+  padding: 14px; border: 1px solid #dce6f2; border-radius: 12px; background: #fff;
+}
+.qlst-editor { background: #f4f8fe; }
+.qlst-item + .qlst-item { margin-top: 8px; }
+.qlst-item h3 { font-size: 1rem; overflow-wrap: anywhere; }
+.qlst-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 7px 0 10px; color: #415471; font-size: .87rem; }
+.qlst-badge { padding: 4px 9px; border-radius: 18px; font-weight: 700; font-size: .8rem; background: #eaf0f8; color: #324f68; }
+.qlst-priority-high, .qlst-late { color: #9c260f; }
+.qlst-priority-high { background: #fff0e8; }
+.qlst-on-time { color: #176249; }
+.qlst-late, .qlst-on-time { font-weight: 750; }
+.qlst-form-grid, .qlst-filter { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin: 8px 0; }
+.qlst-filter { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.qlst-full { grid-column: 1 / -1; }
+.qlst-form-grid label, .qlst-filter label { display: grid; gap: 4px; min-width: 0; font-weight: 650; color: #334864; }
+.qlst-form-grid input, .qlst-form-grid select, .qlst-filter select, .qlst-filter input {
+  width: 100%; min-width: 0; min-height: 41px; padding: 8px; background: white;
+  border: 1px solid #bbcbe1; border-radius: 8px; color: #21364e; font: inherit;
+}
+.qlst-option { display: flex; gap: 7px; align-items: center; }
+.qlst-option input { width: auto; }
+.qlst-form-error { margin: 6px 0; color: #9c260f; }
+.qlst-feedback { border-radius: 10px; padding: 12px; background: #edf4fd; color: #344c69; }
+.qlst-popup {
+  position: fixed; z-index: 2100; right: 18px; bottom: 18px;
+  width: min(420px, calc(100vw - 36px)); max-height: min(70vh,520px); overflow: auto;
+  color: #4b2f14; background: #fff9ee; border: 1px solid #ead1a8; border-radius: 14px;
+  box-shadow: 0 6px 30px #233b5c38; padding: 15px;
+}
+.qlst-popup[hidden] { display: none; }
+.qlst-popup ul { padding-left: 18px; margin: 8px 0; overflow-wrap: anywhere; }
+.qlst-popup time { color: #624b39; }
+.qlst-entry { display: none; }
+@media (max-width: 980px) {
+  .qlst-entry { display: flex; width: 100%; }
+  .qlst-popup { bottom: calc(84px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 600px) {
+  .qlst-filter { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .qlst-form-grid { grid-template-columns: 1fr; }
+  .qlst-meta { display: grid; }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "companion-mwg-checklist-preview",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node preview.mjs",
+    "test": "node database.test.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.17",
+    "@supabase/realtime-js": "2.119.2",
+    "esbuild": "0.25.12",
+    "ws": "8.18.3"
+  },
+  "private": true
+}

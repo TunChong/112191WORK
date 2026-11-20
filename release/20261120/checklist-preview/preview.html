@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="vi"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Companion MWG · Preview Checklist QLST</title>
+<style>
+*{box-sizing:border-box}body{font:15px system-ui;margin:18px;color:#182e49;background:#edf3fb}h1{margin:0;font-size:24px}header>p{margin:6px 0 12px}
+button,select{font:inherit}button{background:#1b55b6;color:#fff;border:0;border-radius:9px;padding:10px 13px;font-weight:700;cursor:pointer}button:disabled{opacity:.6}
+#results{margin:8px 0 16px;padding:10px 14px;background:#fff;border-radius:9px}#report{font-weight:750}
+#outcomes{margin:5px 0;padding-left:24px}main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+article{min-width:0;background:#fff;border:1px solid #d5e3f3;border-radius:12px;overflow:hidden}article div{display:flex;align-items:center;gap:7px;padding:8px}
+iframe{border:0;width:100%;height:740px;display:block}.pass{color:#165e4a}.fail{color:#91270c}@media(max-width:850px){main{grid-template-columns:1fr}iframe{height:600px}}
+</style>
+<header><h1>Companion MWG · Checklist Công việc QLST</h1><p>Hai tài khoản thử dùng chung SHOP-A. Dữ liệu tạo tại chỗ để kiểm tra và thao tác.</p>
+<button id="run" type="button">Chạy kiểm thử hai tài khoản</button></header>
+<section id="results" aria-live="polite"><span id="report">Sẵn sàng kiểm thử</span><ol id="outcomes"></ol></section>
+<main>
+  <article><div><label for="left-role">Tài khoản bên trái</label><select id="left-role" data-pane="left"><option value="manager">QLST · SHOP-A</option><option value="staff">Nhân viên · SHOP-A</option><option value="multi">QLST/TC · SHOP-A và SHOP-B</option></select></div><iframe id="left" title="Ứng dụng tài khoản thứ nhất"></iframe></article>
+  <article><div><label for="right-role">Tài khoản bên phải</label><select id="right-role" data-pane="right"><option value="lead">TC · SHOP-A</option><option value="other">QLST · SHOP-B</option><option value="staff">Nhân viên · SHOP-A</option></select></div><iframe id="right" title="Ứng dụng tài khoản thứ hai"></iframe></article>
+</main>
+<div id="extra" hidden></div>
+<script src="/demo-data.js"></script><script src="/qa.js" defer></script></html>

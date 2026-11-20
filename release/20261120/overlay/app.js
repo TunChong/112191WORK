@@ -340,6 +340,34 @@ function workMenuItems(){
  ];
  return manager()?all:supervisor()?all.slice(0,3):all.slice(0,1);
 }
+function canUseQLSTChecklist(){
+ return !!window.QLSTChecklist && !!state.session && state.user?.active && !state.user.must_change_password
+  && !state.connectionError && ['manager','shift_lead'].includes(state.shopRoles[state.shopId])
+  && state.shops.some(shop => shop.id === state.shopId && shop.active);
+}
+function requestedChecklist(){
+ return new URLSearchParams(location.search).get('tool') === 'qlst-checklist' && canUseQLSTChecklist();
+}
+function updateChecklistContext(){
+ const tool = window.QLSTChecklist;
+ if (!tool) return;
+ if (!canUseQLSTChecklist() || state.screen === 'change-password') { tool.setContext(null); return; }
+ const selected = state.shops.find(shop => shop.id === state.shopId);
+ const userId = state.user.id;
+ tool.setContext({
+  shop: {id: selected.id, code: selected.shop_code, name: selected.shop_name},
+  userId, base: BASE, key: ANON, api: cloudRequest, rpc, toast,
+  async getToken(){
+   if (state.user?.id !== userId || state.shopId !== selected.id) return null;
+   await ensureFreshToken();
+   return state.user?.id === userId && state.shopId === selected.id ? state.session?.access_token || null : null;
+  },
+  navigate(){
+   const entry = root.querySelector('.sidebar [data-screen="qlst_checklist"]');
+   if (entry && canUseQLSTChecklist()) action(entry).catch(err => toast(err.message));
+  },
+ });
+}
 function canUsePrintStudio(){
  return !!window.MWGX && state.user?.active && !state.user.must_change_password && String(state.user.employee_code)==='112191';
 }
@@ -351,6 +379,7 @@ function navEntries(){const entries=manager()?[
  supervisor()?[
  ['home','Tổng quan','home'],['workhub','Công việc siêu thị','clipboard'],['team','Nhân viên','users'],['inventory40','Kiểm kê 5.0','camera'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],['account','Tài khoản','user']]:
  [['home','Tổng quan','home'],['workhub','Công việc siêu thị','clipboard'],['inventory40','Kiểm kê 5.0','camera'],['quote40','Báo giá','receipt'],['audio40','Audio','headphones'],['more','Thêm','more']];
+ if(canUseQLSTChecklist()) entries.splice(1,0,['qlst_checklist','Checklist Công việc QLST','checkcircle']);
  return [...entries,...printNavEntries()];
 }
 function bottomItems(){return supervisor()?[
@@ -362,7 +391,7 @@ function workhubView(){
  const items=workMenuItems();
  return `<div class="stack"><section class="panel workhub-panel"><div class="panel-head"><div><h2>CÔNG VIỆC SIÊU THỊ</h2><div class="subtitle">Chọn chức năng cần sử dụng trong SHOP đang quản lý.</div></div><span class="badge">${items.length} chức năng</span></div><div class="workhub-grid">${items.map(([screen,title,icon,desc])=>`<button type="button" class="workhub-card" data-action="navigate" data-screen="${screen}"><span class="workhub-symbol">${ic(icon)}</span><span class="workhub-text"><strong>${esc(title)}</strong><small>${esc(desc)}</small></span>${ic('chevron')}</button>`).join('')}</div></section></div>`;
 }
-function headerTitle(){return ({mwgx_print:'Thiết kế & In ấn',workhub:'CÔNG VIỆC SIÊU THỊ',audio40:'Audio',quote40:'Báo giá',inventory40:'Kiểm kê 5.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
+function headerTitle(){return ({qlst_checklist:'Checklist Công việc QLST',mwgx_print:'Thiết kế & In ấn',workhub:'CÔNG VIỆC SIÊU THỊ',audio40:'Audio',quote40:'Báo giá',inventory40:'Kiểm kê 5.0',shops:'Quản lý SHOP',home:'Tổng quan',tasks:supervisor()?'Danh sách công việc':'Công việc của tôi',create:'Giao công việc mới',approvals:'Duyệt công việc',recurring:'Công việc hằng ngày',stats:'Báo cáo & thống kê',team:'Nhân sự siêu thị',accounts:'Quản lý tài khoản',alerts:'Thông báo',account:'Tài khoản',more:'Tiện ích quản lý'})[state.screen]||'Tổng quan'}
 function appShell(content){const unread=myNotifications().filter(n=>!n.read_at).length;return `<div class="layout"><aside class="sidebar"><div class="brand"><div class="logo app-icon"><img src="./icon-192.png?v=3.3.5" alt="Companion-MWG"></div><div><strong>Companion-MWG</strong><small>Quản lý công việc siêu thị</small></div></div><nav class="menu">${desktopNav()}</nav><div class="sidefoot">ĐỒNG BỘ TRỰC TUYẾN · MULTI SHOP<br>Companion-MWG · v3.5.5 · FIX ẢNH BÁO GIÁ</div></aside><main class="content">
  <div class="topbar"><div><div class="eyebrow">Companion-MWG / ${roleName(state.user)}</div><h1>${headerTitle()}</h1></div><div class="toptools"><button type="button" class="round-btn mwg-notification-bell" data-action="navigate" data-screen="alerts" title="${unread?'Có '+unread+' thông báo chưa đọc':'Xem thông báo'}" aria-label="${unread?'Có '+unread+' thông báo chưa đọc':'Mở thông báo'}">${ic('bell')}${unread?`<span class="mwg-notification-count" aria-label="${unread} thông báo mới">${unread>99?'99+':unread}</span>`:''}</button><button class="avatar" data-action="navigate" data-screen="account">${esc((state.user?.full_name||'W').trim()[0])}</button></div></div>
  ${state.shops?.length?`<div style="margin:0 0 15px;display:flex;align-items:center;gap:10px"><label for="activeShop" style="font-size:12px;font-weight:700;flex-shrink:0">SHOP:</label><select id="activeShop" aria-label="Chọn SHOP cần quản lý" style="min-width:0;flex:1;background:white;border:1px solid #dbe3f0;border-radius:12px;padding:11px;font-weight:700;color:#243b6b">${state.shops.map(s=>`<option value="${esc(s.id)}" ${s.id===state.shopId?'selected':''}>${esc(shopLabel(s))}</option>`).join('')}</select></div>`:''}
@@ -373,6 +402,7 @@ function empty(title,desc,icon='clipboard'){return `<div class="empty">${ic(icon
 function homeView(){const s=stats();let pending=myRows().filter(x=>supervisor()?x.a.status==='submitted':x.a.status!=='approved').slice(0,4);
  const percent=s.total?Math.round(s.approved/s.total*100):0;
  return `<div class="stack"><div class="hero"><div><div style="font-size:11px;color:#b4d3ff">CHÀO MỪNG TRỞ LẠI</div><h2>${esc(state.user.full_name)}</h2><p>${supervisor()?'Giao việc tập trung, duyệt phiếu và theo dõi tiến độ nhân viên.':'Kiểm tra nhiệm vụ hôm nay, báo cáo bằng hình ảnh và theo dõi kết quả duyệt.'}</p></div>${supervisor()?`<button class="btn white" data-action="navigate" data-screen="create">${ic('plus')} Giao việc</button>`:''}</div>
+ ${canUseQLSTChecklist()?`<button type="button" class="workhub-card qlst-entry" data-action="navigate" data-screen="qlst_checklist"><span class="workhub-symbol">${ic('checkcircle')}</span><span class="workhub-text"><strong>Checklist Công việc QLST</strong></span>${ic('chevron')}</button>`:''}
  <div class="stats">${displayStat(s.total,'Tổng lượt giao','clipboard')}${displayStat(s.approved,'Đã duyệt','checkcircle')}${displayStat(s.submitted,'Chờ duyệt','camera')}${displayStat(s.overdue,'Quá hạn','warning')}</div>
  <div class="split"><section class="panel"><div class="panel-head"><div><h2>${supervisor()?'Báo cáo chờ duyệt':'Công việc cần xử lý'}</h2><div class="subtitle">${supervisor()?'Danh sách báo cáo đang chờ duyệt':'Những nhiệm vụ chưa được duyệt'}</div></div><button class="btn sm outline" data-action="navigate" data-screen="${manager()?'approvals':'tasks'}">Xem tất cả ${ic('chevron')}</button></div>
  <div class="task-list">${pending.length?pending.map(x=>taskCard(x.t,x.a)).join(''):empty('Không có việc tồn','Các công việc đang được xử lý đúng tiến độ.','checkcircle')}</div></section>
@@ -670,7 +700,7 @@ function shopsView(){
 }
 
 function accountView(){return `<section class="panel"><div class="row" style="margin-bottom:16px"><div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(state.user.full_name[0])}</div><div><b>${esc(state.user.full_name)}</b><div class="subtitle">${roleName(state.user)} · Dữ liệu trực tuyến</div></div></div>
- <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">Companion-MWG · v3.5.5-active56 · RC2</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${state.pushEnabled?'Đã bật Push kể cả khi đóng web':Notification.permission==='granted'?'Đã bật thông báo khi link web còn mở':Notification.permission==='denied'?'Thông báo trình duyệt bị chặn; popup trong web vẫn bật':'Popup trong web luôn bật; chưa cấp quyền trình duyệt'}`:'Popup khi mở link web luôn bật. iPhone cần thêm Màn hình chính để nhận khi đóng web'}</div></div>
+ <div class="detail-item"><div class="k">Tài khoản</div><div class="v">${esc(state.user.employee_code)}</div></div><div class="detail-item"><div class="k">Ứng dụng</div><div class="v">Companion-MWG · v3.5.5-active56 · Checklist QLST</div></div><div class="detail-item"><div class="k">Thông báo</div><div class="v">${'Notification' in window?`Trạng thái: ${state.pushEnabled?'Đã bật Push kể cả khi đóng web':Notification.permission==='granted'?'Đã bật thông báo khi link web còn mở':Notification.permission==='denied'?'Thông báo trình duyệt bị chặn; popup trong web vẫn bật':'Popup trong web luôn bật; chưa cấp quyền trình duyệt'}`:'Popup khi mở link web luôn bật. iPhone cần thêm Màn hình chính để nhận khi đóng web'}</div></div>
  <div class="row" style="margin-top:18px"><button class="btn outline" data-action="show-change-password">${ic('lock')} Đổi mật khẩu</button>${state.pushEnabled?`<button class="btn outline" data-action="disable-notifs">${ic('bell')} Tắt thông báo đẩy trên thiết bị</button>`:`<button class="btn outline" data-action="enable-notifs">${ic('bell')} Bật thông báo web / điện thoại</button>`}<button class="btn danger" data-action="logout">${ic('logout')} Đăng xuất</button></div>
  <hr class="divider"/><p class="fineprint">Tài khoản dùng chung được kiểm soát bằng Supabase Auth và Row Level Security. Đăng nhập bằng link web vẫn nhận popup khi trang đang mở. Chrome/Android và trình duyệt có Web Push có thể nhận khi đóng tab nếu đã cấp quyền. Trên iPhone muốn nhận khi đóng Safari phải thêm website vào Màn hình chính rồi cấp quyền. Chế độ Không làm phiền hoặc tiết kiệm pin có thể làm chậm thông báo.</p></section>`}
 function pendingView(){return `<section class="panel"><div class="notice note-amber">${ic('lock')}<div>Tài khoản <b>${esc(state.user.full_name)}</b> đang chờ quản lý kích hoạt. Đăng nhập với tài khoản quản lý và vào mục Nhân viên để cấp quyền.</div></div><button class="btn outline" style="margin-top:16px" data-action="logout">Đăng xuất</button></section>`}
@@ -718,7 +748,8 @@ function changePasswordView(force=true){return `<div class="login-wrap"><div cla
  <div class="notice note-amber" style="margin-bottom:15px">${ic('shield')}<div>${force?'Mật khẩu ban đầu chỉ dùng một lần. Bạn phải đổi mật khẩu trước khi xem công việc hoặc báo cáo.':'Dùng mật khẩu mới của riêng bạn; không gửi cho người khác.'}</div></div>
  <form id="passwordChangeForm" class="login-form" novalidate><div class="form-field"><label>Mật khẩu mới (ít nhất 8 ký tự) *</label><input name="newPassword" type="password" minlength="8" required autocomplete="new-password" placeholder="Tối thiểu 8 ký tự, nên có chữ và số" /></div><div class="form-field"><label>Nhập lại mật khẩu mới *</label><input name="confirmPassword" type="password" required autocomplete="new-password" placeholder="Nhập lại mật khẩu mới" /></div><button class="btn full" type="submit">${ic('check')} Lưu mật khẩu mới</button></form>
  <div class="row" style="margin-top:15px"><button class="btn outline full" data-action="${force?'logout':'back-account'}">${force?'Đăng xuất':'Quay lại'}</button></div></div></div>`}
-function draw(){if(state.screen==='inventory40'&&window.INV50?.isCameraRunning?.())return;
+function draw(){updateChecklistContext();
+ if(state.screen==='inventory40'&&window.INV50?.isCameraRunning?.())return;
  if(CLOUD&&state.connectionError&&state.session){
   root.innerHTML=`<div class="login-wrap"><div class="login-box"><div class="login-head"><h1>Chưa kết nối được máy chủ</h1><p>Phiên đăng nhập của anh vẫn được giữ.</p></div><p role="alert">${esc(state.connectionError)}</p><div class="stack"><button type="button" class="btn full" data-action="retry-session" ${state.loading?'disabled':''}>${state.loading?'Đang kết nối...':'Kết nối lại'}</button><button type="button" class="btn outline full" data-action="logout" ${state.loading?'disabled':''}>Đăng xuất</button></div></div></div>`;return;
  }
@@ -752,12 +783,13 @@ function draw(){if(state.screen==='inventory40'&&window.INV50?.isCameraRunning?.
     userName:()=>state.user.full_name,canManage:manager,canTest:canUsePrintStudio,draw,toast
   });
  }
- const views={mwgx_print:()=>window.MWGX.view('mwgx_print'),workhub:workhubView,audio40:()=>window.AUDIO40?window.AUDIO40.view():empty('Audio','Chưa tải công cụ Audio.','headphones'),home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,quote40:()=>window.QUOTE40?window.QUOTE40.view():empty('Báo giá','Chưa tải bộ tạo báo giá','receipt'),inventory40:()=>window.INV50?window.INV50.view():empty('Kiểm kê 5.0','Chưa tải module kiểm kê.','camera'),shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
+ const views={qlst_checklist:()=>'<div id="qlst-mount"></div>',mwgx_print:()=>window.MWGX.view('mwgx_print'),workhub:workhubView,audio40:()=>window.AUDIO40?window.AUDIO40.view():empty('Audio','Chưa tải công cụ Audio.','headphones'),home:homeView,tasks:tasksView,create:createView,approvals:approvalsView,recurring:recurringView,stats:statsView,team:teamView,quote40:()=>window.QUOTE40?window.QUOTE40.view():empty('Báo giá','Chưa tải bộ tạo báo giá','receipt'),inventory40:()=>window.INV50?window.INV50.view():empty('Kiểm kê 5.0','Chưa tải module kiểm kê.','camera'),shops:shopsView,accounts:accountsView,alerts:alertsView,account:accountView,more:moreView};
  // Điều hướng di động có thêm màn hình `more`, không xuất hiện trong navEntries của desktop.
  const allowedScreens=new Set([...navEntries(),...bottomItems(),...workMenuItems()].map(([key])=>key));
  if(!allowedScreens.has(state.screen)&&!['change-password','alerts'].includes(state.screen))state.screen='home';
  const backToGroup=inWorkGroup()?`<div class="workhub-return"><button class="btn outline sm" type="button" data-action="navigate" data-screen="workhub">${ic('back')} Công việc siêu thị</button></div>`:'';
  root.innerHTML=appShell(backToGroup+(views[state.screen]||homeView)());
+ if(state.screen==='qlst_checklist') window.QLSTChecklist?.mount(document.getElementById('qlst-mount'));
 }
 function normalizeLogin(raw,role){
  const v=String(raw||'').trim().toUpperCase();
@@ -788,7 +820,7 @@ async function finishSignIn(role,normalized){
   }
   state.pendingLogin=null;state.connectionError='';
   const goAudio=state.pendingAudioPromo&&!state.user?.must_change_password;
-  state.screen=goAudio?'audio40':'home';if(goAudio)state.pendingAudioPromo=false;
+  state.screen=goAudio?'audio40':requestedChecklist()?'qlst_checklist':'home';if(goAudio)state.pendingAudioPromo=false;
   draw();if(goAudio)window.AUDIO40?.load();resumeDevicePush().catch(console.warn);
   const fromPush=new URLSearchParams(location.search).get('task');if(fromPush)openPushedTask(fromPush).catch(console.warn);
 }
@@ -807,7 +839,8 @@ async function retrySession(){
 async function changePassword(e){e.preventDefault();const f=e.target,fd=new FormData(f);const p=String(fd.get('newPassword')||''),c=String(fd.get('confirmPassword')||'');if(p.length<8){toast('Mật khẩu mới phải có ít nhất 8 ký tự.');return}if(p!==c){toast('Hai mật khẩu không trùng nhau.');return}const init=state.user.must_change_password;const original=state.user.employee_code+(manager()?'QUANLY':'');if(p.toUpperCase()===original.toUpperCase()||p==='57021!'){toast('Không được sử dụng lại mật khẩu mặc định.');return}const btn=f.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Đang thay đổi...';try{await ensureFreshToken();await cloudRequest('/auth/v1/user',{method:'PUT',body:{password:p}});if(init)await rpc('complete_initial_password');await loadCloud();const goAudio=state.pendingAudioPromo;state.pendingAudioPromo=false;state.screen=goAudio?'audio40':'account';draw();if(goAudio)window.AUDIO40?.load();toast('Đã đổi mật khẩu thành công.');}catch(err){toast('Không đổi được mật khẩu: '+err.message);btn.disabled=false;btn.textContent='Lưu mật khẩu mới'}}
 
 // Không cho tự đăng ký: tài khoản được tạo bằng script quản trị chạy trên máy riêng.
-async function logout(){if(CLOUD){
+async function logout(){window.QLSTChecklist?.setContext(null);
+ if(CLOUD){
   if(canPush()&&state.session){
    try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
        if(sub){await pushService({action:'unsubscribe',endpoint:sub.endpoint}).catch(()=>{});await sub.unsubscribe()}}
@@ -902,6 +935,7 @@ async function switchShop(shopId){
  if(state.screen==='quote40')window.QUOTE40?.onShopChange();
  if(state.screen==='inventory40')await window.INV50?.onShopChange();
  if(!state.shops.some(s=>s.id===shopId))throw new Error('Bạn chưa được cấp quyền cho SHOP này');
+ window.QLSTChecklist?.setContext(null);
  state.shopId=shopId;
  localStorage.setItem('work112191_selected_shop',shopId);
  state.shopMembers=[];state.oneTimeCredential=null;
@@ -984,6 +1018,7 @@ async function action(el,e){const name=el.dataset.action;
  if(name==='back-account'){state.screen='account';draw();return}
  if(name==='navigate'){
  if(el.dataset.screen==='mwgx_print'&&!canUsePrintStudio())return;
+ if(el.dataset.screen==='qlst_checklist'&&!canUseQLSTChecklist())return;
  if(state.screen==='accounts'&&el.dataset.screen!=='accounts')state.oneTimeCredential=null;if(state.screen==='inventory40'&&el.dataset.screen!=='inventory40')await window.INV50?.leave();
  state.screen=el.dataset.screen;state.modal=null;state.filter='all';state.search='';draw();window.scrollTo(0,0);
  if(state.screen==='mwgx_print')window.MWGX.enter('mwgx_print');
@@ -1124,6 +1159,7 @@ async function boot(){
   console.warn(e);
   if(CLOUD)sessionLoadFailed(e);
  }
+ if(requestedChecklist())state.screen='qlst_checklist';
  draw();
  if(state.user){
   resumeDevicePush().catch(console.warn);
