@@ -143,5 +143,279 @@
     "iPhone Safari/PWA background push",
     "Real Audio fulfillment/payment"
   ],
-  "upstream_555": "Unverified. Prior requests took about 10 seconds. No new upstream log."
+  "upstream_555": "Unverified. Prior requests took about 10 seconds. No new upstream log.",
+  "rc2_sticker": {
+    "base_commit": "a5a8e6522d7886f74b094b1c9266a3f13401f4ce",
+    "filename": "COMPANION-MWG-PRODUCTION-RC2.zip",
+    "sha256": "81a0fcc235692665e862519baf7d10d01f78a3ec359618d820168862e6e2b675",
+    "files": 159,
+    "changed_files": 4,
+    "chrome": {
+      "chrome": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "pass": 41,
+      "fail": 0,
+      "defaultSizes": [
+        {
+          "type": "cut-under1",
+          "priceIncreasePct": 12
+        },
+        {
+          "type": "cut-over1",
+          "priceIncreasePct": 12
+        },
+        {
+          "type": "voucher",
+          "priceIncreasePct": 15
+        }
+      ],
+      "cases": [
+        {
+          "type": "cheap",
+          "surface": "thumb",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 6,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 6,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 6,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 2,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 2,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 2,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 1,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 1,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cheap",
+          "count": 1,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "surface": "thumb",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 6,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 6,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 6,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 2,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 2,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 2,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 1,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 1,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-under1",
+          "count": 1,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "surface": "thumb",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 6,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 6,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 6,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 2,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 2,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 2,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 1,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 1,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "cut-over1",
+          "count": 1,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "surface": "thumb",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 6,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 6,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 6,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 2,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 2,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 2,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 1,
+          "data": "mặc định",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 1,
+          "data": "giá ngắn",
+          "result": "PASS"
+        },
+        {
+          "type": "voucher",
+          "count": 1,
+          "data": "chữ và giá dài",
+          "result": "PASS"
+        },
+        {
+          "surface": "PNG 450 DPI",
+          "pixels": [
+            3720,
+            5262
+          ],
+          "result": "PASS"
+        }
+      ]
+    },
+    "unaffected_svg_comparisons": 62,
+    "physical_print": "Not tested"
+  }
 }

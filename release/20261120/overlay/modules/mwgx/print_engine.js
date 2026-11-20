@@ -368,11 +368,11 @@
   if(useLogo)g+=`<image href="${CHEAP_LOGO_DATA}" x="${cx-logoW/2}" y="${logoY}" width="${logoW}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
   else g+=studioText(cx,logoY+logoH*.63,nice(f.bannerTitle||'GIÁ RẺ QUÁ').toLocaleUpperCase('vi-VN'),{size:15*scale,maxWidth:logoW,fill:'#fff',stroke:'#050505',strokeWidth:2.1*scale});
   g+=studioText(cx,top+hh*.59,product,{size:6.4*scale,maxWidth:hw*.62,family:'condensed'});
-  const lineY=top+hh*.66;
-  g+=`<polygon points="${cx-hw*.38},${lineY} ${cx-hw*.27},${lineY-hh*.014} ${cx-hw*.27},${lineY+hh*.014}" fill="#050505" stroke="none"/>`;
-  g+=`<polygon points="${cx+hw*.38},${lineY} ${cx+hw*.27},${lineY-hh*.014} ${cx+hw*.27},${lineY+hh*.014}" fill="#050505" stroke="none"/>`;
-  g+=studioText(cx,lineY+hh*.025,'GIẢM CÒN',{size:11.4*scale,maxWidth:hw*.48});
-  g+=studioText(cx,top+hh*.82,price,{size:12*scale,maxWidth:hw*.68,family:'condensed'});
+  const labelY=top+hh*.743,markY=labelY-hh*.04;
+  g+=`<polygon points="${cx-hw*.38},${markY} ${cx-hw*.31},${markY-hh*.014} ${cx-hw*.31},${markY+hh*.014}" fill="#050505" stroke="none"/>`;
+  g+=`<polygon points="${cx+hw*.38},${markY} ${cx+hw*.31},${markY-hh*.014} ${cx+hw*.31},${markY+hh*.014}" fill="#050505" stroke="none"/>`;
+  g+=studioText(cx,labelY,'GIẢM CÒN',{size:11.4*scale,maxWidth:hw*.48});
+  g+=studioText(cx,top+hh*.852,price,{size:12*scale,maxWidth:hw*.60,family:'condensed'});
   g+='</g>';return g;
  }
  function markHexSticker(x,y,w,h,f){
@@ -382,6 +382,7 @@
   else{hw=Math.min(w-8,78);hh=Math.min(h-8,78)}
   const cx=x+w/2,cy=y+h/2,top=cy-hh/2,scale=Math.min(hw/90,hh/86);
   const type=String(f.stickerType||'percent'),title=nice(f.bannerTitle||(type==='voucher'?'ƯU ĐÃI':'GIẢM SỐC')).toLocaleUpperCase('vi-VN');
+  const largerText=type==='cut-under1'||type==='cut-over1'||type==='voucher';
   const product=nice(f.title||'TÊN SẢN PHẨM').toLocaleUpperCase('vi-VN');
   const note=nice(f.subtitle||f.stickerNote||'THỜI GIAN ÁP DỤNG').toLocaleUpperCase('vi-VN');
   const old=priceDigits(f.oldPrice),sale=priceDigits(f.salePrice),discount=nice(f.discountPercent||'00').replace(/[^0-9]/g,'').slice(0,3)||'00';
@@ -402,8 +403,8 @@
   g+=`<polygon points="${cap}" fill="#050505" stroke="none" clip-path="url(#${capClip})"/>`;
   g+=`<polygon points="${starPoints(cx,top+hh*.135,hh*.027)}" fill="#fff" stroke="#fff" stroke-width="${Math.max(.25,.28*scale)}"/>`;
   g+='</g><g fill="#050505" stroke="none">';
-  g+=studioText(cx,top+hh*.32,title,{size:8.3*scale,maxWidth:hw*.70,family:'condensed'});
-  g+=studioText(cx,top+hh*.40,product,{size:4.6*scale,maxWidth:hw*.68,family:'condensed'});
+  g+=studioText(cx,top+hh*(largerText?.325:.32),title,{size:(largerText?9.6:8.3)*scale,maxWidth:hw*.70,family:'condensed'});
+  g+=studioText(cx,top+hh*(largerText?.414:.40),product,{size:(largerText?5.9:4.6)*scale,maxWidth:hw*.68,family:'condensed'});
   if(type==='percent'){
    g+=studioText(cx,top+hh*.685,`-${discount}%`,{size:26*scale,maxWidth:hw*.74,family:'condensed'});
    const barX=cx-hw*.34,barY=top+hh*.72,barW=hw*.68,barH=hh*.065;
@@ -411,20 +412,21 @@
    g+=`<rect x="${barX}" y="${barY}" width="${barW*.52}" height="${barH}" fill="#050505" stroke="none"/>`;
    g+=studioText(cx,top+hh*.825,`${note}${note.endsWith(':')?'':':'}`,{size:3.7*scale,maxWidth:hw*.68,family:'condensed'});
    g+=studioText(cx,top+hh*.89,nice(f.validDate||'00.00 - 00.00'),{size:3.5*scale,maxWidth:hw*.67,family:'condensed'});
-  }else if(type==='voucher'){
-   g+=studioText(cx,top+hh*.50,'TẶNG PHIẾU MUA HÀNG',{size:6.5*scale,maxWidth:hw*.68,family:'condensed'});
-   g+=studioText(cx,top+hh*.66,`${sale}đ`,{size:17*scale,maxWidth:hw*.74,family:'condensed'});
-   g+=`<rect x="${cx-hw*.34}" y="${top+hh*.72}" width="${hw*.68}" height="${hh*.055}" fill="#050505"/>`;
-   g+=studioText(cx,top+hh*.765,note,{size:3.2*scale,maxWidth:hw*.62,fill:'#fff',family:'condensed'});
-   g+=studioText(cx,top+hh*.885,nice(f.validDate||'00.00 - 00.00'),{size:3.5*scale,maxWidth:hw*.68,family:'condensed'});
   }else{
-   const oldY=top+hh*.50,oldFont=7.8*scale,saleY=top+hh*.65;
-   g+=studioText(cx,oldY,`${old}đ`,{size:oldFont,maxWidth:hw*.72,family:'condensed'});
-   g+=`<line x1="${cx-hw*.35}" y1="${oldY-oldFont*.36}" x2="${cx+hw*.35}" y2="${oldY-oldFont*.36}" stroke="#050505" stroke-width=".65"/>`;
-   g+=studioText(cx,saleY,`${sale}đ`,{size:16.5*scale,maxWidth:hw*.76,family:'condensed'});
-   g+=`<rect x="${cx-hw*.34}" y="${top+hh*.72}" width="${hw*.68}" height="${hh*.055}" fill="#050505"/>`;
-   g+=studioText(cx,top+hh*.765,note,{size:3.2*scale,maxWidth:hw*.62,fill:'#fff',family:'condensed'});
-   g+=studioText(cx,top+hh*.885,nice(f.validDate||'00.00 - 00.00'),{size:3.5*scale,maxWidth:hw*.68,family:'condensed'});
+   if(type==='voucher'){
+    g+=studioText(cx,top+hh*.531,'TẶNG PHIẾU MUA HÀNG',{size:7.7*scale,maxWidth:hw*.81,family:'condensed'});
+   }else{
+    const oldY=top+hh*(largerText?.535:.50),oldFont=(largerText?9.8:7.8)*scale,oldMaxWidth=hw*.72;
+    const oldText=`${old}đ`;
+    const strikeY=oldY-(largerText?fittedSize(oldText,oldMaxWidth,oldFont,'condensed'):oldFont)*.36;
+    g+=studioText(cx,oldY,oldText,{size:oldFont,maxWidth:oldMaxWidth,family:'condensed'});
+    g+=`<line x1="${cx-hw*.35}" y1="${strikeY}" x2="${cx+hw*.35}" y2="${strikeY}" stroke="#050505" stroke-width=".65"/>`;
+   }
+   g+=studioText(cx,top+hh*(largerText?.725:.65),`${sale}đ`,{size:(largerText?19.2:16.5)*scale,maxWidth:hw*(largerText?.85:.76),family:'condensed'});
+   const bandW=hw*(largerText?.655:.68);
+   g+=`<rect x="${cx-bandW/2}" y="${top+hh*(largerText?.754:.72)}" width="${bandW}" height="${hh*(largerText?.085:.055)}" fill="#050505"/>`;
+   g+=studioText(cx,top+hh*(largerText?.817:.765),note,{size:(largerText?4.1:3.2)*scale,maxWidth:hw*.62,fill:'#fff',family:'condensed'});
+   g+=studioText(cx,top+hh*(largerText?.894:.885),nice(f.validDate||'00.00 - 00.00'),{size:(largerText?4.2:3.5)*scale,maxWidth:hw*(largerText?.43:.68),family:'condensed'});
   }
   return g+'</g>';
  }
