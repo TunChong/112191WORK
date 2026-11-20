@@ -313,7 +313,7 @@
   },
   "release": {
     "MAU_NHAP_KIEM_KE_IMEI_5.1.xlsx": "d5f95130177d2bb56d89701d882262a3e8b4c33df6e8c7db733b805443584b10",
-    "app.js": "5eafa5cefc5b4c1b930f6a7bf0ee1fccb39b481aba890d73939a8223345687a0",
+    "app.js": "c668f7c863a0adead513ee0a3c682f7ffe7ed1b711cab068e667a05746f479a4",
     "audio-demo.mp3": "ebcf5fd1690a0b3181365f7cdc9dbf4d5416dd193743923a42b639bcc5a3fab3",
     "audio40.css": "65278cd699c20f5d89ee4de3d27dd9900624b3677f3a0d35631bb3b59e50a326",
     "audio40.js": "ed4238c03405367db34dffe63799828e72e047cc8b9fb1d12ad95fc39589dbd6",
@@ -449,7 +449,7 @@
     "icon-192.png": "0e15151e51beccc6b73c61476a539db5deaa34900b8afe73544a69f1a2096410",
     "icon-512.png": "150ef074a527d7df7b8e22e4a1cf0eb502fec4edac5ae57f539cf9c4f4a2d543",
     "imei_file51.js": "80526043d8c750be760098b651caf8409129b918f11a0eb5ab346c3a48b2b750",
-    "index.html": "aa4599da114a6d4d774c991484954ad447b2a00dea765d0883aea45185724209",
+    "index.html": "4a193e3b73c9f34806a80635db78bd4effdd5cf81eb409ee0b26cb9e60f68793",
     "inventory40.css": "d8fe0bde44158c44d0d59573f23f42c587d3051ce3fda0ca3ae9320b4d285bd9",
     "inventory40.js": "bc8aacd2237dad282c745e4136ab3c443c602ae0d2255e9276fbd273db54a8dd",
     "inventory50.css": "139990533baded365e185ddae1d852ccc700f7113cadfc54ad7d346ed37813f1",
@@ -473,11 +473,11 @@
     "quote_stores.js": "3e73cfb86b0e69a92b1f684b800a3e31d6ef9f0d43f44398845eff88893f5a81",
     "robots.txt": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1",
     "styles.css": "cbb7241732ffaba6b4c74e8fd20e5fb80f66a695250a322d59fb3bc28cc91f4b",
-    "sw.js": "646f9984f4cd7de3ac033dea0bbf78d5a3ae0a835534253db95dd850a313d0ba",
+    "sw.js": "8ada79a3526a14b49575572b2c0959d5304897d87d7b07ddf58a8f8fb593e4af",
     "vietqr-payment.png": "d30575432abdc6a429cd17c48fc6ba6b79c6eda6575e1b8f17e013cacee5c7cf"
   },
   "archives_sha256": {
     "BACKUP-COMPANION-MWG.zip": "cb72b9c4826b8a6abf01354f5651f5f1813af8f9076b82ceb8bad677dd850ed5",
-    "COMPANION-MWG-PRODUCTION.zip": "aa2584740b840d0fbe80ac8e5298772ad7e3212b39cef96e339f1830f111df19"
+    "COMPANION-MWG-PRODUCTION.zip": "969415b55783839ba6f6143d6442c271c5edc308fcf9e92e54d8f7f9c4427eda"
   }
 }

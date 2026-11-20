@@ -799,14 +799,9 @@ function normalizeLogin(raw,role){
 }
 async function signIn(username,password){
  const role=state.authRole,normalized=normalizeLogin(username,role);
- // Chỉ nhận tên đăng nhập số. Email cũ bên dưới chỉ dùng làm fallback Auth trong giai đoạn chuyển đổi.
- let session;
- try{session=await authRequest('token?grant_type=password',{email:normalized.toLowerCase()+'@'+LOGIN_DOMAIN,password})}
- catch(e){
-  if(role!=='manager'||normalized!=='112191'||e.status!==400||(e.code&&e.code!=='invalid_credentials'))throw e;
-   // Giữ truy cập Admin trong lúc chuẩn bị đổi định danh Auth ở Supabase.
-   session=await authRequest('token?grant_type=password',{email:normalized.toLowerCase()+'quanly@'+LOGIN_DOMAIN,password});
- }
+ // QLST 112191 vẫn dùng định danh Auth cũ dù giao diện nhận mã số.
+ const loginId=role==='manager'&&normalized==='112191'?normalized+'quanly':normalized;
+ const session=await authRequest('token?grant_type=password',{email:loginId+'@'+LOGIN_DOMAIN,password});
  storeSession(session);
  state.pendingLogin={role,normalized};
  try{
